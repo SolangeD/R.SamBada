@@ -11,13 +11,6 @@
 #' prepare_output('myFile',1)
 #' @export
 prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=NULL, interactiveChecks=TRUE){
-  #setwd('/home/lasigadmin/R/test2/test_data')
-  #
-  #SNPRelate::snpgdsBED2GDS(bed.fn='ADAPTmap2.bed',fam.fn='ADAPTmap2.fam',bim.fn='ADAPTmap2.bim',out.gdsfn='ADAPTmap2.gds',compress.annotation = "")
-  #setwd("D:/sambada/test2/test_data")
-  #sambadaname='ADAPTmap2_recode'
-  #gdsFile=NULL
-  #dimMax=1
   
   ### Checks ###
   #check input type

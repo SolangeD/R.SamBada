@@ -63,7 +63,7 @@ prepareGeno=function(filename,maf.thresh=NULL, missingness.thresh=NULL,LD.thresh
     close(f)
     
     #recodePlink(numIndiv,numSNP,filename_short,paste(filename_short,'.csv'))
-    system(paste(recode-plink,numIndiv,numSNP,filename_short,paste(filename_short,'.csv')))
+    system(paste('recode-plink',numIndiv,numSNP,filename_short,paste0(filename_short,'.csv')))
     return(NA)
   }
   
@@ -230,7 +230,8 @@ prepareGeno=function(filename,maf.thresh=NULL, missingness.thresh=NULL,LD.thresh
   #!Change: take pruned number of snps length(list_snp)?
   numSNP=length(list_snp)
   numIndiv=length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "sample.id")))
-  test2::recodePlink(numIndiv,numSNP,paste(filename_short,'_filtered',sep=''),paste0(filename_short,'.csv'))
+  #test2::recodePlink(numIndiv,numSNP,paste(filename_short,'_filtered',sep=''),paste0(filename_short,'.csv'))
+  system(paste('recode-plink',numIndiv,numSNP,paste(filename_short,'_filtered',sep=''),paste0(filename_short,'.csv')))
 }
 
 
