@@ -26,7 +26,7 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, dimMax = 1,
 
 \item{wordDelim}{char Word delimiter of input file(s). Default ' ',}
 
-\item{saveType}{Default'END BEST 0.05',}
+\item{saveType}{composed of three words 1) one of 'end' or 'real' to save the result during the analysis or at the end (allows sorting of result) 2) one of 'all' or 'best' to save all models or only significant models 3) If 'best' specify the threshold of significance (before applying Bonferroni's correction). Default 'END BEST 0.05',}
 
 \item{populationVar}{one of 'first' or 'last'. This option indicates whether any explanatory variables represent the population structure. If present, the said population variables must be gathered in the input file, either on the left or on the right side of the group of environmental variables. Default null.}
 
