@@ -41,7 +41,7 @@ plotMap(envFile, x, y, locationProj, popStrCol, gdsFile, markerName,
 None
 }
 \description{
-Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{plotResultInteractive}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
+Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
 }
 \examples{
 plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', mapType=c('marker'), varEnvName='bio1')

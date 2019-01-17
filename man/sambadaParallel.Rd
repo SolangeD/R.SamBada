@@ -14,11 +14,11 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, dimMax = 1,
 \arguments{
 \item{genoFile}{The name of the file in the current directory of genetic information, complient with samBada's format (use prepareGeno to transform it)}
 
-\item{envFile}{The name of the file in the current directory of environmental information (use create_env to create it and prepareEnv to reduce the correlated dataset and check order)}
+\item{envFile}{The name of the file in the current directory of environmental information (use \code{link{createEnv}} to create it and \code{link{prepareEnv}} to reduce the correlated dataset and check order)}
 
-\item{idGeno}{Name of the column in the \ref{genoFile} corresponding to the id of the animals}
+\item{idGeno}{Name of the column in the \code{genoFile} corresponding to the id of the animals}
 
-\item{idEnv}{Name of the column in the \ref{envFile} corresponding to the id of the animals}
+\item{idEnv}{Name of the column in the \code{envFile} corresponding to the id of the animals}
 
 \item{dimMax}{Maximum number of environmental variables included in the logistic models. Use 1 for univariate models, 2 for univariate and bivariates models}
 
@@ -32,11 +32,19 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, dimMax = 1,
 
 \item{spatial}{composed of 5 words 1) Column name (or number) for longitude 2) Column name (or number) for latitude 3) one of 'sperical' or 'cartesian': to indicate the type of coordinate 4) one of 'distance', 'gaussian', bisquare' or 'nearest': type of weighting scheme (see sambadoc) 4) Number bandwith of weighting function Input type is (double). Units are in [m] for spherical coordinates; for cartesian coordinates, units match those of the samples' positions. Case nearest: Input type is (int)}
 
+\item{autoCorr}{composed of 3 words. 1) one of global, local or both: to indicate the type of spatial autocorrelation to compute. 2) one of env, mark or both: to inidicate the variables on which to compute the analysis 3) integer The number of permutation to compute the pseudo p-value. Ex 'global both 999'}
+
+\item{shapeFile}{one of yes or no. With this option, the LISA are saved as a shapefile (in addition to the usual output)}
+
 \item{outputFile}{char Base name(s) for the results file(s). Default: construction from input file with suffixes (e.g. -Out-)}
 
 \item{colSupEnv}{char or vector of char Name(s) of the column(s) in the environmental data to be excluded from the analysis. Default NULL}
 
 \item{colSupMark}{char or vector of char Name(s) of the column(s) in the molecular data to be excluded from the analysis. Default NULL}
+
+\item{subsetVarEnv}{char or vector of char Name(s) of the column(s) in the environmental data to be included in the analysis while the other columns are set as inactive. Default NULL}
+
+\item{subsetVarMark}{char or vector of char Name(s) of the column(s) in the molecular data to be included in the analysis while the other columns are set as inactive. Default NULL}
 
 \item{headers}{logical Presence or absence of variable names in input files Default TRUE}
 

@@ -16,16 +16,16 @@ You can download sambada from GitHub using the function \code{\link{downloadSamb
 
 \section{Preprocessing functions}{
 
-The Preprocessing functions contain three functions: \code{prepareGeno}, \code{createEnv}, \code{prepareEnv}
+The Preprocessing functions contain three functions: \code{\link{prepareGeno}}, \code{\link{createEnv}}, \code{\link{prepareEnv}}
 }
 
 \section{Running sambada function}{
 
-To run sambada, you will want to use the function: \code{sambadaParallel}
+To run sambada, you will want to use the function: \code{\link{sambadaParallel}}
 }
 
 \section{Postprocessing functions}{
 
-The Postprocessing functions contain three functions: \code{prepareGeno}, \code{createEnv}, \code{prepareEnv}
+The Postprocessing functions contain three functions: \code{\link{prepareGeno}}, \code{\link{createEnv}}, \code{\link{prepareEnv}}
 }
 

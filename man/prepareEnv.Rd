@@ -21,7 +21,7 @@ prepareEnv(envfile, maxcorr, idname, separator = ",", genofile = NULL,
 
 \item{genofile}{char (optional)Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created}
 
-\item{numpc}{double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC. If 0, PCA and population structure will not be computed: in that case, the \code{genofile} will only be used to make the sample order in the envFile match the one of the \code{enfile} (necessary for sambada's computation). Set it to null if \code{genofile} is null}
+\item{numpc}{double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC. If 0, PCA and population structure will not be computed: in that case, the \code{genofile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genofile} is null}
 
 \item{maf.thresh}{double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)}
 
