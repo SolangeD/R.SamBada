@@ -1,47 +1,52 @@
 #' @title Prepare genomic input
 #' @description Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options. The output file has the same name as the input file but with a .csv extension
 #' @author Solange Gaillard, Oliver Selmoni
-#' @param filename char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen
-#' @param maf.thresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)
-#' @param missingness.thresh double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)
-#' @param LD.thresh double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering (if null no filtering on LD will be computed)
-#' @param mgf.thresh double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations relie on gentoypes
+#' @param fileName char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen
+#' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)
+#' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)
+#' @param ldThresh double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering (if null no filtering on LD will be computed)
+#' @param mgfThresh double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations relie on gentoypes
 #' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (prepareGeno or sambada_parallel) has been already run in the R active session.
-#' @param interactiveChecks logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for maf.thresh, missingness.thresh, mgf.thresh (optional, default value=FALSE)
+#' @param interactiveChecks logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for mafThresh, missingnessThresh, mgfThresh (optional, default value=FALSE)
 #' @return None
 #' @examples
-#' prepareGeno('myPlinkFile.ped',maf.tresh=0.05, missingness.thresh=0.05,LD.thresh=0.2,mgf.thresh=0.8,interactiveChecks=TRUE)
-#' prepareGeno('myGDSFile.gds',maf.tresh=0.05, missingness.thresh=0.05,LD.thresh=0.2,mgf.thresh=0.8,interactiveChecks=FALSE)
+#' #With ped input file
+#' prepareGeno('myPlinkFile.ped',mafThresh=0.05, missingnessThresh=0.05,
+#'      mgfThresh=0.8,interactiveChecks=TRUE)
+#'
+#' #With gds input file
+#' prepareGeno('myGDSFile.gds',mafThresh=0.05, missingnessThresh=0.05,
+#'      mgfThresh=0.8,interactiveChecks=FALSE)
 #' @export
-prepareGeno=function(filename,maf.thresh=NULL, missingness.thresh=NULL,LD.thresh=NULL,mgf.thresh=NULL, directory=NULL, interactiveChecks=FALSE, verbose=FALSE){
+prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NULL,mgfThresh=NULL, directory=NULL, interactiveChecks=FALSE, verbose=FALSE){
 
   ### Check inputs ###
   
-  if(typeof(filename)!='character') stop("filename argument supposed to be character")
-  if (!file.exists(filename)) stop("Input file not found.")
-  if(!is.null(maf.thresh)){
-    if(typeof(maf.thresh)!='double') stop("maf.thresh argument supposed to be decimal number")
-    if(maf.thresh>1 | maf.thresh<0) stop("maf.thresh argument supposed to be between 0 and 1")    
+  if(typeof(fileName)!='character') stop("fileName argument supposed to be character")
+  if (!file.exists(fileName)) stop("Input file not found.")
+  if(!is.null(mafThresh)){
+    if(typeof(mafThresh)!='double') stop("mafThresh argument supposed to be decimal number")
+    if(mafThresh>1 | mafThresh<0) stop("mafThresh argument supposed to be between 0 and 1")    
   }
-  if(!is.null(missingness.thresh)){
-    if(typeof(missingness.thresh)!='double') stop("missingness.thresh argument supposed to be decimal number")
-    if(missingness.thresh>1 | missingness.thresh<0) stop("missingness.thresh argument supposed to be between 0 and 1")
+  if(!is.null(missingnessThresh)){
+    if(typeof(missingnessThresh)!='double') stop("missingnessThresh argument supposed to be decimal number")
+    if(missingnessThresh>1 | missingnessThresh<0) stop("missingnessThresh argument supposed to be between 0 and 1")
   }
 
-  if(!is.null(mgf.thresh)){
-    if(typeof(mgf.thresh)!='double') stop("mgf.thresh argument supposed to be decimal number")
-    if(mgf.thresh>1 | mgf.thresh<0) stop("mgf.thresh argument supposed to be between 0 and 1")
+  if(!is.null(mgfThresh)){
+    if(typeof(mgfThresh)!='double') stop("mgfThresh argument supposed to be decimal number")
+    if(mgfThresh>1 | mgfThresh<0) stop("mgfThresh argument supposed to be between 0 and 1")
   }
-  if(!is.null(LD.thresh)){
-    if(typeof(LD.thresh)!='double') stop("LD.thresh argument supposed to be decimal number")
-    if(LD.thresh>1 | LD.thresh<0) stop("LD.thresh argument supposed to be between 0 and 1")
+  if(!is.null(ldThresh)){
+    if(typeof(ldThresh)!='double') stop("ldThresh argument supposed to be decimal number")
+    if(ldThresh>1 | ldThresh<0) stop("ldThresh argument supposed to be between 0 and 1")
   }
   if(typeof(interactiveChecks)!='logical') stop('interactiveChecks argument supposed to be logical')
   if(typeof(verbose)!='logical') stop('verbose argument supposed to be logical')
   
   # Get file extension
-  filename_short=substr(filename,1,gregexpr("\\.", filename)[[1]][length(gregexpr("\\.", filename)[[1]])]-1)
-  extension=substr(filename,gregexpr("\\.", filename)[[1]][length(gregexpr("\\.", filename)[[1]])]+1, nchar(filename))
+  filename_short=substr(fileName,1,gregexpr("\\.", fileName)[[1]][length(gregexpr("\\.", fileName)[[1]])]-1)
+  extension=substr(fileName,gregexpr("\\.", fileName)[[1]][length(gregexpr("\\.", fileName)[[1]])]+1, nchar(fileName))
   
   if(!is.null(directory)){
     changePath(directory)
@@ -49,13 +54,13 @@ prepareGeno=function(filename,maf.thresh=NULL, missingness.thresh=NULL,LD.thresh
 
   ### If ped file with no filters => no need to code to GDS ###
   
-  if(extension=='ped' & is.null(maf.thresh) & is.null(missingness.thresh) & is.null(mgf.thresh) & is.null(LD.thresh)){
+  if(extension=='ped' & is.null(mafThresh) & is.null(missingnessThresh) & is.null(mgfThresh) & is.null(ldThresh)){
     
     if (!file.exists(paste(filename_short,'.map',sep=''))) stop(".map input file not found. Same name as .ped mandatory")
     numSNP=nrow(read.table(paste(filename_short,'.map',sep=''), colClasses=c("character", rep("NULL",3)),sep="\t"))
     #numIndiv=nrow(read.table(filename, colClasses=c(rep("character",2), rep("NULL",4+numSNP*2)),sep=" "))
     #Calculate numIndiv by counting number of new line in pef file
-    f = file(filename, open="rb")
+    f = file(fileName, open="rb")
     numIndiv = 0L
     while (length(chunk <- readBin(f, "raw", 20000)) > 0) {
       numIndiv = numIndiv + sum(chunk == as.raw(10L))
@@ -88,10 +93,10 @@ prepareGeno=function(filename,maf.thresh=NULL, missingness.thresh=NULL,LD.thresh
     if(useGDS=='y'){
       gds_file=paste0(filename_short,'.gds')
     } else{
-      gds_file=createGDSfile(filename)
+      gds_file=createGDSfile(fileName)
     }
   } else{
-    gds_file=createGDSfile(filename)
+    gds_file=createGDSfile(fileName)
   }
   
   #Open gds file
@@ -108,27 +113,27 @@ prepareGeno=function(filename,maf.thresh=NULL, missingness.thresh=NULL,LD.thresh
   if(interactiveChecks==TRUE){ #If true, shows histogram of pruning values and asks the user to check chosen thresholds
     snpSummary=SNPRelate::snpgdsSNPRateFreq(gds_obj, with.snp.id = TRUE)
     # Creates MAF histograms
-    if(is.null(maf.thresh)==FALSE){
+    if(is.null(mafThresh)==FALSE){
       hist(snpSummary$MinorFreq, breaks=100, xlab='Minor allele Frequency', main='Histogram of minor allele frequency') 
-      abline(v=maf.thresh,col="red")
-      maf.thresh2 = readline(prompt="Would you like to change your maf threshold? (press n if no, or enter a new threshold): ")
-      if(grepl("[[:digit:]\\.-]",maf.thresh2)){
-        if(as.numeric(maf.thresh2)>1 | as.numeric(maf.thresh2)<0) stop("maf.thresh argument supposed to be between 0 and 1")
-        maf.thresh=as.numeric(maf.thresh2)
+      abline(v=mafThresh,col="red")
+      mafThresh2 = readline(prompt="Would you like to change your maf threshold? (press n if no, or enter a new threshold): ")
+      if(grepl("[[:digit:]\\.-]",mafThresh2)){
+        if(as.numeric(mafThresh2)>1 | as.numeric(mafThresh2)<0) stop("mafThresh argument supposed to be between 0 and 1")
+        mafThresh=as.numeric(mafThresh2)
       }      
     }
     # Creates Missingness histograms
-    if(is.null(missingness.thresh)==FALSE){
+    if(is.null(missingnessThresh)==FALSE){
       hist(snpSummary$MissingRate, breaks=100, xlab='Missingness',main='Histogram of missingness') 
-      abline(v=missingness.thresh,col="red")
-      missingness.thresh2 = readline(prompt="Would you like to change your missingness threshold? (press n if no, or enter a new threshold): ")
-      if(grepl("[[:digit:]\\.-]",missingness.thresh2)){
-        if(as.numeric(missingness.thresh2)>1 | as.numeric(missingness.thresh2)<0) stop("missingness.thresh argument supposed to be between 0 and 1")
-        missingness.thresh=as.numeric(missingness.thresh2)
+      abline(v=missingnessThresh,col="red")
+      missingnessThresh2 = readline(prompt="Would you like to change your missingness threshold? (press n if no, or enter a new threshold): ")
+      if(grepl("[[:digit:]\\.-]",missingnessThresh2)){
+        if(as.numeric(missingnessThresh2)>1 | as.numeric(missingnessThresh2)<0) stop("missingnessThresh argument supposed to be between 0 and 1")
+        missingnessThresh=as.numeric(missingnessThresh2)
       }
     }
     # Number of pruned SNP by LD
-    if(is.null(LD.thresh)==FALSE){
+    if(is.null(ldThresh)==FALSE){
       if(length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.id")))>1000000){
         compute.LD = readline(prompt="Would you like to compute the graph of discarded SNP vs LD (takes a long time given the number of SNPs) ? (press y for yes, any other key for no): ")
       } else {
@@ -144,45 +149,45 @@ prepareGeno=function(filename,maf.thresh=NULL, missingness.thresh=NULL,LD.thresh
           i=i+1
         }
         barplot(snp_pruned, names.arg=seq(0,1,0.05), space=0, col="white",xlab='LD',ylab='Number of SNPs pruned',main='Histogram of number of pruned SNP by LD')
-        abline(v=LD.thresh*length(seq(0,1,0.05))+1-LD.thresh, col="red")
-        LD.thresh2 = readline(prompt="Would you like to change your LD threshold? (press n if no, or enter a new threshold): ")
-        if(grepl("[[:digit:]\\.-]",LD.thresh2)){
-          if(as.numeric(LD.thresh2)>1 | as.numeric(LD.thresh2)<0) stop("LD.thresh argument supposed to be between 0 and 1")
-          LD.thresh=as.numeric(LD.thresh2)
+        abline(v=ldThresh*length(seq(0,1,0.05))+1-ldThresh, col="red")
+        ldThresh2 = readline(prompt="Would you like to change your LD threshold? (press n if no, or enter a new threshold): ")
+        if(grepl("[[:digit:]\\.-]",ldThresh2)){
+          if(as.numeric(ldThresh2)>1 | as.numeric(ldThresh2)<0) stop("ldThresh argument supposed to be between 0 and 1")
+          ldThresh=as.numeric(ldThresh2)
         }
       }
     }
     # Major Genotype Frequency
-    if(is.null(mgf.thresh)==FALSE){
+    if(is.null(mgfThresh)==FALSE){
       geno=SNPRelate::snpgdsGetGeno(gds_obj)
       mgf_freq=MGF(geno,-1)
       hist(mgf_freq/100, breaks=100, main='Histogram of MGF')
-      abline(v=mgf.thresh, col='red')
-      mgf.thresh2 = readline(prompt="Would you like to change your MGF threshold? (press n if no, or enter a new threshold): ")
-      if(grepl("[[:digit:]\\.-]",mgf.thresh2)){
-        if(as.numeric(mgf.thresh2)>1 | as.numeric(mgf.thresh2)<0) stop("mgf.thresh argument supposed to be between 0 and 1")
-        mgf.thresh=as.numeric(mgf.thresh2)
+      abline(v=mgfThresh, col='red')
+      mgfThresh2 = readline(prompt="Would you like to change your MGF threshold? (press n if no, or enter a new threshold): ")
+      if(grepl("[[:digit:]\\.-]",mgfThresh2)){
+        if(as.numeric(mgfThresh2)>1 | as.numeric(mgfThresh2)<0) stop("mgfThresh argument supposed to be between 0 and 1")
+        mgfThresh=as.numeric(mgfThresh2)
       }
     }
   }
   
   #LD, MAF and Missing rate pruning
-  if(is.null(maf.thresh)){
-    maf.thresh=NaN
+  if(is.null(mafThresh)){
+    mafThresh=NaN
   } 
-  if(is.null(missingness.thresh)){
-    missingness.thresh=NaN
+  if(is.null(missingnessThresh)){
+    missingnessThresh=NaN
   } 
-  if(is.null(LD.thresh)){ #Filtrer à la main or use snpgdsSelectSNP
+  if(is.null(ldThresh)){ #Filtrer à la main or use snpgdsSelectSNP
     #if(!exists('snpSummary')){
     #  snpSummary=SNPRelate::snpgdsSNPRateFreq(gds_obj, with.snp.id=TRUE)
     #}
-    #maf_filtered=snpSummary$snp.id[snpSummary$MinorFreq>maf.thresh] #List of snps with maf > than threshold (pass the filter)
-    #miss_filtered=snpSummary$snp.id[snpSummary$MissingRate<missingness.thresh] #List of snps with missingness < than threshold (pass the filter)
+    #maf_filtered=snpSummary$snp.id[snpSummary$MinorFreq>mafThresh] #List of snps with maf > than threshold (pass the filter)
+    #miss_filtered=snpSummary$snp.id[snpSummary$MissingRate<missingnessThresh] #List of snps with missingness < than threshold (pass the filter)
     #snp_filtered=maf_filtered[maf_filtered %in% miss_filtered] #List of snps that pass both tests
-    snp_filtered=SNPRelate::snpgdsSelectSNP(gds_obj, autosome.only=FALSE, maf=maf.thresh, missing.rate=missingness.thresh, verbose=FALSE)
+    snp_filtered=SNPRelate::snpgdsSelectSNP(gds_obj, autosome.only=FALSE, maf=mafThresh, missing.rate=missingnessThresh, verbose=FALSE)
   } else {
-    gds_pruned=SNPRelate::snpgdsLDpruning(gds_obj, maf=maf.thresh, missing.rate=missingness.thresh, ld.threshold=LD.thresh, verbose=FALSE)
+    gds_pruned=SNPRelate::snpgdsLDpruning(gds_obj, maf=mafThresh, missing.rate=missingnessThresh, ld.threshold=ldThresh, verbose=FALSE)
     snp_filtered=unlist(gds_pruned)
   }
   #Filter out insertion
@@ -192,11 +197,11 @@ prepareGeno=function(filename,maf.thresh=NULL, missingness.thresh=NULL,LD.thresh
   
   
   #Major genotype frequency pruning
-  if(!is.null(mgf.thresh)){
+  if(!is.null(mgfThresh)){
     if(interactiveChecks==FALSE){ #If true, geno already calculated
       geno=SNPRelate::snpgdsGetGeno(gds_obj)
     }
-    snpMGF=MGF(geno,mgf.thresh)
+    snpMGF=MGF(geno,mgfThresh)
     snpMGF=snpMGF[snpMGF>0] #End full of zero
     #snp present in general and MGF filters
     list_snp=snpMGF[snpMGF %in% snp_filtered] 
@@ -238,23 +243,28 @@ prepareGeno=function(filename,maf.thresh=NULL, missingness.thresh=NULL,LD.thresh
 #' @title Create env file from raster file(s) and/or glabal database present in the raster r package
 #' @description Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or glabal database present in the raster r package
 #' @author Solange Gaillard
-#' @param locationfilename !! char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file
-#' @param x char Name of the x (or longitude if not projected coordinate system) column in the \code{locationfilename}. Required if \code{locationfilename} extension is .csv
-#' @param x char Name of the y (or latitude if not projected coordinate system) column in the \code{locationfilename}. Required if \code{locationfilename} extension is .csv
-#' @param locationproj integer Coordinate system EPSG code of the \code{locationfilename}. If \code{locationfilename} is already georeferenced, this argument will be skipped. Required if \code{locationfilename} extension is csv.
-#' @param rastername char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory
-#' @param rasterproj integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlyer is already georeferenced, this argument will be skipped. If \code{rastername} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)
-#' @param directory logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rastername} will be loaded
+#' @param locationFileName !! char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file
+#' @param x char Name of the x (or longitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
+#' @param x char Name of the y (or latitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
+#' @param locationProj integer Coordinate system EPSG code of the \code{locationFileName}. If \code{locationFileName} is already georeferenced, this argument will be skipped. Required if \code{locationFileName} extension is csv.
+#' @param rasterName char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory
+#' @param rasterProj integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlyer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)
+#' @param directory logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rasterName} will be loaded
 #' @param worldclim logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
 #' @param srtm logical If TRUE the SRTM (altitude) variables will be downloaded at a resolution ... Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
 #' @param interactiveChecks logical If TRUE, shows loaded rasters and point locations
 #' @param verbose logical If TRUE, indication on process will be shown
 #' @return None 
 #' @examples
-#' createEnv(rastername=c('prec.tif','tmin.sdat'),locationfilename='MyFile.shp',rasterproj=c(4326,21781), worldclim=TRUE,interactiveChecks=TRUE)
-#' createEnv(locationfilename='MyFile.csv',x='Longitude',y='Latitude',locationproj=4326, worldclim=TRUE,interactiveChecks=FALSE)
+#' #Own raster + worldclim download
+#' createEnv(rasterName=c('prec.tif','tmin.sdat'),locationFileName='MyFile.shp',
+#'       rasterProj=c(4326,21781), worldclim=TRUE,interactiveChecks=TRUE)
+#'
+#' #Worldclim download only
+#' createEnv(locationFileName='MyFile.csv',x='Longitude',y='Latitude',locationProj=4326, 
+#'       worldclim=TRUE,interactiveChecks=FALSE)
 #' @export
-createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername, rasterproj,directory=FALSE, worldclim=TRUE, srtm=FALSE, interactiveChecks, verbose=TRUE){
+createEnv=function(locationFileName, x,y,locationProj, separator=',', rasterName, rasterProj,directory=FALSE, worldclim=TRUE, srtm=FALSE, interactiveChecks, verbose=TRUE){
   
   ### Load required library
   
@@ -278,26 +288,26 @@ createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername
 
   
   
-  #locationfilename='ADAPTmap2-env.csv'
+  #locationFileName='ADAPTmap2-env.csv'
   #x='Longitude'
   #y='Latitude'
-  #rastername='prec_1.bil'
-  #locationproj=4326
+  #rasterName='prec_1.bil'
+  #locationProj=4326
   
   ### Check inputs ###
   
-  if(!is.null(rastername)){
-    if(typeof(rastername)!='character') stop("rastername is supposed to be character or vector of char")
+  if(!is.null(rasterName)){
+    if(typeof(rasterName)!='character') stop("rasterName is supposed to be character or vector of char")
   }
-  if(!is.null(rasterproj)){
-    if(typeof(rasterproj)!='double' & sum(rasterproj%%1)!=0) stop("rasterproj is supposed to be integer or vector of integers")
-    if(length(rasterproj)>1 & length(rastername)!=length(rasterproj)) stop('The size of rasterproj is supposed to be 1 or equals size of rastername')
+  if(!is.null(rasterProj)){
+    if(typeof(rasterProj)!='double' & sum(rasterProj%%1)!=0) stop("rasterProj is supposed to be integer or vector of integers")
+    if(length(rasterProj)>1 & length(rasterName)!=length(rasterProj)) stop('The size of rasterProj is supposed to be 1 or equals size of rasterName')
   }
   if(!is.null(directory)){
     if(typeof(directory)!='logical') stop("directory is supposed to be logical")
   }
-  if(!is.null(locationfilename)){
-    if(typeof(locationfilename)!='character') stop("locationfilename is supposed to be a character")
+  if(!is.null(locationFileName)){
+    if(typeof(locationFileName)!='character') stop("locationFileName is supposed to be a character")
   }
   if(!is.null(x)){
     if(typeof(x)!='character') stop("x is supposed to be a character")
@@ -305,9 +315,9 @@ createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername
   if(!is.null(y)){
     if(typeof(y)!='character') stop("y is supposed to be a character")
   }
-  if(!is.null(locationproj)){
-    if(typeof(locationproj)!='double' & locationproj%%1!=0) stop("locationproj is supposed to be an integer")
-    if(length(locationproj)>1) stop('rasterproj is not supposed to be a vector')
+  if(!is.null(locationProj)){
+    if(typeof(locationProj)!='double' & locationProj%%1!=0) stop("locationProj is supposed to be an integer")
+    if(length(locationProj)>1) stop('rasterProj is not supposed to be a vector')
   }
   
   if(!is.null(worldclim)){
@@ -319,20 +329,20 @@ createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername
   if(!is.null(interactiveChecks)){
     if(typeof(interactiveChecks)!='logical') stop("interactiveChecks is supposed to be logical")
   }
-  if(is.null(rastername) & worldclim==FALSE & srtm==FALSE) stop('Either provide a rastername or set worldclim or srtm to true')
-  if(directory==TRUE & is.null(rastername)) stop('The name of the directory must be indicated in the rastername argument if directory=TRUE')
-  if(directory==FALSE & !is.null(rastername)){
-    for(i in 1:length(rastername)){
-      if(!file.exists(rastername[i])) stop(paste0(rastername[i],' not found'))
+  if(is.null(rasterName) & worldclim==FALSE & srtm==FALSE) stop('Either provide a rasterName or set worldclim or srtm to true')
+  if(directory==TRUE & is.null(rasterName)) stop('The name of the directory must be indicated in the rasterName argument if directory=TRUE')
+  if(directory==FALSE & !is.null(rasterName)){
+    for(i in 1:length(rasterName)){
+      if(!file.exists(rasterName[i])) stop(paste0(rasterName[i],' not found'))
     }
   }
-  if(!file.exists(locationfilename))stop("locationfilename not found")
+  if(!file.exists(locationFileName))stop("locationFileName not found")
 
-  locationextension=substr(locationfilename,gregexpr("\\.", locationfilename)[[1]][length(gregexpr("\\.", locationfilename)[[1]])]+1, nchar(locationfilename))
+  locationextension=substr(locationFileName,gregexpr("\\.", locationFileName)[[1]][length(gregexpr("\\.", locationFileName)[[1]])]+1, nchar(locationFileName))
   if(locationextension=='csv'){
-    if(is.null(x))stop("x must be provided if locationfilename is a .CSV")
-    if(is.null(y))stop("y must be provided if locationfilename is a .CSV")
-    if(is.null(locationproj))stop("locationproj must be provided if locationfilename is a .CSV")
+    if(is.null(x))stop("x must be provided if locationFileName is a .CSV")
+    if(is.null(y))stop("y must be provided if locationFileName is a .CSV")
+    if(is.null(locationProj))stop("locationProj must be provided if locationFileName is a .CSV")
   }
   
   #Save active directory (will be changed)
@@ -346,7 +356,7 @@ createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername
   }
   
   
-  locations=openEnvData(locationfilename, separator = separator)
+  locations=openEnvData(locationFileName, separator = separator)
   #Create data to be exported (original columns of locationfile for now)
   data=locations
   #Transform locations into a spatial object.! If shapefile
@@ -354,23 +364,23 @@ createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername
     sp::coordinates(locations) = c(x,y)
   }
   
-  #If location file is not georeferenced and locationproj is given, assign projection
-  if(is.na(raster::projection(locations)) & !is.null(locationproj)){
-    raster::projection(locations) = sp::CRS(paste0('+init=epsg:',locationproj))
+  #If location file is not georeferenced and locationProj is given, assign projection
+  if(is.na(raster::projection(locations)) & !is.null(locationProj)){
+    raster::projection(locations) = sp::CRS(paste0('+init=epsg:',locationProj))
   }
   
   ### Rasters provided by the user
   
-  if(!is.null(rastername)){
+  if(!is.null(rasterName)){
     
     if(verbose==TRUE){
-      print('loading rasters provided in rastername')
+      print('loading rasters provided in rasterName')
     }
     
     if(directory==TRUE){
       
       #Find all raster files in the directory
-      setwd(rastername)
+      setwd(rasterName)
       files=list.files(pattern = "\\.tif$")
       files=c(files, list.files(pattern = "\\.gtiff$")) 
       files=c(files, list.files(pattern = "\\.img$")) 
@@ -378,28 +388,28 @@ createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername
       files=c(files, list.files(pattern = "\\.ascii$")) 
       files=c(files, list.files(pattern = "\\.grd$")) 
       files=c(files, list.files(pattern = "\\.bil$")) 
-      rastername=files
+      rasterName=files
     
     }
     
-    for(i in 1:length(rastername)){
+    for(i in 1:length(rasterName)){
       
-      rastername2=rastername[i]
-      rastername2_short=substr(rastername2,1,gregexpr("\\.", rastername2)[[1]][length(gregexpr("\\.", rastername2)[[1]])]-1)
-      if(!file.exists(rastername2))stop(paste(rastername2,"not found"))
+      rasterName2=rasterName[i]
+      rasterName2_short=substr(rasterName2,1,gregexpr("\\.", rasterName2)[[1]][length(gregexpr("\\.", rasterName2)[[1]])]-1)
+      if(!file.exists(rasterName2))stop(paste(rasterName2,"not found"))
       #Load raster using raster library
-      raster=raster::raster(rastername2)
+      raster=raster::raster(rasterName2)
       
       #Set projection if not georeferenced
-      if(is.na(raster::projection(raster)) & is.null(rasterproj)) stop(paste0("Rasters must be georeferenced or rasterproj must be provided! Check file ",rastername2))
-      if(is.na(raster::projection(raster)) & !is.null(rasterproj)){
-        if(length(rasterproj)>1){ #one proj per raster
-          rasterproj2=rasterproj[i]
+      if(is.na(raster::projection(raster)) & is.null(rasterProj)) stop(paste0("Rasters must be georeferenced or rasterProj must be provided! Check file ",rasterName2))
+      if(is.na(raster::projection(raster)) & !is.null(rasterProj)){
+        if(length(rasterProj)>1){ #one proj per raster
+          rasterProj2=rasterProj[i]
         }
         else{ # one proj for all rasters
-          rasterproj2=rasterproj
+          rasterProj2=rasterProj
         }
-        raster::projection(raster) = sp::CRS(paste0('+init=epsg:',rasterproj2))
+        raster::projection(raster) = sp::CRS(paste0('+init=epsg:',rasterProj2))
       }
       
       #Plot raster
@@ -419,7 +429,7 @@ createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername
       colnames_data=colnames(data)
       data = data.frame(data, extractdataraster)
       #Specify name of columns
-      colnames(data)=c(colnames_data, rastername2_short)
+      colnames(data)=c(colnames_data, rasterName2_short)
     }
   }
   
@@ -576,7 +586,7 @@ createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername
   
   #Export data
   setwd(active_dir)
-  locationfilename_short=substr(locationfilename,1,gregexpr("\\.", locationfilename)[[1]][length(gregexpr("\\.", locationfilename)[[1]])]-1)
+  locationfilename_short=substr(locationFileName,1,gregexpr("\\.", locationFileName)[[1]][length(gregexpr("\\.", locationFileName)[[1]])]-1)
   
   write.table(data, file=paste0(locationfilename_short,'-env.csv'), append=FALSE,quote=TRUE,sep=" ", dec = ".",row.names=FALSE,col.names=TRUE)
   
@@ -590,74 +600,86 @@ createEnv=function(locationfilename, x,y,locationproj, separator=',', rastername
 #' @title Prepare environmental input
 #' @description Writes a new environmental file that sambada can work with after having removed too correlated variables. Also calculates population structure from a PCA in SNPRelate and add it at the end of the environmental file
 #' @author Solange Gaillard, Oliver Selmoni
-#' @param envfile char Name of the input environmental file (must be in active directory). Can be .csv or .shp
-#' @param maxcorr double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted
-#' @param idname char Name of the id in the environmental file matching the one of genofile
-#' @param separator char If envfile is .csv, the separator character. If file created with create_env, separator is ' '
-#' @param genofile char (optional)Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created
-#' @param numpc double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC. If 0, PCA and population structure will not be computed: in that case, the \code{genofile} will only be used to make the sample order in the envFile match the one of the \code{enfile} (necessary for sambada's computation). Set it to null if \code{genofile} is null 
-#' @param maf.thresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)
-#' @param missingness.thresh double A number between 0 and 1 specifying the missing rate filtering when computing PCS(if null no filtering on missing rate will be computed)
-#' @param LD.thresh double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering before computing the PCA (if null no filtereing on LD will be computed)
-#' @param numpop integer If not null, clustering based on \code{numpc} first PC will be computed to devide into \code{numpop} populations. If -1 automatic detection of number of cluster (elbow method if \code{ClustMethod}='kmeans', maximise branch length if \code{ClustMethod}='hclust'). If null, no clustering will be computed: if \code{genofile} is set, principal component scores will be included as population information in the final file.
-#' @param ClustMethod char One of 'kmeans' or 'hclust' for K-means and hierarchical clustering respectively. Default 'kmeans'
-#' @param interactiveChecks logical If TRUE, plots will show up showing number of populations chosen, and correlation between variables and the user can interactively change the chosen threshold for maxcorr and numpop (optional, default value=FALSE)
+#' @param envFile char Name of the input environmental file (must be in active directory). Can be .csv or .shp
+#' @param maxCorr double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted
+#' @param idName char Name of the id in the environmental file matching the one of \code{genoFile}
+#' @param separator char If envFile is .csv, the separator character. If file created with create_env, separator is ' '
+#' @param genoFile char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created
+#' @param numPc double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genoFile} is null 
+#' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)
+#' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering when computing PCS(if null no filtering on missing rate will be computed)
+#' @param ldThresh double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering before computing the PCA (if null no filtereing on LD will be computed)
+#' @param numPop integer If not null, clustering based on \code{numPc} first PC will be computed to devide into \code{numPop} populations. If -1 automatic detection of number of cluster (elbow method if \code{clustMethod}='kmeans', maximise branch length if \code{clustMethod}='hclust'). If null, no clustering will be computed: if \code{genoFile} is set, principal component scores will be included as population information in the final file.
+#' @param clustMethod char One of 'kmeans' or 'hclust' for K-means and hierarchical clustering respectively. Default 'kmeans'
+#' @param interactiveChecks logical If TRUE, plots will show up showing number of populations chosen, and correlation between variables and the user can interactively change the chosen threshold for \code{maxCorr} and \code{numPop} (optional, default value=FALSE)
 #' @param includeCol character vector Columns in the envrionmental file to be considered as variables. If none specified, all numeric variables will be considered as env var except for the id
 #' @param excludeCol character vector Columns in the envrionmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as env var except for the id
-#' @param popstrCol character vector Columns in the envrionmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files
+#' @param popStrCol character vector Columns in the envrionmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files
 #' @param x character Name of the column corresponding to the x coordinate (or longitude if sperical coordinate). If not null, x column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.
 #' @param y character Name of the column corresponding to the y coordinate (or latitude if sperical coordinate). If not null, y column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.
 #' @param locationProj integer EPSG code of the projection of x-y coordinate
 #' @param verbose boolean If true show information about progress of the process
 #' @return None
 #' @examples
-#' prepareEnv('myFile-env.csv',0.8,'Nom',' ',x='Longitude',y='Latitude', locationproj=4326, interactiveChecks = TRUE)
+#' #Calculating PCA-based population structure
+#' prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
+#'      mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
+#'      x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
+#'
+#' #Calculating structure membership coefficient based on kmeans clustering
+#' prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
+#'      mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
+#'      x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
+#'
+#' #Without calculating population structure.
+#' prepareEnv('myFile-env.csv',0.8,'Nom',' ', x='Longitude',y='Latitude', 
+#'      locationProj=4326, interactiveChecks = TRUE)
 #' @export
-prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc=NULL, maf.thresh=NULL, missingness.thresh=NULL, LD.thresh=NULL, numpop=-1, ClustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popstrCol=NULL, x,y,locationproj,interactiveChecks=FALSE, verbose=TRUE){
+prepareEnv=function(envFile, maxCorr, idName, separator=',',genoFile=NULL, numPc=NULL, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
   #setwd("/home/lasigadmin/R/test2/src")
-  #envfile='ADAPTmap2-env.csv'
+  #envFile='ADAPTmap2-env.csv'
   #separator=';'
   
   ### Check inputs ###
   
-  if(is.null(envfile)) stop("envfile argument is required")
-  if(typeof(envfile)!='character') stop("envfile argument supposed to be a character string")
-  if (!file.exists(envfile)) stop("Input envfile not found.")
+  if(is.null(envFile)) stop("envFile argument is required")
+  if(typeof(envFile)!='character') stop("envFile argument supposed to be a character string")
+  if (!file.exists(envFile)) stop("Input envFile not found.")
   
-  if(!is.null(maxcorr)){
-    if(typeof(maxcorr)!='double') stop("maxcorr argument supposed to be decimal number")
-    if(maxcorr>1 | maxcorr<0) stop("maxcorr argument supposed to be between 0 and 1")
+  if(!is.null(maxCorr)){
+    if(typeof(maxCorr)!='double') stop("maxCorr argument supposed to be decimal number")
+    if(maxCorr>1 | maxCorr<0) stop("maxCorr argument supposed to be between 0 and 1")
   }
   
-  if(!is.null(idname)){
-    if(typeof(idname)!='character') stop("idname argument supposed to be a character string")
+  if(!is.null(idName)){
+    if(typeof(idName)!='character') stop("idName argument supposed to be a character string")
   }
   
-  if(!is.null(genofile)){
-    if(typeof(genofile)!='character') stop("genofile argument supposed to be a character string")
-    if(!file.exists(genofile)) stop("Input genofile not found.")
-    if(is.null(numpc)) stop("numpc cannot be null if genofile is not null")
+  if(!is.null(genoFile)){
+    if(typeof(genoFile)!='character') stop("genoFile argument supposed to be a character string")
+    if(!file.exists(genoFile)) stop("Input genoFile not found.")
+    if(is.null(numPc)) stop("numPc cannot be null if genoFile is not null")
   }
   
-  if(!is.null(numpc)){ 
-    if(typeof(numpc)!='double')stop("Numpc must be a number")
-    if(numpc>1 & numpc%%1!=0) stop("If numpc>1, numpc must be an integer")
+  if(!is.null(numPc)){ 
+    if(typeof(numPc)!='double')stop("numPc must be a number")
+    if(numPc>1 & numPc%%1!=0) stop("If numPc>1, numPc must be an integer")
   }
   
-  if(!is.null(numpop)){ 
-    if(numpop<0 & numpop!=-1) stop("Numpop must be positive or equal to -1")
-    if(typeof(numpop)!='double') stop("If numpop>1, numpop must be an integer")
-    if(numpop>1 & numpop%%1!=0) stop("numpop argument supposed to be an integer")
+  if(!is.null(numPop)){ 
+    if(numPop<0 & numPop!=-1) stop("numPop must be positive or equal to -1")
+    if(typeof(numPop)!='double') stop("If numPop>1, numPop must be an integer")
+    if(numPop>1 & numPop%%1!=0) stop("numPop argument supposed to be an integer")
   }
   
-  if(!is.null(maf.thresh)){
-    if(typeof(maf.thresh)!='double') stop("maf.thresh argument supposed to be decimal number")
-    if((maf.thresh>1 | maf.thresh<0)) stop("maf.thresh argument supposed to be between 0 and 1")
+  if(!is.null(mafThresh)){
+    if(typeof(mafThresh)!='double') stop("mafThresh argument supposed to be decimal number")
+    if((mafThresh>1 | mafThresh<0)) stop("mafThresh argument supposed to be between 0 and 1")
   }
   
-  if(!is.null(missingness.thresh)){
-    if(typeof(missingness.thresh)!='double') stop("missingness.thresh argument supposed to be decimal number")
-    if((missingness.thresh>1 | missingness.thresh<0)) stop("missingness.thresh argument supposed to be between 0 and 1")
+  if(!is.null(missingnessThresh)){
+    if(typeof(missingnessThresh)!='double') stop("missingnessThresh argument supposed to be decimal number")
+    if((missingnessThresh>1 | missingnessThresh<0)) stop("missingnessThresh argument supposed to be between 0 and 1")
   }
   
   if(!is.null(includeCol)){
@@ -671,9 +693,9 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
     if(typeof(x)!='character') stop('x supposed to be a string')
     if(is.null(y)) stop('y must be provided if x is provided')
     if(typeof(y)!='character') stop('y supposed to be a string')
-    if(is.null(locationproj)) stop('locationproj must be specified when x and y are provided')
-    if(typeof(locationproj)!='double')stop('locationproj supposed to be an integer (EPSG code)')
-    if(locationproj%%1!=0) stop('locationproj supposed to be an integer (EPSG code)')
+    if(is.null(locationProj)) stop('locationProj must be specified when x and y are provided')
+    if(typeof(locationProj)!='double')stop('locationProj supposed to be an integer (EPSG code)')
+    if(locationProj%%1!=0) stop('locationProj supposed to be an integer (EPSG code)')
   }
   
   if(!is.null(interactiveChecks)){
@@ -685,7 +707,7 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
   }
   
   ### Load required libraries ###
-  if(!is.null(genofile)){
+  if(!is.null(genoFile)){
     if (!requireNamespace("SNPRelate", quietly = TRUE)) {
       stop("Package \"SNPRelate\" needed for this function to work. Please install it.", call. = FALSE)
     }
@@ -712,24 +734,24 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
   ### Open Environmental file ###
 
   if(verbose==TRUE){
-    print('Opening envfile')
+    print('Opening envFile')
   }
   
-  env=openEnvData(envfile, separator)
+  env=openEnvData(envFile, separator)
   
-  #Check that includeCol, excludeCol, popstrCol are in the header of the envfile
+  #Check that includeCol, excludeCol, popStrCol are in the header of the envFile
   if(!is.null(includeCol)){
-    if(sum(includeCol %in% colnames(env))!=length(includeCol)) stop("Not all includeCol present in envfile")
+    if(sum(includeCol %in% colnames(env))!=length(includeCol)) stop("Not all includeCol present in envFile")
   }
   if(!is.null(excludeCol)){
-    if(sum(excludeCol %in% colnames(env))!=length(excludeCol)) stop("Not all excludeCol present in envfile")
+    if(sum(excludeCol %in% colnames(env))!=length(excludeCol)) stop("Not all excludeCol present in envFile")
   }
   if(!is.null(x)){
-    if(sum(x %in% colnames(env))!=1) stop("x column not in envfile")
-    if(sum(x %in% colnames(env))!=1) stop("y column not in envfile")
+    if(sum(x %in% colnames(env))!=1) stop("x column not in envFile")
+    if(sum(x %in% colnames(env))!=1) stop("y column not in envFile")
   }
-  if(!is.null(popstrCol)){
-    if(sum(popstrCol %in% colnames(env))!=length(popstrCol)) stop("Not all popstrCol present in envfile")
+  if(!is.null(popStrCol)){
+    if(sum(popStrCol %in% colnames(env))!=length(popStrCol)) stop("Not all popStrCol present in envFile")
   }
   
   ### Check correlation among variables ###
@@ -750,8 +772,8 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
   }
   
   for(i in 1:ncol(env2)){
-    #If column is numeric and not ID nor in excludeCol, nor popstrCol, nor x/y
-    if(is.numeric(env2[,i]) & colnames(env2)[i]!=idname & !(colnames(env2)[i] %in% excludeCol) & !(colnames(env2)[i] %in% popstrCol) & colnames(env2)[i]!=x & colnames(env2)[i]!=y){
+    #If column is numeric and not ID nor in excludeCol, nor popStrCol, nor x/y
+    if(is.numeric(env2[,i]) & colnames(env2)[i]!=idName & !(colnames(env2)[i] %in% excludeCol) & !(colnames(env2)[i] %in% popStrCol) & colnames(env2)[i]!=x & colnames(env2)[i]!=y){
       env_colnames=c(env_colnames, colnames(env2)[i])
     }
   }
@@ -768,28 +790,28 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
     }
     plot(corr_thresh,kept_env,pch='.',xlab='chosen correlation threshold',ylab='number of variables kept',main='Num of var kept according to correlation threshold')
     lines(corr_thresh,kept_env)
-    abline(v=maxcorr,col="red")
-    maxcorr2 = readline(prompt="Would you like to choose a different max authorized correlation threshold? (press any letter if no, or enter a new number (between 0-1) indicating the maximum correlation): ")
-    if(grepl("[[:digit:]\\.-]",maxcorr2)){
-      maxcorr=as.integer(maxcorr2)
+    abline(v=maxCorr,col="red")
+    maxCorr2 = readline(prompt="Would you like to choose a different max authorized correlation threshold? (press any letter if no, or enter a new number (between 0-1) indicating the maximum correlation): ")
+    if(grepl("[[:digit:]\\.-]",maxCorr2)){
+      maxCorr=as.integer(maxCorr2)
     }  
   }
   
-  #Keep only variables whose correlation among them is below the maxcorr threshold (ad-hoc function redEnv)
-  env_red=redENV(env_numeric, maxcorr) ###
+  #Keep only variables whose correlation among them is below the maxCorr threshold (ad-hoc function redEnv)
+  env_red=redENV(env_numeric, maxCorr) ###
   env_name=names(env_red)
   env_kept=env[,env_name]
   
   ### Calculate propulation structure
   
-  if(!is.null(genofile) & numpc>0){ #If genofile is not null, calculate population structure
+  if(!is.null(genoFile) & numPc>0){ #If genoFile is not null, calculate population structure
 
     if(verbose==TRUE){
       print('computing population structure')
     }
    
     #Create GDS file
-    gds_file=createGDSfile(genofile)
+    gds_file=createGDSfile(genoFile)
     
     #Open GDS file (and close it on exit)
     gds_obj=SNPRelate::snpgdsOpen(gds_file)
@@ -803,99 +825,99 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
     #} else {
     #  numvect=numIndiv
     #}
-    if(!is.null(LD.thresh)){
-      ld_filtered=SNPRelate::snpgdsLDpruning(gds_obj, ld.threshold=LD.thresh)
+    if(!is.null(ldThresh)){
+      ld_filtered=SNPRelate::snpgdsLDpruning(gds_obj, ld.threshold=ldThresh)
       numvect=min(length(unlist(ld_filtered)),100)
-      pca=SNPRelate::snpgdsPCA(gds_obj, snp.id=unlist(ld_filtered),maf=maf.thresh, missing.rate=missingness.thresh, eigen.cnt = numvect)
+      pca=SNPRelate::snpgdsPCA(gds_obj, snp.id=unlist(ld_filtered),maf=mafThresh, missing.rate=missingnessThresh, eigen.cnt = numvect)
     } else {
       numvect=min(length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.id"))),100)
-      pca=SNPRelate::snpgdsPCA(gds_obj,maf=maf.thresh, missing.rate=missingness.thresh, eigen.cnt = numvect)
+      pca=SNPRelate::snpgdsPCA(gds_obj,maf=mafThresh, missing.rate=missingnessThresh, eigen.cnt = numvect)
     }
     
-    # Choose best number of PC if numpc<1
+    # Choose best number of PC if numPc<1
     varprop=pca$varprop[1:numvect]
-    if(numpc<1){
+    if(numPc<1){
       DIFFPC = diff(c(0,varprop))
       #NbPCs: ad-hoc function seaking for the leap in the variance proportion
-      numpc=NbPCs(DIFFPC,numpc)
-      if(numpc==length(varprop))stop('Leap in proportion of variance of PCA not found within the first 100 principal component')
+      numPc=NbPCs(DIFFPC,numPc)
+      if(numPc==length(varprop))stop('Leap in proportion of variance of PCA not found within the first 100 principal component')
     } 
     
     # Plot VP of first 100 axes and show chosen number of pc
     if(interactiveChecks==TRUE){
       barplot(varprop, main='Variance proportion of first 100 axes', xlab='axis number', ylab='proportion variance explained')
-      abline(v=numpc,col="red")
-      numpc2 = readline(prompt="Would you like to choose a different number of pc? (press any letter if no, or enter a new number): ")
-      if(grepl("[[:digit:]\\.-]",numpc2)){
-        numpc=as.integer(numpc2)
+      abline(v=numPc,col="red")
+      numPc2 = readline(prompt="Would you like to choose a different number of pc? (press any letter if no, or enter a new number): ")
+      if(grepl("[[:digit:]\\.-]",numPc2)){
+        numPc=as.integer(numPc2)
       }
     }
     
     popvect_tot=cbind(pca$sample.id, pca$eigenvect)
-    #ID match between envfile and genofile
-    popvect2=popvect_tot[match(env[,idname],popvect_tot[,1]),]
+    #ID match between envFile and genoFile
+    popvect2=popvect_tot[match(env[,idName],popvect_tot[,1]),]
     pca$eigenvect=popvect2[complete.cases(popvect2),2:ncol(popvect2)]
     class(pca$eigenvect)='numeric'
     #pca$sample.id=popvect2[complete.cases(popvect2),1]
     
     #Retrieve right number of pc
-    popvect2=popvect2[,1:(numpc+1)] #First column=ID, keep numpc axis 
-    colnames(popvect2)=c('sampleid',paste0('pop',1:(numpc)))
+    popvect2=popvect2[,1:(numPc+1)] #First column=ID, keep numPc axis 
+    colnames(popvect2)=c('sampleid',paste0('pop',1:(numPc)))
     
     if(nrow(popvect_tot)!=nrow(pca$eigenvect)){
-      stop(paste0('All IDs in envfile and genofile do not match. Found ',nrow(popvect2),' out of ',nrow(popvect),' indiv'))
+      stop(paste0('All IDs in envFile and genoFile do not match. Found ',nrow(popvect2),' out of ',nrow(popvect),' indiv'))
     }
     
 
     
-    if(!is.null(numpop)){
+    if(!is.null(numPop)){
       changePopNum=TRUE
       while(changePopNum==TRUE){ #The user can interactively change the number of population. Loop begins again 
         
         ### Clustering ###
         
-        if(numpop==-1){ #automatic detection of num pop
+        if(numPop==-1){ #automatic detection of num pop
           
           #hierarchical clustering 
-          if(ClustMethod=='hclust'){
+          if(clustMethod=='hclust'){
             
-            hiclust=hclust(dist(as.matrix(pca$eigenvect[,1:numpc])))
+            hiclust=hclust(dist(as.matrix(pca$eigenvect[,1:numPc])))
             #automatic detection of optimal number of cluster (det num clust for each height and keep the most frequent)
             v=seq(0,max(hiclust$height),max(hiclust$height)/100)
-            numpop_all = sapply(v, function(height){max(cutree(hiclust, h=height))})
-            numpop=as.integer(names(sort(table(numpop_all),decreasing=TRUE)[1])) #most frequent
+            numPop_all = sapply(v, function(height){max(cutree(hiclust, h=height))})
+            numPop=as.integer(names(sort(table(numPop_all),decreasing=TRUE)[1])) #most frequent
             
             #Prompt the user for a different number of clusters
             plot(hiclust)
-            abline(h=v[numpop_all==numpop][1],col="red")
-            numpop2=readline(paste0("Number of suggested cluster ",numpop,". Would you like to change it? (Press a new number or any letter to continue): "))
-            if(grepl("[[:digit:]\\.-]",numpop2)){
-              numpop=as.integer(numpop2)
+            abline(h=v[numPop_all==numPop][1],col="red")
+            numPop2=readline(paste0("Number of suggested cluster ",numPop,". Would you like to change it? (Press a new number or any letter to continue): "))
+            if(grepl("[[:digit:]\\.-]",numPop2)){
+              numPop=as.integer(numPop2)
             } 
-            clust_cut=cutree(hiclust,k=numpop)
+            clust_cut=cutree(hiclust,k=numPop)
             clust=list(cluster=clust_cut)
           } else{ # kmeans
             
             #Kmeans and elbow method
-            wss <- sapply(1:20, function(k){kmeans(pca$eigenvect[,1:numpc], k, nstart=50,iter.max = 15 )$tot.withinss})
-            numpop=NbPopElbow(diff(wss))
+            wss <- sapply(1:20, function(k){kmeans(pca$eigenvect[,1:numPc], k, nstart=50,iter.max = 15 )$tot.withinss})
+            numPop=NbPopElbow(diff(wss))
             
             #Prompt the user for a different number of clusters
             plot(1:20, wss)
-            abline(v=numpop, col="red")
-            numpop2=readline(paste0("Number of suggested cluster ",numpop,". Would you like to change it? (Press a new number or any letter to continue): "))
-            if(grepl("[[:digit:]\\.-]",numpop2)){
-              numpop=as.integer(numpop2)
+            abline(v=numPop, col="red")
+            numPop2=readline(paste0("Number of suggested cluster ",numPop,". Would you like to change it? (Press a new number or any letter to continue): "))
+            if(grepl("[[:digit:]\\.-]",numPop2)){
+              numPop=as.integer(numPop2)
             }   
-            clust=kmeans(pca$eigenvect[,1:numpc],numpop)        
+            clust=kmeans(pca$eigenvect[,1:numPc],numPop)        
           }
-        } else if (numpop>1){
-          if(ClustMethod=='hclust'){
-            hiclust=hclust(dist(as.matrix(pca$eigenvect[,1:numpc])))
-            clust_cut=cutree(hiclust,k=numpop)
+        } else if (numPop>1){
+          if(clustMethod=='hclust'){
+            hiclust=hclust(dist(as.matrix(pca$eigenvect[,1:numPc])))
+            clust_cut=cutree(hiclust,k=numPop)
             clust=list(cluster=clust_cut)           
           } else {
-            clust=kmeans(pca$eigenvect[,1:numpc],numpop)
+            clust=kmeans(pca$eigenvect[,1:numPc],numPop)
           }
         }
   
@@ -916,20 +938,20 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
         
         #Biplot
         plot(pca$eigenvect[,2], pca$eigenvect[,1], col=clust$cluster, xlab="eigenvector 2", ylab="eigenvector 1")  
-        numpop2 = readline(prompt="Would you like to choose a different number of population? (press any letter if no, -1 to reshow the tree/elbow, or enter a new number): ")
-        ClustMethod2 = readline(prompt="Would you like to choose a different clustering alogrithm? (press any letter if no, kmeans or hclust to change algorithm): ")
-        if(grepl("[[:digit:]\\.-]",numpop2) | ClustMethod2=='hclust' | ClustMethod2=='kmeans'){
-          if(grepl("[[:digit:]\\.-]",numpop2)){
-            numpop=as.integer(numpop2)
+        numPop2 = readline(prompt="Would you like to choose a different number of population? (press any letter if no, -1 to reshow the tree/elbow, or enter a new number): ")
+        clustMethod2 = readline(prompt="Would you like to choose a different clustering alogrithm? (press any letter if no, kmeans or hclust to change algorithm): ")
+        if(grepl("[[:digit:]\\.-]",numPop2) | clustMethod2=='hclust' | clustMethod2=='kmeans'){
+          if(grepl("[[:digit:]\\.-]",numPop2)){
+            numPop=as.integer(numPop2)
           }
-          if(ClustMethod2=='hclust' | ClustMethod2=='kmeans'){
-            ClustMethod=ClustMethod2
+          if(clustMethod2=='hclust' | clustMethod2=='kmeans'){
+            clustMethod=clustMethod2
           }
           next
         }
         
         #Calculate distance to centroid
-        for(j in 1:numpop){
+        for(j in 1:numPop){
           dist_j=sqrt((pca$eigenvect[,1]-mean(pca$eigenvect[t(clust$cluster==j),1]))^2+(pca$eigenvect[,2]-mean(pca$eigenvect[t(clust$cluster==j),2]))^2)
           if(j==1){
             dist=dist_j
@@ -943,22 +965,22 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
             #Transform env to a spatial object, set projection and reproject to mercator
             location=env
             sp::coordinates(location)=c(x,y)
-            sp::proj4string(location)=paste0('+init=epsg:',locationproj)
+            sp::proj4string(location)=paste0('+init=epsg:',locationProj)
             sp::spTransform(location, '+init=epsg:4326')
             country=data('wrld_simpl', package='maptools')
             plot(country,xlim=c(min(sp::coordinates(location)[,'Longitude']),max(sp::coordinates(location)[,'Longitude'])),ylim=c(min(sp::coordinates(location)[,'Latitude']),max(sp::coordinates(location)[,'Latitude'])))
             rad=abs(max(sp::coordinates(location)[,'Longitude'])-min(sp::coordinates(location)[,'Longitude']))/50
             for(i in 1:nrow(location)){
-              mapplots::add.pie(z=1/dist[i,1:(numpop)],x=sp::coordinates(location[i,1])[,'Longitude'], y=sp::coordinates(location[i,1])[,'Latitude'], labels=NA, radius=rad)
+              mapplots::add.pie(z=1/dist[i,1:(numPop)],x=sp::coordinates(location[i,1])[,'Longitude'], y=sp::coordinates(location[i,1])[,'Latitude'], labels=NA, radius=rad)
             }
-            numpop2 = readline(prompt="Would you like to choose a different number of population? (press any letter if no, -1 to reshow the tree/elbow, or enter a new number): ")
-            ClustMethod2 = readline(prompt="Would you like to choose a different clustering alogrithm? (press any letter if no, kmeans or hclust to change algorithm): ")
-            if(grepl("[[:digit:]\\.-]",numpop2) | ClustMethod2=='hclust' | ClustMethod2=='kmeans'){
-              if(grepl("[[:digit:]\\.-]",numpop2)){
-                numpop=as.integer(numpop2)
+            numPop2 = readline(prompt="Would you like to choose a different number of population? (press any letter if no, -1 to reshow the tree/elbow, or enter a new number): ")
+            clustMethod2 = readline(prompt="Would you like to choose a different clustering alogrithm? (press any letter if no, kmeans or hclust to change algorithm): ")
+            if(grepl("[[:digit:]\\.-]",numPop2) | clustMethod2=='hclust' | clustMethod2=='kmeans'){
+              if(grepl("[[:digit:]\\.-]",numPop2)){
+                numPop=as.integer(numPop2)
               }
-              if(ClustMethod2=='hclust' | ClustMethod2=='kmeans'){
-                ClustMethod=ClustMethod2
+              if(clustMethod2=='hclust' | clustMethod2=='kmeans'){
+                clustMethod=clustMethod2
               }
               next
             } else {
@@ -974,25 +996,25 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
   
   ### Check correlation between kept env variables and population var ###
   
-  if((!is.null(genofile) & numpc>0) | !is.null(popstrCol)){
+  if((!is.null(genoFile) & numPc>0) | !is.null(popStrCol)){
     
     if(verbose==TRUE){
       print('Checking correlation between kept env variables and population var. If correlation > 70%, the variable will be printed here')
     }    
-    if(!is.null(popstrCol)){
+    if(!is.null(popStrCol)){
       #If population structure already in env file
-      numvar=(length(popstrCol))
-      popvect2=as.matrix(env[,popstrCol])
+      numvar=(length(popStrCol))
+      popvect2=as.matrix(env[,popStrCol])
       if(numvar==1){ #looses column name
-        colnames(popvect2)=popstrCol
+        colnames(popvect2)=popStrCol
       }
-    } else if(!is.null(numpop)){
-      popvect2=as.matrix(dist[,1:(numpop-1)])
-      colnames(popvect2)=c(paste0('pop',1:(numpop-1)))
-      numvar=numpop-1
+    } else if(!is.null(numPop)){
+      popvect2=as.matrix(dist[,1:(numPop-1)])
+      colnames(popvect2)=c(paste0('pop',1:(numPop-1)))
+      numvar=numPop-1
     } else {
       popvect2=as.matrix(popvect2[,2:ncol(popvect2)])
-      numvar=numpc
+      numvar=numPc
       if(numvar==1){ #looses column name
         colnames(popvect2)='pop1'
       }
@@ -1014,49 +1036,49 @@ prepareEnv=function(envfile, maxcorr, idname, separator=',',genofile=NULL, numpc
   ### bind kept env variables and population and print file ###
   
   if(!is.null(x)){
-    if(!is.null(genofile) & numpc>0){
-      total=cbind(env[,c(idname, x, y)],env_kept,popvect2)
-      colnames(total)=c(idname,x,y,colnames(env_kept),colnames(popvect2)[1:numvar])
-      #ID match between envfile and genofile
-      total=total[match(pca$sample.id,total[,idname]),]
-    } else if(!is.null(popstrCol)){
-      total=cbind(env[,c(idname,x,y)],env_kept,env[,popstrCol])
-      colnames(total)=c(idname,x,y,colnames(env_kept),popstrCol) 
+    if(!is.null(genoFile) & numPc>0){
+      total=cbind(env[,c(idName, x, y)],env_kept,popvect2)
+      colnames(total)=c(idName,x,y,colnames(env_kept),colnames(popvect2)[1:numvar])
+      #ID match between envFile and genoFile
+      total=total[match(pca$sample.id,total[,idName]),]
+    } else if(!is.null(popStrCol)){
+      total=cbind(env[,c(idName,x,y)],env_kept,env[,popStrCol])
+      colnames(total)=c(idName,x,y,colnames(env_kept),popStrCol) 
     } else {
-      total = cbind(env[,c(idname,x,y)],env_kept)
-      colnames(total)=c(idname,x,y,colnames(env_kept))
+      total = cbind(env[,c(idName,x,y)],env_kept)
+      colnames(total)=c(idName,x,y,colnames(env_kept))
     }
   } else { #not geographic column
-    if(!is.null(genofile) & numpc>0){
-      total=cbind(env[,idname],env_kept,popvect2)
-      colnames(total)=c(idname,colnames(env_kept),colnames(popvect2)[1:numvar])
-      #ID match between envfile and genofile
-      total=total[match(pca$sample.id,total[,idname]),]
-    } else if(!is.null(popstrCol)){
-      total=cbind(env[,idname],env_kept,env[,popstrCol])
-      colnames(total)=c(idname,colnames(env_kept),popstrCol)   
+    if(!is.null(genoFile) & numPc>0){
+      total=cbind(env[,idName],env_kept,popvect2)
+      colnames(total)=c(idName,colnames(env_kept),colnames(popvect2)[1:numvar])
+      #ID match between envFile and genoFile
+      total=total[match(pca$sample.id,total[,idName]),]
+    } else if(!is.null(popStrCol)){
+      total=cbind(env[,idName],env_kept,env[,popStrCol])
+      colnames(total)=c(idName,colnames(env_kept),popStrCol)   
     } else {
-      total = cbind(env[,idname],env_kept)
-      colnames(total)=c(idname,colnames(env_kept))
+      total = cbind(env[,idName],env_kept)
+      colnames(total)=c(idName,colnames(env_kept))
     }    
   }
-  envfilename_short=substr(envfile,1,gregexpr("\\.", envfile)[[1]][length(gregexpr("\\.", envfile)[[1]])]-1)
+  envFilename_short=substr(envFile,1,gregexpr("\\.", envFile)[[1]][length(gregexpr("\\.", envFile)[[1]])]-1)
   
-  write.table(total, file=paste0(envfilename_short,'-export.csv'), append=FALSE,quote=FALSE,sep=" ", dec = ".",row.names=FALSE,col.names=TRUE)
+  write.table(total, file=paste0(envFilename_short,'-export.csv'), append=FALSE,quote=FALSE,sep=" ", dec = ".",row.names=FALSE,col.names=TRUE)
   if(verbose==TRUE){
-    print(paste0('File ',envfilename_short,'-export.csv',' successfully created'))
+    print(paste0('File ',envFilename_short,'-export.csv',' successfully created'))
   }
 }
 
 #Open environmental data
-openEnvData = function(envfile, separator){
-  if(typeof(envfile)!='character') stop("envfile argument supposed to be decimal number")
-  if (!file.exists(envfile)) stop("Input envfile not found.")
-  envextension=substr(envfile,gregexpr("\\.", envfile)[[1]][length(gregexpr("\\.", envfile)[[1]])]+1, nchar(envfile))
+openEnvData = function(envFile, separator){
+  if(typeof(envFile)!='character') stop("envFile argument supposed to be decimal number")
+  if (!file.exists(envFile)) stop("Input envFile not found.")
+  envextension=substr(envFile,gregexpr("\\.", envFile)[[1]][length(gregexpr("\\.", envFile)[[1]])]+1, nchar(envFile))
   if(envextension=='csv'){
-    env=read.csv(envfile, header=TRUE, sep=separator)
+    env=read.csv(envFile, header=TRUE, sep=separator)
   } else if(envextension=='shp'){
-    env=raster::shapefile(envfile)
+    env=raster::shapefile(envFile)
   } else {
     stop("Extension not supported! Should be either .csv or .shp")
   } 

@@ -205,6 +205,9 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   if (!requireNamespace("biomaRt", quietly = TRUE)) {
     stop("Package \"biomaRt\" needed for this function to work. Please install it.", call. = FALSE)
   }
+    if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
+  }
   
   #Define and open GDS file
   if(is.null(gdsFile)){
@@ -459,7 +462,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 
 
 #' @title Plotting of maps 
-#' @description Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{plotResultInteractive}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
+#' @description Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
 #' @author Solange Gaillard
 #' @param envFile char The file containing the input environmental variable of sambada. 
 #' @param x char The name of the column corresponding to the x-coordinate in the envFile. Can be set to null if unknown, in this case the maps will not be available
@@ -477,10 +480,42 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 #' @param simultaneous boolean If TRUE and \code{mapType} contains several kinds of maps, all maps corresponding to the same marker will be plotted on the same window. The resulting maps can be very small.
 #' @return None 
 #' @examples
-#' plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', mapType=c('marker'), varEnvName='bio1')
+#' # Map of marker
+#' plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
+#'      gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
+#'      mapType=c('marker'), varEnvName='bio1')
+#'
+#' # Maps of marker and population structure (two subplot)
+#' plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
+#'      gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
+#'      mapType=c('marker', 'popStr'), varEnvName='bio1', simultaneous=TRUE)
 #' @export
 plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName, mapType, varEnvName, SAMethod=NULL, SAThreshold=NULL, saveType=NULL, rasterName=NULL, simultaneous=FALSE){
 
+  # Test if required libraries are installed
+  if (!requireNamespace("SNPRelate", quietly = TRUE)) {
+    stop("Package \"SNPRelate\" needed for this function to work. Please install it.", call. = FALSE)
+  }
+  if (!requireNamespace("gdsfmt", quietly = TRUE)) {
+    stop("Package \"gdsfmt\" needed for this function to work. Please install it.", call. = FALSE)
+  }
+  if (!requireNamespace("sp", quietly = TRUE)) {
+    stop("Package \"sp\" needed for this function to work. Please install it.", call. = FALSE)
+  }
+  if (!requireNamespace("packcircles", quietly = TRUE)) {
+    stop("Package \"packcircles\" needed for this function to work. Please install it.", call. = FALSE)
+  }
+  if (!requireNamespace("raster", quietly = TRUE)) {
+    stop("Package \"raster\" needed for this function to work. Please install it.", call. = FALSE)
+  }  
+  if (!requireNamespace("mapplots", quietly = TRUE)) {
+    stop("Package \"mapplots\" needed for this function to work. Please install it.", call. = FALSE)
+  }
+  if('AS' %in% mapType){
+    if (!requireNamespace("spdep", quietly = TRUE)) {
+	  stop("Package \"spdep\" needed for this function to work. Please install it.", call. = FALSE)
+    }  
+  }
   ### Check inputs ###
   if(typeof(envFile)!='character') stop('envFile argument should be a character')
   if(!file.exists(envFile)){
