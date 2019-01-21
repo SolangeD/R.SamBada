@@ -39,7 +39,7 @@ downloadSambada = function(directory = NULL){
 	unlink(temp)
 
 	#Set current folder in PATH so that sambada can be called without specifying its path for the current session
-	changePath(paste0(directory,'binaries'))
+	changePath(paste0(directory,'/binaries'))
 }
 
 #' @title Adds folder to the PATH environmental variable
