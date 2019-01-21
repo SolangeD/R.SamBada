@@ -4,24 +4,24 @@
 \alias{prepareGeno}
 \title{Prepare genomic input}
 \usage{
-prepareGeno(filename, maf.thresh = NULL, missingness.thresh = NULL,
-  LD.thresh = NULL, mgf.thresh = NULL, directory = NULL,
+prepareGeno(fileName, mafThresh = NULL, missingnessThresh = NULL,
+  ldThresh = NULL, mgfThresh = NULL, directory = NULL,
   interactiveChecks = FALSE, verbose = FALSE)
 }
 \arguments{
-\item{filename}{char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen}
+\item{fileName}{char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen}
 
-\item{maf.thresh}{double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)}
+\item{mafThresh}{double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)}
 
-\item{missingness.thresh}{double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)}
+\item{missingnessThresh}{double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)}
 
-\item{LD.thresh}{double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering (if null no filtering on LD will be computed)}
+\item{ldThresh}{double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering (if null no filtering on LD will be computed)}
 
-\item{mgf.thresh}{double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations relie on gentoypes}
+\item{mgfThresh}{double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations relie on gentoypes}
 
 \item{directory}{char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (prepareGeno or sambada_parallel) has been already run in the R active session.}
 
-\item{interactiveChecks}{logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for maf.thresh, missingness.thresh, mgf.thresh (optional, default value=FALSE)}
+\item{interactiveChecks}{logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for mafThresh, missingnessThresh, mgfThresh (optional, default value=FALSE)}
 }
 \value{
 None
@@ -30,8 +30,13 @@ None
 Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options. The output file has the same name as the input file but with a .csv extension
 }
 \examples{
-prepareGeno('myPlinkFile.ped',maf.tresh=0.05, missingness.thresh=0.05,LD.thresh=0.2,mgf.thresh=0.8,interactiveChecks=TRUE)
-prepareGeno('myGDSFile.gds',maf.tresh=0.05, missingness.thresh=0.05,LD.thresh=0.2,mgf.thresh=0.8,interactiveChecks=FALSE)
+#With ped input file
+prepareGeno('myPlinkFile.ped',mafThresh=0.05, missingnessThresh=0.05,
+     mgfThresh=0.8,interactiveChecks=TRUE)
+
+#With gds input file
+prepareGeno('myGDSFile.gds',mafThresh=0.05, missingnessThresh=0.05,
+     mgfThresh=0.8,interactiveChecks=FALSE)
 }
 \author{
 Solange Gaillard, Oliver Selmoni

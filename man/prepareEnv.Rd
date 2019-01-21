@@ -4,50 +4,50 @@
 \alias{prepareEnv}
 \title{Prepare environmental input}
 \usage{
-prepareEnv(envfile, maxcorr, idname, separator = ",", genofile = NULL,
-  numpc = NULL, maf.thresh = NULL, missingness.thresh = NULL,
-  LD.thresh = NULL, numpop = -1, ClustMethod = "kmeans",
-  includeCol = NULL, excludeCol = NULL, popstrCol = NULL, x, y,
-  locationproj, interactiveChecks = FALSE, verbose = TRUE)
+prepareEnv(envFile, maxCorr, idName, separator = ",", genoFile = NULL,
+  numPc = NULL, mafThresh = NULL, missingnessThresh = NULL,
+  ldThresh = NULL, numPop = -1, clustMethod = "kmeans",
+  includeCol = NULL, excludeCol = NULL, popStrCol = NULL, x, y,
+  locationProj, interactiveChecks = FALSE, verbose = TRUE)
 }
 \arguments{
-\item{envfile}{char Name of the input environmental file (must be in active directory). Can be .csv or .shp}
+\item{envFile}{char Name of the input environmental file (must be in active directory). Can be .csv or .shp}
 
-\item{maxcorr}{double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted}
+\item{maxCorr}{double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted}
 
-\item{idname}{char Name of the id in the environmental file matching the one of genofile}
+\item{idName}{char Name of the id in the environmental file matching the one of \code{genoFile}}
 
-\item{separator}{char If envfile is .csv, the separator character. If file created with create_env, separator is ' '}
+\item{separator}{char If envFile is .csv, the separator character. If file created with create_env, separator is ' '}
 
-\item{genofile}{char (optional)Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created}
+\item{genoFile}{char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created}
 
-\item{numpc}{double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC. If 0, PCA and population structure will not be computed: in that case, the \code{genofile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genofile} is null}
+\item{numPc}{double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genoFile} is null}
 
-\item{maf.thresh}{double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)}
+\item{mafThresh}{double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)}
 
-\item{missingness.thresh}{double A number between 0 and 1 specifying the missing rate filtering when computing PCS(if null no filtering on missing rate will be computed)}
+\item{missingnessThresh}{double A number between 0 and 1 specifying the missing rate filtering when computing PCS(if null no filtering on missing rate will be computed)}
 
-\item{LD.thresh}{double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering before computing the PCA (if null no filtereing on LD will be computed)}
+\item{ldThresh}{double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering before computing the PCA (if null no filtereing on LD will be computed)}
 
-\item{numpop}{integer If not null, clustering based on \code{numpc} first PC will be computed to devide into \code{numpop} populations. If -1 automatic detection of number of cluster (elbow method if \code{ClustMethod}='kmeans', maximise branch length if \code{ClustMethod}='hclust'). If null, no clustering will be computed: if \code{genofile} is set, principal component scores will be included as population information in the final file.}
+\item{numPop}{integer If not null, clustering based on \code{numPc} first PC will be computed to devide into \code{numPop} populations. If -1 automatic detection of number of cluster (elbow method if \code{clustMethod}='kmeans', maximise branch length if \code{clustMethod}='hclust'). If null, no clustering will be computed: if \code{genoFile} is set, principal component scores will be included as population information in the final file.}
 
-\item{ClustMethod}{char One of 'kmeans' or 'hclust' for K-means and hierarchical clustering respectively. Default 'kmeans'}
+\item{clustMethod}{char One of 'kmeans' or 'hclust' for K-means and hierarchical clustering respectively. Default 'kmeans'}
 
 \item{includeCol}{character vector Columns in the envrionmental file to be considered as variables. If none specified, all numeric variables will be considered as env var except for the id}
 
 \item{excludeCol}{character vector Columns in the envrionmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as env var except for the id}
 
-\item{popstrCol}{character vector Columns in the envrionmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files}
+\item{popStrCol}{character vector Columns in the envrionmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files}
 
 \item{x}{character Name of the column corresponding to the x coordinate (or longitude if sperical coordinate). If not null, x column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.}
 
 \item{y}{character Name of the column corresponding to the y coordinate (or latitude if sperical coordinate). If not null, y column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.}
 
-\item{interactiveChecks}{logical If TRUE, plots will show up showing number of populations chosen, and correlation between variables and the user can interactively change the chosen threshold for maxcorr and numpop (optional, default value=FALSE)}
+\item{locationProj}{integer EPSG code of the projection of x-y coordinate}
+
+\item{interactiveChecks}{logical If TRUE, plots will show up showing number of populations chosen, and correlation between variables and the user can interactively change the chosen threshold for \code{maxCorr} and \code{numPop} (optional, default value=FALSE)}
 
 \item{verbose}{boolean If true show information about progress of the process}
-
-\item{locationProj}{integer EPSG code of the projection of x-y coordinate}
 }
 \value{
 None
@@ -56,7 +56,19 @@ None
 Writes a new environmental file that sambada can work with after having removed too correlated variables. Also calculates population structure from a PCA in SNPRelate and add it at the end of the environmental file
 }
 \examples{
-prepareEnv('myFile-env.csv',0.8,'Nom',' ',x='Longitude',y='Latitude', locationproj=4326, interactiveChecks = TRUE)
+#Calculating PCA-based population structure
+prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
+     mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
+     x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
+
+#Calculating structure membership coefficient based on kmeans clustering
+prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
+     mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
+     x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
+
+#Without calculating population structure.
+prepareEnv('myFile-env.csv',0.8,'Nom',' ', x='Longitude',y='Latitude', 
+     locationProj=4326, interactiveChecks = TRUE)
 }
 \author{
 Solange Gaillard, Oliver Selmoni

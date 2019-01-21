@@ -57,6 +57,14 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, dimMax = 1,
 \description{
 Read sambadas input file to retrieve necessary information (num indiv etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. See sambada's documentation for more information.
 }
+\examples{
+#With all default parameter
+sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID')
+
+#With population structure
+sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID'
+     dimMax=2, saveType='END ALL', populationVar='pop1')
+}
 \author{
 Solange Gaillard, Sylvie Stucki
 }

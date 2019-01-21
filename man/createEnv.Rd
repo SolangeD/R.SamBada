@@ -4,22 +4,22 @@
 \alias{createEnv}
 \title{Create env file from raster file(s) and/or glabal database present in the raster r package}
 \usage{
-createEnv(locationfilename, x, y, locationproj, separator = ",",
-  rastername, rasterproj, directory = FALSE, worldclim = TRUE,
+createEnv(locationFileName, x, y, locationProj, separator = ",",
+  rasterName, rasterProj, directory = FALSE, worldclim = TRUE,
   srtm = FALSE, interactiveChecks, verbose = TRUE)
 }
 \arguments{
-\item{locationfilename}{!! char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file}
+\item{locationFileName}{!! char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file}
 
-\item{x}{char Name of the x (or longitude if not projected coordinate system) column in the \code{locationfilename}. Required if \code{locationfilename} extension is .csv}
+\item{x}{char Name of the x (or longitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv}
 
-\item{locationproj}{integer Coordinate system EPSG code of the \code{locationfilename}. If \code{locationfilename} is already georeferenced, this argument will be skipped. Required if \code{locationfilename} extension is csv.}
+\item{locationProj}{integer Coordinate system EPSG code of the \code{locationFileName}. If \code{locationFileName} is already georeferenced, this argument will be skipped. Required if \code{locationFileName} extension is csv.}
 
-\item{rastername}{char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory}
+\item{rasterName}{char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory}
 
-\item{rasterproj}{integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlyer is already georeferenced, this argument will be skipped. If \code{rastername} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)}
+\item{rasterProj}{integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlyer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)}
 
-\item{directory}{logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rastername} will be loaded}
+\item{directory}{logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rasterName} will be loaded}
 
 \item{worldclim}{logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory}
 
@@ -29,7 +29,7 @@ createEnv(locationfilename, x, y, locationproj, separator = ",",
 
 \item{verbose}{logical If TRUE, indication on process will be shown}
 
-\item{x}{char Name of the y (or latitude if not projected coordinate system) column in the \code{locationfilename}. Required if \code{locationfilename} extension is .csv}
+\item{x}{char Name of the y (or latitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv}
 }
 \value{
 None
@@ -38,8 +38,13 @@ None
 Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or glabal database present in the raster r package
 }
 \examples{
-createEnv(rastername=c('prec.tif','tmin.sdat'),locationfilename='MyFile.shp',rasterproj=c(4326,21781), worldclim=TRUE,interactiveChecks=TRUE)
-createEnv(locationfilename='MyFile.csv',x='Longitude',y='Latitude',locationproj=4326, worldclim=TRUE,interactiveChecks=FALSE)
+#Own raster + worldclim download
+createEnv(rasterName=c('prec.tif','tmin.sdat'),locationFileName='MyFile.shp',
+      rasterProj=c(4326,21781), worldclim=TRUE,interactiveChecks=TRUE)
+
+#Worldclim download only
+createEnv(locationFileName='MyFile.csv',x='Longitude',y='Latitude',locationProj=4326, 
+      worldclim=TRUE,interactiveChecks=FALSE)
 }
 \author{
 Solange Gaillard

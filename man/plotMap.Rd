@@ -44,7 +44,15 @@ None
 Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
 }
 \examples{
-plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', mapType=c('marker'), varEnvName='bio1')
+# Map of marker
+plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
+     gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
+     mapType=c('marker'), varEnvName='bio1')
+
+# Maps of marker and population structure (two subplot)
+plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
+     gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
+     mapType=c('marker', 'popStr'), varEnvName='bio1', simultaneous=TRUE)
 }
 \author{
 Solange Gaillard
