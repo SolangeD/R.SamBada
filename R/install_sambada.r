@@ -50,12 +50,24 @@ changePath=function(directory){
   #check if directory already in path
   if(grepl(gsub('\\','/',directory, fixed=TRUE),gsub('\\','/',Sys.getenv('PATH'), fixed=TRUE))==FALSE){
     #Add directory to path
-    Sys.setenv(
-      PATH = paste(
-        Sys.getenv("PATH"), 
-        directory, 
-        sep = ";"
+    env=Sys.info()['sysname']
+    if(env=='Windows'){
+      Sys.setenv(
+        PATH = paste(
+          Sys.getenv("PATH"), 
+          directory, 
+          sep = ";"
+        )
       )
-    )
+    } else {
+      Sys.setenv(
+        PATH = paste(
+          Sys.getenv("PATH"), 
+          directory, 
+          sep = ":"
+        )
+      )      
+    }
+  
   }
 }
