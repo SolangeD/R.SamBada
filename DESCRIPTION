@@ -7,6 +7,27 @@ Author: Solange Gaillard, Sylvie Stucki, Oliver Selmoni, Elia Vajana
 Maintainer: Your Name <your@email.com>
 Description: Processing pipeline for Sambada from pre to post processing
 License: GPL (>= 2)
-Imports: SNPRelate
+Imports: SNPRelate,
+	gdsfmt
 LinkingTo: 
 RoxygenNote: 6.1.0
+Suggests: utils,
+	data.table,
+	shiny,
+	plotly,
+	httr,
+	biomaRt,
+	ggplot2,
+	sp, 
+	packcircles, 
+	raster, 
+	mapplots, 
+	spdep,
+	rgdal, 
+	gdalUtils,
+	rworldmap,
+	doParallel,
+	foreach,
+	knitr,
+    rmarkdown
+VignetteBuilder: knitr
