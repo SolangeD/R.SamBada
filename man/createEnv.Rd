@@ -5,17 +5,21 @@
 \title{Create env file from raster file(s) and/or glabal database present in the raster r package}
 \usage{
 createEnv(locationFileName, x, y, locationProj, separator = ",",
-  rasterName, rasterProj, directory = FALSE, worldclim = TRUE,
+  rasterName, rasterProj = NULL, directory = FALSE, worldclim = TRUE,
   srtm = FALSE, interactiveChecks, verbose = TRUE)
 }
 \arguments{
-\item{locationFileName}{!! char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file}
+\item{locationFileName}{char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file}
 
 \item{x}{char Name of the x (or longitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv}
 
+\item{y}{char Name of the y (or latitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv}
+
 \item{locationProj}{integer Coordinate system EPSG code of the \code{locationFileName}. If \code{locationFileName} is already georeferenced, this argument will be skipped. Required if \code{locationFileName} extension is csv.}
 
-\item{rasterName}{char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory}
+\item{separator}{char The separator used to separate columns in your \code{locationFileName}}
+
+\item{rasterName}{char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory. Can be set to null if worldclim or srtm are set to TRUE.}
 
 \item{rasterProj}{integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlyer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)}
 
@@ -28,8 +32,6 @@ createEnv(locationFileName, x, y, locationProj, separator = ",",
 \item{interactiveChecks}{logical If TRUE, shows loaded rasters and point locations}
 
 \item{verbose}{logical If TRUE, indication on process will be shown}
-
-\item{x}{char Name of the y (or latitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv}
 }
 \value{
 None

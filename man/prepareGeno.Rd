@@ -19,7 +19,7 @@ prepareGeno(fileName, mafThresh = NULL, missingnessThresh = NULL,
 
 \item{mgfThresh}{double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations relie on gentoypes}
 
-\item{directory}{char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (prepareGeno or sambada_parallel) has been already run in the R active session.}
+\item{directory}{char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (\code{prepareGeno} or \code{sambadaParallel}) has been already run in the R active session.}
 
 \item{interactiveChecks}{logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for mafThresh, missingnessThresh, mgfThresh (optional, default value=FALSE)}
 }

@@ -4,7 +4,7 @@
 \alias{prepareEnv}
 \title{Prepare environmental input}
 \usage{
-prepareEnv(envFile, maxCorr, idName, separator = ",", genoFile = NULL,
+prepareEnv(envFile, maxCorr, idName, separator = " ", genoFile = NULL,
   numPc = NULL, mafThresh = NULL, missingnessThresh = NULL,
   ldThresh = NULL, numPop = -1, clustMethod = "kmeans",
   includeCol = NULL, excludeCol = NULL, popStrCol = NULL, x, y,
