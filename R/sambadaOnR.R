@@ -20,7 +20,8 @@
 #' @section Postprocessing functions:
 #' The Postprocessing functions contain three functions: 
 #'\itemize{
-#'\item{\code{\link{prepareOutput}}: calculate p and q-values from sambada output}
+#'\item{\code{\link{prepareOutput}}: calculate p and q-values from sambada output and retrieve SNP position for manhattan plots}
+#'\item{\code{\link{plotManhattan}}: create a manhattan plot of one or several envrionmental variables}
 #'\item{\code{\link{plotResultInteractive}}: start an interactive local web page to query a manhattan plot with maps, plots and ensembl query result}
 #'\item{\code{\link{plotMap}}: create a map of marker, population structure or environmental variable distribution}
 #'}

@@ -196,6 +196,9 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   if (!requireNamespace("SNPRelate", quietly = TRUE)) {
     stop("Package \"SNPRelate\" needed for this function to work. Please install it.", call. = FALSE)
   }
+  if (!requireNamespace("httr", quietly = TRUE)) {
+    stop("Package \"httr\" needed for this function to work. Please install it.", call. = FALSE)
+  }
   if (!requireNamespace("shiny", quietly = TRUE)) {
     stop("Package \"shiny\" needed for this function to work. Please install it.", call. = FALSE)
   }
@@ -211,9 +214,12 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   
   #Define and open GDS file
   if(is.null(gdsFile)){
-    gdsFile = paste0(gsub('-env.csv','',envFile),'.gds')
+    gdsFile = paste0(gsub('-env-export.csv','',envFile),'.gds')
     if(!file.exists(gdsFile)){
-      stop("A gds file is needed for this function to work. Specify the name in the input of the function if it is already created, or create it with the package SNPRelate or prepare_geno from this package")
+      gdsFile = paste0(gsub('-env.csv','',envFile),'.gds')
+      if(!file.exists(gdsFile)){
+        stop("A gds file is needed for this function to work. Specify the name in the input of the function if it is already created, or create it with the package SNPRelate or prepare_geno from this package")
+      }
     }
   }
   gds_obj=SNPRelate::snpgdsOpen(gdsFile)
@@ -231,7 +237,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   snp = ensemblOutput$snp
   ensembl = ensemblOutput$ensembl
   
-  #Prepare Manhattan (to be changed)
+  #Prepare Manhattan 
   subset=sambadaOutput[which(sambadaOutput[,'Env_1']==varEnv),]
   if(nrow(subset)==0) stop('No records found in sambada output corresponding to the chosen environmental variable (varEnv argument)')
   if(length(chromo)>1){
@@ -268,8 +274,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
         shiny::verbatimTextOutput("event2"),
         shiny::h4("Ensembl genes within determined window"),
         shiny::verbatimTextOutput("event"),
-        #shiny::h4("Link to google search of description of found genes"),
-        #shiny::htmlOutput("event4"),
+        shiny::h4("Variant consequence"),
+        shiny::verbatimTextOutput("event4"),
         shiny::h4("Same SNP, different env var"),
         shiny::verbatimTextOutput("event3")
       ),
@@ -321,9 +327,36 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           #c=tryCatch({biomaRt::getBM(attributes=c('chromosome_name','ensembl_gene_id','wikigene_name','start_position','end_position','description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)}, error=function(e){"no gene found!"})
           #c
           biomaRt::getBM(attributes=c('chromosome_name','ensembl_gene_id','wikigene_name','start_position','end_position','description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)
+
         }
-        
+          
       })
+      #When clicked: query Ensembl
+      if(!is.null(species)){
+        output$event4 <- shiny::renderPrint({
+          f <- plotly::event_data("plotly_click")
+          if (is.null(f)) {
+            "Select a point!" 
+          }else {
+            selectBP=subset[which(subset$pos+subset$maxPos==f$x),'pos']
+            selectBP=selectBP[1]
+            selectCHR=subset[which(subset$pos+subset$maxPos==f$x),'chr']
+            selectCHR=selectCHR[1]
+            server <- "https://rest.ensembl.org"
+            #Get reference allele from gds
+            selectSNP=subset[which(subset$pos+subset$maxPos==f$x),'snp']
+            selectSNP=selectSNP[1]
+            snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==selectSNP$snp)
+            alleles=gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.allele"), start=c(snp_id), count=c(1))
+            alternative_allele=substr(alleles,3,3)
+            ext <- paste0("/vep/",species,"/region/",selectCHR,":",selectBP-1,"-",selectBP,"/",alternative_allele,"?")
+            r <- httr::GET(paste(server, ext, sep = ""), httr::content_type("application/json"))
+            httr::stop_for_status(r)  
+            cont=httr::content(r)
+            cont[[1]]$most_severe_consequence
+          }
+        })
+      }
       # output$event4 <- shiny::renderPrint({
       #   f <- plotly::event_data("plotly_click")
       #   if (is.null(f)) {
@@ -410,6 +443,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           pres=genoToMarker(gds_obj, selectMarker)
           xy=data.frame(x,y,varenv,ID, geno, pres, popCol)
          
+          pal1 <- c("antiquewhite2", "black")
+          
           graph <- plotly::plot_ly()
           graph <- plotly::add_trace(graph,data=xy, x=x,y=y, type='scatter',mode='markers', color=pres, marker=list(showscale=FALSE), name='marker', colors=pal1, text=ID,hoverinfo = c("color"))
           graph <- plotly::hide_colorbar(graph)  
@@ -460,6 +495,93 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   #shiny::stopApp()
 }
 
+#' @title Manhattan plot 
+#' @description Plot the manhattan plot for a given environmental data
+#' @author Solange Gaillard
+#' @param preparedOutput char The prepared output list from prepare_output function
+#' @param varEnv char The name of the environmental variable one wish to study. Can be a vector of char if you want to plot several varEnv at a row. If \code{saveType} is NULL, the program prompts to continue. If \code{saveType} is png or pdf, several files are saved
+#' @param valueName char Name of the p- or q-value one wish to plot the manhattan on. This can be either pvalueG, pvalueW, qvalueG, qvalueW for G- or Waldscore respectively.
+#' @param chromo char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)
+#' @param saveType char One of NULL, 'png' or 'pdf'. If NULL is set, the plot will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory with the name 'manhattan-' followed by varEnv.
+#' @examples
+#' manhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
+#' @export
+plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=NULL){
+  ### Checks
+  #preparedOutput
+  if(!('sambadaOutput' %in% names(preparedOutput))) stop('preparedOutput should have a component named samabadaOutput. Use the result of the function prepare_output')
+  if(!('chrSNPNum' %in% names(preparedOutput))) stop('preparedOutput should have a component named chrSNPNum. Use the result of the function prepare_output')  
+  if(!('chrMaxPos' %in% names(preparedOutput))) stop('preparedOutput should have a component named chrMaxPos. Use the result of the function prepare_output')  
+
+  #valueName
+  if(!(valueName %in% names(preparedOutput$sambadaOutput)))stop('valueName should be a component of preparedOutput$sambadaOutput. Use the result of the function prepare_output as preparedOutput')
+
+  # Test if required libraries are installed
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
+  }
+  
+  sambadaOutput = preparedOutput$sambadaOutput
+  chrSNPNum = preparedOutput$chrSNPNum
+  chrMaxPos = preparedOutput$chrMaxPos
+  
+  for(i in 1:length(varEnv)){
+    subset=sambadaOutput[which(sambadaOutput[,'Env_1']==varEnv[i]),]
+    if(nrow(subset)==0) stop('No records found in sambada output corresponding to the chosen environmental variable (varEnv[i] argument)')
+    if(length(chromo)>1){
+      subset=subset[with(subset, which(chr %in% chromo)),]
+    } else if(chromo != 'all' ){
+      subset=subset[with(subset, which(chr %in% chromo)),]
+    }
+    if(nrow(subset)==0) stop('No record found in sambada output corresponding to the chosen chromosome (chromo argument)')
+    #subset$pval=-log10(subset[,get(valueName)])
+    subset$pval=-log10(subset[,'pvalueG'])
+    
+    prevPos=data.frame("chr"=chrMaxPos$Group.1, "maxPos"=cumsum(as.numeric(chrMaxPos$x))-chrMaxPos$x)
+    prevPos=data.frame(prevPos, "chrPos"=rownames(prevPos))
+    subset=merge(subset,prevPos,by='chr', sort=FALSE, all.x=TRUE)
+    subset$color=colors()[as.integer(as.character(subset$chrPos))%%2+6] 
+    
+    #Prepare manhattan
+    rhg_cols=c("#CCCC99","#999966")
+    p <- ggplot2::ggplot(data=subset, ggplot2::aes(x=maxPos+pos, y=pval, colour=color, label=snp, text=pos), showlegend=FALSE) 
+    p <- p + ggplot2::geom_point(size=1)
+    p <- p + ggplot2::theme(legend.position="none")
+    p <- p + ggplot2::scale_color_manual(values=c("#8B8378", "#CDC0B0"))
+    p <- p + ggplot2::scale_y_continuous(name =paste0("-log10(",valueName,")"))
+    p <- p + ggplot2::ggtitle(varEnv[i])
+    if(length(chromo)>1){
+      p <- p + ggplot2::scale_x_continuous(name ="Chromosome", breaks=prevPos$maxPos[chromo], labels=as.character(prevPos$chr[chromo]))
+    } else if (chromo == 'all'){
+      p <- p + ggplot2::scale_x_continuous(name ="Chromosome", breaks=prevPos$maxPos, labels=as.character(prevPos$chr))
+    } else {
+      p <- p + ggplot2::scale_x_continuous(name ="Position")
+    }
+    # Problem when serveral chromo and chromosomes not side by side
+    if(!is.null(saveType)){
+      if(saveType=='png'){
+        png(paste0('manhattan-',varEnv[i],'.png'))
+      }
+      if(saveType=='pdf'){
+        pdf(paste0('manhattan-',varEnv[i],'.pdf'))
+      }
+    }
+    # Manhattan
+    plot(p)
+    
+    if(!is.null(saveType)){
+      dev.off()
+    } else {
+      if(i<length(varEnv)){
+        cont=readline('Would you like to continue? Press x to exit, any other letter to continue: ')
+        if(cont=='x'){
+          return(NA)
+        }
+      }
+    }
+  }
+}
+
 
 #' @title Plotting of maps 
 #' @description Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
@@ -475,7 +597,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 #' @param varEnvName char Name of the environmental variable. If a raster of the variable is located in your working directory, you can provide \code{varEnvName} even for \code{mapType} such as 'marker' or 'AS'. The function will scan the folder of your working directory for raster with the same name as \code{varEnvName} (and commonly used extension for raster) and put it as background.
 #' @param SAMethod char If \code{mapType} contains 'AS', then you must specify the method for setting the weights of neighbours. Can be one of 'knn' (k-nearest neighbours) or 'distance' 
 #' @param SAMThreshold char If \code{mapType} contains 'AS' and \code{SAMethod} id 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)
-#' @param saveType char One of NULL, 'png' or 'pdf'. To be implemented... If NULL is set, the maps will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory.
+#' @param saveType char One of NULL, 'png' or 'pdf'. If NULL is set, the maps will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory.
 #' @param rasterName char If a raster file with the environmental variable distribution exists with a different name than \code{varEnvName}, provide it here (including extension)
 #' @param simultaneous boolean If TRUE and \code{mapType} contains several kinds of maps, all maps corresponding to the same marker will be plotted on the same window. The resulting maps can be very small.
 #' @return None 
@@ -584,7 +706,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
 
   
   #Draw plots
-  for(m in 1:length(markerName)){
+  for(m in 1:length(markerName)){ #Problem if null (ex want to draw pop )
     #Get Marker info
     if('marker' %in%  mapType | 'AS' %in% mapType ){
       #Open gds File
@@ -620,123 +742,150 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
     }
     
     for(t in 1:length(mapType)){
-      par(mar=c(2,2,2,2), xpd=FALSE)
-      #if(t==1){
-      #Draw background
-      if(exists('rasterName')){
-        #If raster found, put it as background
-        #Attention mettre les coordonnées de scattered point ou envData???
-        raster::image(raster, asp=1, maxpixels=10000000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
+      if((mapType[t] %in% c('marker','AS')) | (simultaneous==FALSE & m==1) | simultaneous==TRUE) {
+        if(saveType=='pdf'){
+          grDevices::pdf(paste0(mapType[t],'.pdf'))
+        } else if (saveType=='png'){
+          grDevices::png(paste0(mapType[t],'.png'))
+        }
+        par(mar=c(2,2,2,2), xpd=FALSE)
+        #if(t==1){
+        #Draw background
+        if(exists('rasterName')){
+          #If raster found, put it as background
+          #Attention mettre les coordonnées de scattered point ou envData???
+          raster::image(raster, asp=1, maxpixels=10000000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
+          
+        }else {
+          #If raster not found, put countries as background
+          country=data('wrld_simpl', package='maptools')
+          raster::plot(wrld_simpl,xlim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])),ylim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])))
+        }
         
-      }else {
-        #If raster not found, put countries as background
-        country=data('wrld_simpl', package='maptools')
-        raster::plot(wrld_simpl,xlim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])),ylim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])))
+        #Draw lines between original location and scattered one (if not scattered, the lines will be masked by the points)
+        for(i in 1:nrow(envData)){
+          lines(c(envData@coords[i,x],scattered_point$layout@coords[i,'x']),c(envData@coords[i,y],scattered_point$layout@coords[i,'y']), col='antiquewhite3')
+        }
+        
+        #Draw points
+        if(mapType[t]=='marker'){
+          raster::plot(scattered_point$layout,col=colors()[pres*19+5],pch=16,add=TRUE)
+        } else if(mapType[t]=='env' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
+          #Define color palette
+          new.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
+          raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,varEnvName]-min(envData@data[,varEnvName]))/(max(envData@data[,varEnvName])-min(envData@data[,varEnvName]))*100)],pch=20,add=TRUE)
+        } else if(mapType[t]=='popStr' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
+          if(length(popStrCol)>1){
+            for(i in 1:nrow(scattered_point$layout)){ 
+              mapplots::add.pie(z=as.double(abs(1/envData@data[i,popStrCol])),x=scattered_point$layout@coords[i,'x'], scattered_point$layout@coords[i,'y'], labels=NA, col=terrain.colors(3), radius=size*2)
+            }
+          } else {
+            new.pal=colorRampPalette(c("white","black"))( 100 )
+            raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,popStrCol]-min(envData@data[,popStrCol]))/(max(envData@data[,popStrCol])-min(envData@data[,popStrCol]))*100)],pch=16,add=TRUE)
+          }
+        
+        } else if(mapType[t]=='AS'){
+          ### autocorrelation
+          #Calculate autocorrelation
+          #knearneigh, dnearneigh
+          if(method=='knn'){
+            knn=spdep::knearneigh(envData,5)
+            nb=spdep::knn2nb(knn)
+          } else if (method=='distance'){
+            nb=spdep::dnearneigh(envData,0,20)
+          }
+          nblist=spdep::nb2listw(nb, zero.policy=TRUE) 
+          #iglobal=spdep::moran.test(as.vector(pres),nblist, na.action=na.omit)
+          ilocal=spdep::localmoran(as.vector(pres),nblist, zero.policy=TRUE,na.action=na.exclude)
+          #Define color for map
+          color=vector('character',nrow(ilocal))
+          color[ilocal[,'Ii']<(-0.5)]='blue4'
+          color[ilocal[,'Ii']<(-0.1) & ilocal[,'Ii']>=(-0.5)]='lightblue3'
+          color[ilocal[,'Ii']<(0.1) & ilocal[,'Ii']>=(-0.1)]='wheat'
+          color[ilocal[,'Ii']<(0.5) & ilocal[,'Ii']>=(0.1)]='salmon'
+          color[ilocal[,'Ii']>=0.5]='red3'
+          color[is.na(ilocal[,'Ii'])]='white'
+          #Define pch of points in map according to significance
+          pointch=vector('integer',nrow(ilocal))
+          pointch[ilocal[,'Pr(z > 0)']<=(0.05)]=19
+          pointch[ilocal[,'Pr(z > 0)']>(0.05)]=21
+          pointch[is.na(ilocal[,'Pr(z > 0)'])]=19
+          #Draw points
+          raster::plot(scattered_point$layout,col=color,pch=pointch,cex=1.2,bg='grey',add=TRUE)
+        }
+        
+        #Draw legend
+        if(exists('rasterName')){
+          #Raster legend
+          par(mar=c(2,1,3,2), xpd=NA)
+          #raster.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
+          raster.pal=terrain.colors( 100 )
+          
+          image(1, 1:100, t(seq_along(1:100)), col=raster.pal, axes=FALSE , xlab="", ylab="")
+          axis(4, at=(pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)]-min(raster_df[,varEnvName], na.rm=TRUE))/(max(raster_df[,varEnvName], na.rm=TRUE)-min(raster_df[,varEnvName], na.rm=TRUE))*100, label=pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)])
+          text(1,107,'Raster')
+        } else {
+          if(mapType[t]=='env'){
+            # Point legend
+            par(mar=c(2,1,3,2), xpd=NA)
+            image(1, 1:100, t(seq_along(1:100)), col=new.pal, axes=FALSE, xlab="", ylab="")
+            axis(4, at=(pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)]-min(envData@data[,varEnvName], na.rm=TRUE))/(max(envData@data[,varEnvName], na.rm=TRUE)-min(envData@data[,varEnvName], na.rm=TRUE))*100, label=pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)])
+            text(1,107,'Points')
+            plot.new()
+            next
+          }
+        }
+        if(mapType[t]=='popStr'){
+          # Point legend
+          #par(mar=c(2,1,3,2), xpd=NA)
+          if(length(popStrCol)>1){
+            points(rep(0,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),pch=19, col=terrain.colors(length(popStrCol)))
+            text(rep(0.1,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),popStrCol, pos=4)
+            text(1,-10,'Population')          
+          } else {
+            par(mar=c(2,1,3,2), xpd=NA)
+            pop.pal=colorRampPalette(c("white", "black"))( 100 )
+            image(1, 1:100, t(seq_along(1:100)), col=pop.pal, axes=FALSE , xlab="", ylab="")
+            axis(4, at=(pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)]-min(envData@data[,popStrCol], na.rm=TRUE))/(max(envData@data[,popStrCol], na.rm=TRUE)-min(envData@data[,popStrCol], na.rm=TRUE))*100, label=pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)])
+            text(1,107,'Poulation')
+          }
+  
+        } else if(mapType[t]=='AS'){
+          # Point legend
+          #par(mar=c(2,1,3,2), xpd=NA)
+          plot.new()
+          points(rep(0,10),c(seq(from=1, by=-0.1, length.out=5),seq(from=0.4, by=-0.1, length.out=5)),pch=c(19,19,19,19,19,21,21,21,21,21), col=c('blue4','lightblue3','wheat','salmon','red3','blue4','lightblue3','wheat','salmon','red3'), bg='gray')
+          text(rep(0.1,10),c(seq(from=1, by=-0.1, length.out=5),seq(from=0.4, by=-0.1, length.out=5)),c('< -0.5','-0.5 - -0.1','-0.1 - 0.1','0.1 - 0.5','> 0.5'), pos=4)
+          text(0,1.1,'I (signif)', pos=4)
+          text(0, 0.5,'I (not signif)', pos=4)
+        } else if(mapType[t]=='marker'){
+          plot.new()
+          points(c(0,0),c(1,0.8),pch=19, col=c(colors()[5],colors()[24]))
+          text(c(0.1,0.1),c(1,0.8),c('Absent','Present'),pos=4)
+        }
+      #}
+        if(simultaneous==FALSE & t<length(mapType)){
+          if(is.null(saveType)){
+            continue = readline(prompt="Would you like to continue? (press x to exit, any other letter to continue): ")
+            if(continue=='x'){
+              return(NA)
+            } 
+          } else {
+            dev.off()
+          }
+        }
       }
-      
-      #Draw lines between original location and scattered one (if not scattered, the lines will be masked by the points)
-      for(i in 1:nrow(envData)){
-        lines(c(envData@coords[i,x],scattered_point$layout@coords[i,'x']),c(envData@coords[i,y],scattered_point$layout@coords[i,'y']), col='antiquewhite3')
-      }
-      
-      #Draw points
-      if(mapType[t]=='marker'){
-        raster::plot(scattered_point$layout,col=colors()[pres*19+5],pch=16,add=TRUE)
-      } else if(mapType[t]=='env'){
-        #Define color palette
-        new.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
-        raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,varEnvName]-min(envData@data[,varEnvName]))/(max(envData@data[,varEnvName])-min(envData@data[,varEnvName]))*100)],pch=20,add=TRUE)
-      } else if(mapType[t]=='popStr'){
-        if(length(popStrCol)>1){
-          for(i in 1:nrow(scattered_point$layout)){ 
-            mapplots::add.pie(z=as.double(abs(1/envData@data[i,popStrCol])),x=scattered_point$layout@coords[i,'x'], scattered_point$layout@coords[i,'y'], labels=NA, col=terrain.colors(3), radius=size*2)
+      if(m<length(markerName)){
+        if(is.null(saveType)){
+          continue = readline(prompt="Would you like to continue? (press x to exit, any other letter to continue): ")
+          if(continue=='x'){
+            return(NA)
           }
         } else {
-          new.pal=colorRampPalette(c("white","black"))( 100 )
-          raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,popStrCol]-min(envData@data[,popStrCol]))/(max(envData@data[,popStrCol])-min(envData@data[,popStrCol]))*100)],pch=16,add=TRUE)
-        }
-      
-      } else if(mapType[t]=='AS'){
-        ### autocorrelation
-        #Calculate autocorrelation
-        #knearneigh, dnearneigh
-        if(method=='knn'){
-          knn=spdep::knearneigh(envData,5)
-          nb=spdep::knn2nb(knn)
-        } else if (method=='distance'){
-          nb=spdep::dnearneigh(envData,0,20)
-        }
-        nblist=spdep::nb2listw(nb, zero.policy=TRUE) 
-        #iglobal=spdep::moran.test(as.vector(pres),nblist, na.action=na.omit)
-        ilocal=spdep::localmoran(as.vector(pres),nblist, zero.policy=TRUE,na.action=na.exclude)
-        #Define color for map
-        color=vector('character',nrow(ilocal))
-        color[ilocal[,'Ii']<(-0.5)]='blue4'
-        color[ilocal[,'Ii']<(-0.1) & ilocal[,'Ii']>=(-0.5)]='lightblue3'
-        color[ilocal[,'Ii']<(0.1) & ilocal[,'Ii']>=(-0.1)]='wheat'
-        color[ilocal[,'Ii']<(0.5) & ilocal[,'Ii']>=(0.1)]='salmon'
-        color[ilocal[,'Ii']>=0.5]='red3'
-        color[is.na(ilocal[,'Ii'])]='white'
-        #Define pch of points in map according to significance
-        pointch=vector('integer',nrow(ilocal))
-        pointch[ilocal[,'Pr(z > 0)']<=(0.05)]=19
-        pointch[ilocal[,'Pr(z > 0)']>(0.05)]=21
-        pointch[is.na(ilocal[,'Pr(z > 0)'])]=19
-        #Draw points
-        raster::plot(scattered_point$layout,col=color,pch=pointch,cex=1.2,bg='grey',add=TRUE)
-      }
-      
-      #Draw legend
-      if(exists('rasterName')){
-        #Raster legend
-        par(mar=c(2,1,3,2), xpd=NA)
-        #raster.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
-        raster.pal=terrain.colors( 100 )
-        
-        image(1, 1:100, t(seq_along(1:100)), col=raster.pal, axes=FALSE , xlab="", ylab="")
-        axis(4, at=(pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)]-min(raster_df[,varEnvName], na.rm=TRUE))/(max(raster_df[,varEnvName], na.rm=TRUE)-min(raster_df[,varEnvName], na.rm=TRUE))*100, label=pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)])
-        text(1,107,'Raster')
-      } else {
-        if(mapType[t]=='env'){
-          # Point legend
-          par(mar=c(2,1,3,2), xpd=NA)
-          image(1, 1:100, t(seq_along(1:100)), col=new.pal, axes=FALSE, xlab="", ylab="")
-          axis(4, at=(pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)]-min(envData@data[,varEnvName], na.rm=TRUE))/(max(envData@data[,varEnvName], na.rm=TRUE)-min(envData@data[,varEnvName], na.rm=TRUE))*100, label=pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)])
-          text(1,107,'Points')
-          plot.new()
-          next
+          dev.off()
         }
       }
-      if(mapType[t]=='popStr'){
-        # Point legend
-        #par(mar=c(2,1,3,2), xpd=NA)
-        if(length(popStrCol)>1){
-          points(rep(0,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),pch=19, col=terrain.colors(length(popStrCol)))
-          text(rep(0.1,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),popStrCol, pos=4)
-          text(1,-10,'Population')          
-        } else {
-          par(mar=c(2,1,3,2), xpd=NA)
-          pop.pal=colorRampPalette(c("white", "black"))( 100 )
-          image(1, 1:100, t(seq_along(1:100)), col=pop.pal, axes=FALSE , xlab="", ylab="")
-          axis(4, at=(pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)]-min(envData@data[,popStrCol], na.rm=TRUE))/(max(envData@data[,popStrCol], na.rm=TRUE)-min(envData@data[,popStrCol], na.rm=TRUE))*100, label=pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)])
-          text(1,107,'Poulation')
-        }
-
-      } else if(mapType[t]=='AS'){
-        # Point legend
-        #par(mar=c(2,1,3,2), xpd=NA)
-        plot.new()
-        points(rep(0,10),c(seq(from=1, by=-0.1, length.out=5),seq(from=0.4, by=-0.1, length.out=5)),pch=c(19,19,19,19,19,21,21,21,21,21), col=c('blue4','lightblue3','wheat','salmon','red3','blue4','lightblue3','wheat','salmon','red3'), bg='gray')
-        text(rep(0.1,10),c(seq(from=1, by=-0.1, length.out=5),seq(from=0.4, by=-0.1, length.out=5)),c('< -0.5','-0.5 - -0.1','-0.1 - 0.1','0.1 - 0.5','> 0.5'), pos=4)
-        text(0,1.1,'I (signif)', pos=4)
-        text(0, 0.5,'I (not signif)', pos=4)
-      } else if(mapType[t]=='marker'){
-        plot.new()
-        points(c(0,0),c(1,0.8),pch=19, col=c(colors()[5],colors()[24]))
-        text(c(0.1,0.1),c(1,0.8),c('Absent','Present'),pos=4)
-      }
-    #}
-    }  
+    }
   }
   
 }

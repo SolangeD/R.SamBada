@@ -6,7 +6,7 @@
 #' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)
 #' @param ldThresh double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering (if null no filtering on LD will be computed)
 #' @param mgfThresh double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations relie on gentoypes
-#' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (prepareGeno or sambada_parallel) has been already run in the R active session.
+#' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (\code{prepareGeno} or \code{sambadaParallel}) has been already run in the R active session.
 #' @param interactiveChecks logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for mafThresh, missingnessThresh, mgfThresh (optional, default value=FALSE)
 #' @return None
 #' @examples
@@ -243,11 +243,12 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
 #' @title Create env file from raster file(s) and/or glabal database present in the raster r package
 #' @description Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or glabal database present in the raster r package
 #' @author Solange Gaillard
-#' @param locationFileName !! char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file
+#' @param locationFileName char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file
 #' @param x char Name of the x (or longitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
-#' @param x char Name of the y (or latitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
+#' @param y char Name of the y (or latitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
+#' @param separator char The separator used to separate columns in your \code{locationFileName}
 #' @param locationProj integer Coordinate system EPSG code of the \code{locationFileName}. If \code{locationFileName} is already georeferenced, this argument will be skipped. Required if \code{locationFileName} extension is csv.
-#' @param rasterName char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory
+#' @param rasterName char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory. Can be set to null if worldclim or srtm are set to TRUE.
 #' @param rasterProj integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlyer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)
 #' @param directory logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rasterName} will be loaded
 #' @param worldclim logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
@@ -264,7 +265,7 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
 #' createEnv(locationFileName='MyFile.csv',x='Longitude',y='Latitude',locationProj=4326, 
 #'       worldclim=TRUE,interactiveChecks=FALSE)
 #' @export
-createEnv=function(locationFileName, x,y,locationProj, separator=',', rasterName, rasterProj,directory=FALSE, worldclim=TRUE, srtm=FALSE, interactiveChecks, verbose=TRUE){
+createEnv=function(locationFileName, x,y,locationProj, separator=',', rasterName, rasterProj=NULL,directory=FALSE, worldclim=TRUE, srtm=FALSE, interactiveChecks, verbose=TRUE){
   
   ### Load required library
   
@@ -635,7 +636,7 @@ createEnv=function(locationFileName, x,y,locationProj, separator=',', rasterName
 #' prepareEnv('myFile-env.csv',0.8,'Nom',' ', x='Longitude',y='Latitude', 
 #'      locationProj=4326, interactiveChecks = TRUE)
 #' @export
-prepareEnv=function(envFile, maxCorr, idName, separator=',',genoFile=NULL, numPc=NULL, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
+prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc=NULL, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
   #setwd("/home/lasigadmin/R/test2/src")
   #envFile='ADAPTmap2-env.csv'
   #separator=';'
@@ -865,7 +866,7 @@ prepareEnv=function(envFile, maxCorr, idName, separator=',',genoFile=NULL, numPc
     colnames(popvect2)=c('sampleid',paste0('pop',1:(numPc)))
     
     if(nrow(popvect_tot)!=nrow(pca$eigenvect)){
-      stop(paste0('All IDs in envFile and genoFile do not match. Found ',nrow(popvect2),' out of ',nrow(popvect),' indiv'))
+      stop(paste0('All IDs in envFile and genoFile do not match. Found ',nrow(pca$eigenvect),' match out of ',nrow(popvect_tot),' indiv'))
     }
     
 

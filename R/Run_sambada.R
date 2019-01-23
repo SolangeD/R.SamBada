@@ -31,9 +31,7 @@
 #'      dimMax=2, saveType='END ALL', populationVar='pop1')
 #' @export
 sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NULL, wordDelim=' ', saveType='END BEST 0.05', populationVar=NULL, spatial=NULL, autoCorr=NULL, shapeFile=NULL, outputFile=NULL, colSupEnv=NULL, colSupMark=NULL, subsetVarEnv=NULL, subsetVarMark=NULL, headers=TRUE, directory=NULL, keepAllFiles=FALSE){
-  #a faire
-  #documenter inputs spéciaux
-  #attention dans %dopar%, changer le nom du package
+
 
   ### Check inputs
   required_string=c('genoFile', 'envFile', 'idGeno', 'idEnv')
@@ -49,7 +47,9 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
   if(dimMax>2) warning('dimMax is >2. Are you sure this is what you want?')
   if(typeof(wordDelim)!='character') stop("wordDelim supposed to be a single character")
   if(nchar(wordDelim)!=1) stop("wordDelim supposed to be a single character")
-  if(typeof(directory)!='character') stop("directory supposed to be a character")
+  if(!is.null(directory)){
+    if(typeof(directory)!='character') stop("directory supposed to be a character")
+  }
 
   
   add_opt=c('saveType', 'spatial', 'autoCorr', 'shapeFile','outputFile', 'colSupEnv', 'colSupMark', 'subsetVarEnv', 'subsetVarMark')
