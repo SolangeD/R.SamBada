@@ -5,7 +5,7 @@
 \title{Manhattan plot}
 \usage{
 plotManhattan(preparedOutput, varEnv, valueName, chromo = "all",
-  saveType = NULL)
+  saveType = NULL, threshold = NULL)
 }
 \arguments{
 \item{preparedOutput}{char The prepared output list from prepare_output function}
@@ -17,6 +17,8 @@ plotManhattan(preparedOutput, varEnv, valueName, chromo = "all",
 \item{chromo}{char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)}
 
 \item{saveType}{char One of NULL, 'png' or 'pdf'. If NULL is set, the plot will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory with the name 'manhattan-' followed by varEnv.}
+
+\item{threshold}{double A digit number indicating a value to draw a threshold line}
 }
 \description{
 Plot the manhattan plot for a given environmental data

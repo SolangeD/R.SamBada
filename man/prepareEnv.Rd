@@ -5,7 +5,7 @@
 \title{Prepare environmental input}
 \usage{
 prepareEnv(envFile, maxCorr, idName, separator = " ", genoFile = NULL,
-  numPc = NULL, mafThresh = NULL, missingnessThresh = NULL,
+  numPc = 0.5, mafThresh = NULL, missingnessThresh = NULL,
   ldThresh = NULL, numPop = -1, clustMethod = "kmeans",
   includeCol = NULL, excludeCol = NULL, popStrCol = NULL, x, y,
   locationProj, interactiveChecks = FALSE, verbose = TRUE)
@@ -21,7 +21,7 @@ prepareEnv(envFile, maxCorr, idName, separator = " ", genoFile = NULL,
 
 \item{genoFile}{char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created}
 
-\item{numPc}{double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genoFile} is null}
+\item{numPc}{double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC (the program will find the first leap in the proportion of variance where the ratio (difference in variance between PC x and x+1)/(variance of PC x) is greater than NumPc. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genoFile} is null}
 
 \item{mafThresh}{double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)}
 
