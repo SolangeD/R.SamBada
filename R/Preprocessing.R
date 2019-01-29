@@ -114,7 +114,7 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
     snpSummary=SNPRelate::snpgdsSNPRateFreq(gds_obj, with.snp.id = TRUE)
     # Creates MAF histograms
     if(is.null(mafThresh)==FALSE){
-      hist(snpSummary$MinorFreq, breaks=100, xlab='Minor allele Frequency', main='Histogram of minor allele frequency') 
+      hist(snpSummary$MinorFreq, breaks=100, xlab='Minor allele Frequency', main='Histogram of minor allele frequency', xlim=c(0,max(mafThresh,max(snpSummary$MinorFreq)))) 
       abline(v=mafThresh,col="red")
       mafThresh2 = readline(prompt="Would you like to change your maf threshold? (press n if no, or enter a new threshold): ")
       if(grepl("[[:digit:]\\.-]",mafThresh2)){
@@ -124,7 +124,7 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
     }
     # Creates Missingness histograms
     if(is.null(missingnessThresh)==FALSE){
-      hist(snpSummary$MissingRate, breaks=100, xlab='Missingness',main='Histogram of missingness') 
+      hist(snpSummary$MissingRate, breaks=100, xlab='Missingness',main='Histogram of missingness', xlim=c(0,max(missingnessThresh,max(snpSummary$MissingRate)))) 
       abline(v=missingnessThresh,col="red")
       missingnessThresh2 = readline(prompt="Would you like to change your missingness threshold? (press n if no, or enter a new threshold): ")
       if(grepl("[[:digit:]\\.-]",missingnessThresh2)){
@@ -606,7 +606,7 @@ createEnv=function(locationFileName, x,y,locationProj, separator=',', rasterName
 #' @param idName char Name of the id in the environmental file matching the one of \code{genoFile}
 #' @param separator char If envFile is .csv, the separator character. If file created with create_env, separator is ' '
 #' @param genoFile char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created
-#' @param numPc double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genoFile} is null 
+#' @param numPc double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC (the program will find the first leap in the proportion of variance where the ratio (difference in variance between PC x and x+1)/(variance of PC x) is greater than NumPc. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genoFile} is null 
 #' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)
 #' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering when computing PCS(if null no filtering on missing rate will be computed)
 #' @param ldThresh double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering before computing the PCA (if null no filtereing on LD will be computed)
@@ -636,7 +636,7 @@ createEnv=function(locationFileName, x,y,locationProj, separator=',', rasterName
 #' prepareEnv('myFile-env.csv',0.8,'Nom',' ', x='Longitude',y='Latitude', 
 #'      locationProj=4326, interactiveChecks = TRUE)
 #' @export
-prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc=NULL, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
+prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc=0.5, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
   #setwd("/home/lasigadmin/R/test2/src")
   #envFile='ADAPTmap2-env.csv'
   #separator=';'
@@ -838,9 +838,9 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
     # Choose best number of PC if numPc<1
     varprop=pca$varprop[1:numvect]
     if(numPc<1){
-      DIFFPC = diff(c(0,varprop))
+      #DIFFPC = diff(c(0,varprop))
       #NbPCs: ad-hoc function seaking for the leap in the variance proportion
-      numPc=NbPCs(DIFFPC,numPc)
+      numPc=NbPCs2(varprop,numPc)
       if(numPc==length(varprop))stop('Leap in proportion of variance of PCA not found within the first 100 principal component')
     } 
     
@@ -1104,7 +1104,7 @@ extractVar = function(raster, locations){
 NbPCs = function(DIFFPC, cutoff=0.1) {
   
   co=1
-  while (((DIFFPC[co]-DIFFPC[co+1])/DIFFPC[co])>cutoff) {
+  while (abs((DIFFPC[co]-DIFFPC[co+1])/DIFFPC[co])>cutoff) {
     co=co+1
     if(co==length(DIFFPC)){
       break()
@@ -1113,6 +1113,22 @@ NbPCs = function(DIFFPC, cutoff=0.1) {
   
   print(paste0('Number of PC suggested for describing pop structure: ',co-1))
   return(co-1)
+  
+}
+
+#To choose the optimal number of populations
+NbPCs2 = function(PC, cutoff=0.5) {
+  
+  co=1
+  while (abs((PC[co+1]-PC[co])/PC[co+1])<cutoff) {
+    co=co+1
+    if(co==length(PC)){
+      return(0)
+    }
+  }
+  
+  #print(paste0('Number of PC suggested for describing pop structure: ',co-1))
+  return(co)
   
 }
 

@@ -503,10 +503,11 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 #' @param valueName char Name of the p- or q-value one wish to plot the manhattan on. This can be either pvalueG, pvalueW, qvalueG, qvalueW for G- or Waldscore respectively.
 #' @param chromo char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)
 #' @param saveType char One of NULL, 'png' or 'pdf'. If NULL is set, the plot will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory with the name 'manhattan-' followed by varEnv.
+#' @param threshold double A digit number indicating a value to draw a threshold line
 #' @examples
 #' manhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
 #' @export
-plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=NULL){
+plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=NULL, threshold=NULL){
   ### Checks
   #preparedOutput
   if(!('sambadaOutput' %in% names(preparedOutput))) stop('preparedOutput should have a component named samabadaOutput. Use the result of the function prepare_output')
@@ -557,6 +558,9 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
     } else {
       p <- p + ggplot2::scale_x_continuous(name ="Position")
     }
+    if(!is.null(threshold)){
+      p <- p + ggplot2::geom_hline(threshold, color='red', size)
+    }
     # Problem when serveral chromo and chromosomes not side by side
     if(!is.null(saveType)){
       if(saveType=='png'){
@@ -593,7 +597,7 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
 #' @param popStrCol char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available reprenting population structure.
 #' @param locationProj integer EPSG code of the geographical projection in the envFile
 #' @param markerName name of the marker to be plotter if \code{mapType} is 'marker' or 'AS'. \code{markerName} can be found in preparedOutput$sambadaOutput[,''] where preparedOutput would be the result of the function \code{prepareOutput}
-#' @param mapType char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (envrionmental variable distribution), 'popStr' (appartnance to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.
+#' @param mapType char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (envrionmental variable distribution), 'popStr' (population variable on continuous scale), 'popPieChart' (appartnance to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.
 #' @param varEnvName char Name of the environmental variable. If a raster of the variable is located in your working directory, you can provide \code{varEnvName} even for \code{mapType} such as 'marker' or 'AS'. The function will scan the folder of your working directory for raster with the same name as \code{varEnvName} (and commonly used extension for raster) and put it as background.
 #' @param SAMethod char If \code{mapType} contains 'AS', then you must specify the method for setting the weights of neighbours. Can be one of 'knn' (k-nearest neighbours) or 'distance' 
 #' @param SAMThreshold char If \code{mapType} contains 'AS' and \code{SAMethod} id 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)
@@ -664,7 +668,8 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       if(length(which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==substr(markerName[m], 1, nchar(markerName[m])-3)))==0) stop(paste0(markerName[m]," not found in gds"))
     }
   }
-  if(sum(mapType %in% c('marker','env','AS','popStr'))!=length(mapType)) stop("mapType should be one, or several of, 'marker','env','AS','popStr'")
+  if(sum(mapType %in% c('marker','env','AS','popStr', 'popPieChart'))!=length(mapType)) stop("mapType should be one, or several of, 'marker','env','AS','popStr', 'popPieChart'")
+  if(('popPieChart' %in% mapType) & (length(popStrCol)<2)) stop('popStrCol should have a length >= 2 if mapType is popPieChart')
   if(typeof(varEnvName)!='character') stop('varEnvName argument should be a character')
   if(!is.null(SAMethod)) if(!(SAMethod %in% c('knn','distance'))) stop('SAMethod should be one of knn or distance')
   if(!is.null(SAThreshold)) if(typeof(SAThreshold)!='double') stop ('SAThreshold should be numeric')
@@ -775,15 +780,12 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
           new.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
           raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,varEnvName]-min(envData@data[,varEnvName]))/(max(envData@data[,varEnvName])-min(envData@data[,varEnvName]))*100)],pch=20,add=TRUE)
         } else if(mapType[t]=='popStr' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
-          if(length(popStrCol)>1){
-            for(i in 1:nrow(scattered_point$layout)){ 
-              mapplots::add.pie(z=as.double(abs(1/envData@data[i,popStrCol])),x=scattered_point$layout@coords[i,'x'], scattered_point$layout@coords[i,'y'], labels=NA, col=terrain.colors(3), radius=size*2)
-            }
-          } else {
             new.pal=colorRampPalette(c("white","black"))( 100 )
             raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,popStrCol]-min(envData@data[,popStrCol]))/(max(envData@data[,popStrCol])-min(envData@data[,popStrCol]))*100)],pch=16,add=TRUE)
+        } else if(mapType[t]=='popPieChart' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
+          for(i in 1:nrow(scattered_point$layout)){ 
+            mapplots::add.pie(z=as.double(abs(1/envData@data[i,popStrCol])),x=scattered_point$layout@coords[i,'x'], scattered_point$layout@coords[i,'y'], labels=NA, col=terrain.colors(3), radius=size*2)
           }
-        
         } else if(mapType[t]=='AS'){
           ### autocorrelation
           #Calculate autocorrelation
@@ -835,21 +837,18 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
             next
           }
         }
-        if(mapType[t]=='popStr'){
+        if(mapType[t]=='popPieChart'){
           # Point legend
           #par(mar=c(2,1,3,2), xpd=NA)
-          if(length(popStrCol)>1){
             points(rep(0,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),pch=19, col=terrain.colors(length(popStrCol)))
             text(rep(0.1,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),popStrCol, pos=4)
             text(1,-10,'Population')          
-          } else {
-            par(mar=c(2,1,3,2), xpd=NA)
-            pop.pal=colorRampPalette(c("white", "black"))( 100 )
-            image(1, 1:100, t(seq_along(1:100)), col=pop.pal, axes=FALSE , xlab="", ylab="")
-            axis(4, at=(pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)]-min(envData@data[,popStrCol], na.rm=TRUE))/(max(envData@data[,popStrCol], na.rm=TRUE)-min(envData@data[,popStrCol], na.rm=TRUE))*100, label=pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)])
-            text(1,107,'Poulation')
-          }
-  
+        } else if(mapType[t]=='popStr'){
+          par(mar=c(2,1,3,2), xpd=NA)
+          pop.pal=colorRampPalette(c("white", "black"))( 100 )
+          image(1, 1:100, t(seq_along(1:100)), col=pop.pal, axes=FALSE , xlab="", ylab="")
+          axis(4, at=(pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)]-min(envData@data[,popStrCol], na.rm=TRUE))/(max(envData@data[,popStrCol], na.rm=TRUE)-min(envData@data[,popStrCol], na.rm=TRUE))*100, label=pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)])
+          text(1,107,'Poulation')
         } else if(mapType[t]=='AS'){
           # Point legend
           #par(mar=c(2,1,3,2), xpd=NA)
