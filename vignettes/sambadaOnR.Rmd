@@ -4,7 +4,7 @@ author: "Solange Gaillard, Sylvie Stucki, Oliver Selmoni, Elia Vajana"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_document
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{sambadaOnR}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
