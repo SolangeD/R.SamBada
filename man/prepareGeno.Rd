@@ -22,6 +22,8 @@ prepareGeno(fileName, mafThresh = NULL, missingnessThresh = NULL,
 \item{directory}{char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (\code{prepareGeno} or \code{sambadaParallel}) has been already run in the R active session.}
 
 \item{interactiveChecks}{logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for mafThresh, missingnessThresh, mgfThresh (optional, default value=FALSE)}
+
+\item{verbose}{logical Turn on verbose mode}
 }
 \value{
 None
@@ -30,6 +32,7 @@ None
 Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options. The output file has the same name as the input file but with a .csv extension
 }
 \examples{
+\dontrun{
 #With ped input file
 prepareGeno('myPlinkFile.ped',mafThresh=0.05, missingnessThresh=0.05,
      mgfThresh=0.8,interactiveChecks=TRUE)
@@ -37,6 +40,7 @@ prepareGeno('myPlinkFile.ped',mafThresh=0.05, missingnessThresh=0.05,
 #With gds input file
 prepareGeno('myGDSFile.gds',mafThresh=0.05, missingnessThresh=0.05,
      mgfThresh=0.8,interactiveChecks=FALSE)
+}
 }
 \author{
 Solange Gaillard, Oliver Selmoni

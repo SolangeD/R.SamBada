@@ -29,13 +29,13 @@ plotMap(envFile, x, y, locationProj, popStrCol, gdsFile, markerName,
 
 \item{SAMethod}{char If \code{mapType} contains 'AS', then you must specify the method for setting the weights of neighbours. Can be one of 'knn' (k-nearest neighbours) or 'distance'}
 
+\item{SAThreshold}{char If \code{mapType} contains 'AS' and \code{SAMethod} id 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)}
+
 \item{saveType}{char One of NULL, 'png' or 'pdf'. If NULL is set, the maps will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory.}
 
 \item{rasterName}{char If a raster file with the environmental variable distribution exists with a different name than \code{varEnvName}, provide it here (including extension)}
 
 \item{simultaneous}{boolean If TRUE and \code{mapType} contains several kinds of maps, all maps corresponding to the same marker will be plotted on the same window. The resulting maps can be very small.}
-
-\item{SAMThreshold}{char If \code{mapType} contains 'AS' and \code{SAMethod} id 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)}
 }
 \value{
 None
@@ -44,6 +44,7 @@ None
 Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
 }
 \examples{
+\dontrun{
 # Map of marker
 plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
      gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
@@ -53,6 +54,7 @@ plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop
 plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
      gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
      mapType=c('marker', 'popStr'), varEnvName='bio1', simultaneous=TRUE)
+}
 }
 \author{
 Solange Gaillard

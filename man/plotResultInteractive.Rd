@@ -6,7 +6,7 @@
 \usage{
 plotResultInteractive(preparedOutput, varEnv, envFile, species = NULL,
   pass = NULL, x = NULL, y = NULL, valueName = "pvalueG",
-  chromo = "all", gdsFile = NULL, IDCol = NULL, popstrCol = NULL)
+  chromo = "all", gdsFile = NULL, IDCol = NULL, popStrCol = NULL)
 }
 \arguments{
 \item{preparedOutput}{char The prepared output list from prepare_output function}
@@ -40,7 +40,9 @@ None
 Plots the manhattan plot for a given environmental variable. The plot is interactive and a map of the distribution of the marker can be retrieved as well as nearby genes listed in Ensembl.
 }
 \examples{
+\dontrun{
 plotResultInteractive('myFile','chircus',1,'Longitude','Latitude','bio1',c('1','2'))
+}
 }
 \author{
 Solange Gaillard

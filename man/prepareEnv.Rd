@@ -56,6 +56,7 @@ None
 Writes a new environmental file that sambada can work with after having removed too correlated variables. Also calculates population structure from a PCA in SNPRelate and add it at the end of the environmental file
 }
 \examples{
+\dontrun{
 #Calculating PCA-based population structure
 prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
      mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
@@ -69,6 +70,7 @@ prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2,
 #Without calculating population structure.
 prepareEnv('myFile-env.csv',0.8,'Nom',' ', x='Longitude',y='Latitude', 
      locationProj=4326, interactiveChecks = TRUE)
+}
 }
 \author{
 Solange Gaillard, Oliver Selmoni

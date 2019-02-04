@@ -51,19 +51,19 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, dimMax = 1,
 \item{directory}{char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (prepareGeno or sambadaParallel) has been already run in the R active session.}
 
 \item{keepAllFiles}{logical If TRUE, all parameter files and splitted genofile and log-files are not removed. Default FALSE}
-
-\item{All}{additional parameters in samBada: see documentation. In case you have to specify several words, you can either specify them in one string and separate them with a space or add a vector string}
 }
 \description{
-Read sambadas input file to retrieve necessary information (num indiv etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. See sambada's documentation for more information.
+Read sambadas input file to retrieve necessary information (num indiv etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
 }
 \examples{
+\dontrun{
 #With all default parameter
 sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID')
 
 #With population structure
-sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID'
+sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID',
      dimMax=2, saveType='END ALL', populationVar='pop1')
+}
 }
 \author{
 Solange Gaillard, Sylvie Stucki

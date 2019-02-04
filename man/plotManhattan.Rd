@@ -24,7 +24,9 @@ plotManhattan(preparedOutput, varEnv, valueName, chromo = "all",
 Plot the manhattan plot for a given environmental data
 }
 \examples{
-manhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
+\dontrun{
+plotManhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
+}
 }
 \author{
 Solange Gaillard

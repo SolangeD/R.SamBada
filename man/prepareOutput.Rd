@@ -21,11 +21,13 @@ prepareOutput(sambadaname, dimMax, gdsFile = NULL, popStr = FALSE,
 \item{interactiveChecks}{logical}
 }
 \value{
-a list containing a) $sambadaOutput a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) chrSNPNum The total number of SNPs in each chromosme c) $chrMaxPos The highest position found in each chromosome
+a list containing a) $sambadaOutput a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) $chrSNPNum The total number of SNPs in each chromosme c) $chrMaxPos The highest position found in each chromosome
 }
 \description{
 Read sambada's output and prepare it by retrieving the snp position and chromosome (usefull for plotting manhattan)
 }
 \examples{
+\dontrun{
 prepare_output('myFile',1)
+}
 }

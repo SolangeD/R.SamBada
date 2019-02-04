@@ -4,9 +4,9 @@
 \alias{createEnv}
 \title{Create env file from raster file(s) and/or glabal database present in the raster r package}
 \usage{
-createEnv(locationFileName, x, y, locationProj, separator = ",",
-  rasterName, rasterProj = NULL, directory = FALSE, worldclim = TRUE,
-  srtm = FALSE, interactiveChecks, verbose = TRUE)
+createEnv(locationFileName, x = NULL, y = NULL, locationProj = NULL,
+  separator = ",", rasterName, rasterProj = NULL, directory = FALSE,
+  worldclim = TRUE, srtm = FALSE, interactiveChecks, verbose = TRUE)
 }
 \arguments{
 \item{locationFileName}{char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file}
@@ -40,6 +40,7 @@ None
 Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or glabal database present in the raster r package
 }
 \examples{
+\dontrun{
 #Own raster + worldclim download
 createEnv(rasterName=c('prec.tif','tmin.sdat'),locationFileName='MyFile.shp',
       rasterProj=c(4326,21781), worldclim=TRUE,interactiveChecks=TRUE)
@@ -47,6 +48,7 @@ createEnv(rasterName=c('prec.tif','tmin.sdat'),locationFileName='MyFile.shp',
 #Worldclim download only
 createEnv(locationFileName='MyFile.csv',x='Longitude',y='Latitude',locationProj=4326, 
       worldclim=TRUE,interactiveChecks=FALSE)
+}
 }
 \author{
 Solange Gaillard
