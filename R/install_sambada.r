@@ -3,7 +3,9 @@
 #' @author Solange Gaillard
 #' @param directory character The directory where sambada should be downloaded. If null, downloads in a (new) folder named sambada in the active directory.
 #' @examples
+#' \dontrun{
 #' downloadSamada('D:/Sambada')
+#' }
 #' @export
 downloadSambada = function(directory = NULL){
   if(is.null(directory)){

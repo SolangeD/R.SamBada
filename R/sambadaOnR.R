@@ -26,7 +26,11 @@
 #'\item{\code{\link{plotMap}}: create a map of marker, population structure or environmental variable distribution}
 #'}
 #'
+#' @importFrom grDevices colorRampPalette colors dev.off dev.size pdf png terrain.colors
+#' @importFrom graphics abline axis barplot boxplot hist image layout lines par plot plot.new points text
+#' @importFrom stats aggregate complete.cases cor cutree hclust kmeans na.exclude pchisq splinefun
+#' @importFrom utils data read.csv read.table write.table
+#'
 #' @docType package
 #' @name sambadaOnR-package
-#' @alias sambadaOnR-package
 NULL

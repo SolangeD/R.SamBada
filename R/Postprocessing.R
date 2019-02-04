@@ -6,9 +6,11 @@
 #' @param popStr logical Indicates whether sambada was run using the POPSTRVAR parameter (i.e. population structure was taken into account). Default false
 #' @param nrows integer Specifies the number of line to read from the input file. Useful if saveType END ALL was used in sambada and that the number of models run is large so that the reading and processing is too slow. The saveType END parameter ensures that most significant models are located at the top of the file.
 #' @param interactiveChecks logical
-#' @return a list containing a) $sambadaOutput a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) chrSNPNum The total number of SNPs in each chromosme c) $chrMaxPos The highest position found in each chromosome
+#' @return a list containing a) $sambadaOutput a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) $chrSNPNum The total number of SNPs in each chromosme c) $chrMaxPos The highest position found in each chromosome
 #' @examples
+#' \dontrun{
 #' prepare_output('myFile',1)
+#' }
 #' @export
 prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=NULL, interactiveChecks=TRUE){
   
@@ -157,9 +159,11 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 #' @param popStrCol char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available reprenting population structure.
 #' @return None 
 #' @examples
+#' \dontrun{
 #' plotResultInteractive('myFile','chircus',1,'Longitude','Latitude','bio1',c('1','2'))
+#' }
 #' @export
-plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, pass=NULL,x=NULL,y=NULL,  valueName='pvalueG',chromo='all',gdsFile=NULL, IDCol=NULL, popstrCol=NULL){
+plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, pass=NULL,x=NULL,y=NULL,  valueName='pvalueG',chromo='all',gdsFile=NULL, IDCol=NULL, popStrCol=NULL){
 
   ### Checks
   #preparedOutput
@@ -184,7 +188,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   }
   if(!(varEnv %in% names(envDataTest)))stop('varEnv-argument should be part of the header of the envFile')
   if(!(IDCol %in% names(envDataTest)))stop('IDCol-argument should be part of the header of the envFile')
-  if(sum(popstrCol %in% names(envDataTest))!=length(popstrCol))stop('All elements of popstrCol-argument should be part of the header of the envFile')
+  if(sum(popStrCol %in% names(envDataTest))!=length(popStrCol))stop('All elements of popStrCol-argument should be part of the header of the envFile')
   #valueName
   if(!(valueName %in% names(preparedOutput$sambadaOutput)))stop('valueName should be a component of preparedOutput$sambadaOutput. Use the result of the function prepare_output as preparedOutput')
   #chromo
@@ -252,6 +256,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   prevPos=data.frame(prevPos, "chrPos"=rownames(prevPos))
   subset=merge(subset,prevPos,by='chr', sort=FALSE, all.x=TRUE)
   subset$color=colors()[as.integer(as.character(subset$chrPos))%%2+6] 
+  subset$xcoord=subset$pos+subset$maxPos
 
   #Define layout of webpage
   ui <- shiny::shinyUI(shiny::fluidPage(
@@ -292,7 +297,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   server <- function(input, output, session) {
     #Prepare manhattan
     rhg_cols=c("#CCCC99","#999966")
-    p <- ggplot2::ggplot(data=subset, ggplot2::aes(x=maxPos+pos, y=pval, colour=color, label=snp, text=pos), showlegend=FALSE) 
+    p <- ggplot2::ggplot(data=subset, ggplot2::aes_string(x='xcoord', y='pval', colour='color', label='snp', text='pos'), showlegend=FALSE) 
     p <- p + ggplot2::geom_point(size=1)
     p <- p + ggplot2::theme(legend.position="none")
     p <- p + ggplot2::scale_color_manual(values=c("#8B8378", "#CDC0B0"))
@@ -423,7 +428,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           x=envData[,x]
           y=envData[,y]
           varenv=envData[,varEnv]
-          popCol=envData[,popstrCol]
+          popCol=envData[,popStrCol]
           ID=envData[,IDCol]
           # Get marker and snp
           selectSNP=subset[which(subset$pos+subset$maxPos==g$x),'snp']
@@ -449,14 +454,14 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           graph <- plotly::add_trace(graph,data=xy, x=x,y=y, type='scatter',mode='markers', color=pres, marker=list(showscale=FALSE), name='marker', colors=pal1, text=ID,hoverinfo = c("color"))
           graph <- plotly::hide_colorbar(graph)  
           graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers', x=~x,y=~y, name='varenv', marker=list(color=~varenv,colorscale = 'YlOrRd', showscale=TRUE, colorbar=list(len=0.3, title='varenv',y=1)))
-          if(length(popstrCol)==1){
+          if(length(popStrCol)==1){
             graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name='pop1', marker=list(color=~popCol,colorscale = 'Greens', showscale=TRUE, colorbar=list(len=0.3, title='pops', y=0.7)))
           } else {  
-            minpop=min(xy[,popstrCol])
-            maxpop=max(xy[,popstrCol])
-            graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name='pop1', marker=list(color=~get(popstrCol[1]),colorscale = 'Greens', cmin=minpop, cmax=maxpop, showscale=TRUE, colorbar=list(len=0.2, title='pops', y=0.75)))
-            for(p in 2:length(popstrCol)){
-              graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name=paste0('pop',p), marker=list(color=~get(popstrCol[p]),colorscale = 'Greens',cmin=minpop, cmax=maxpop,  showscale=FALSE))
+            minpop=min(xy[,popStrCol])
+            maxpop=max(xy[,popStrCol])
+            graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name='pop1', marker=list(color=~get(popStrCol[1]),colorscale = 'Greens', cmin=minpop, cmax=maxpop, showscale=TRUE, colorbar=list(len=0.2, title='pops', y=0.75)))
+            for(p in 2:length(popStrCol)){
+              graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name=paste0('pop',p), marker=list(color=~get(popStrCol[p]),colorscale = 'Greens',cmin=minpop, cmax=maxpop,  showscale=FALSE))
             }
           }
           graph
@@ -471,7 +476,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           #plotly::plot_ly(type='scatter', mode='markers')
         } else{
           varenv=envData[,varEnv]
-          popCol=envData[,popstrCol]
+          popCol=envData[,popStrCol]
           # Get marker and snp
           selectSNP=subset[which(subset$pos+subset$maxPos==g$x),'snp']
           selectSNP=selectSNP[1]
@@ -486,7 +491,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
       })
       
       session$onSessionEnded(function() {
-        stopApp()
+        shiny::stopApp()
         SNPRelate::snpgdsClose(gds_obj)
       })
   }
@@ -505,7 +510,9 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 #' @param saveType char One of NULL, 'png' or 'pdf'. If NULL is set, the plot will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory with the name 'manhattan-' followed by varEnv.
 #' @param threshold double A digit number indicating a value to draw a threshold line
 #' @examples
-#' manhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
+#' \dontrun{
+#' plotManhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
+#' }
 #' @export
 plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=NULL, threshold=NULL){
   ### Checks
@@ -541,11 +548,12 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
     prevPos=data.frame("chr"=chrMaxPos$Group.1, "maxPos"=cumsum(as.numeric(chrMaxPos$x))-chrMaxPos$x)
     prevPos=data.frame(prevPos, "chrPos"=rownames(prevPos))
     subset=merge(subset,prevPos,by='chr', sort=FALSE, all.x=TRUE)
-    subset$color=colors()[as.integer(as.character(subset$chrPos))%%2+6] 
+    subset$color=colors()[as.integer(as.character(subset$chrPos))%%2+6]
+    subset$xcoord=subset$maxPos+subset$pos
     
     #Prepare manhattan
     rhg_cols=c("#CCCC99","#999966")
-    p <- ggplot2::ggplot(data=subset, ggplot2::aes(x=maxPos+pos, y=pval, colour=color, label=snp, text=pos), showlegend=FALSE) 
+    p <- ggplot2::ggplot(data=subset, ggplot2::aes_string(x='xcoord', y='pval', colour='color', label='snp', text='pos'), showlegend=FALSE) 
     p <- p + ggplot2::geom_point(size=1)
     p <- p + ggplot2::theme(legend.position="none")
     p <- p + ggplot2::scale_color_manual(values=c("#8B8378", "#CDC0B0"))
@@ -600,12 +608,13 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
 #' @param mapType char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (envrionmental variable distribution), 'popStr' (population variable on continuous scale), 'popPieChart' (appartnance to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.
 #' @param varEnvName char Name of the environmental variable. If a raster of the variable is located in your working directory, you can provide \code{varEnvName} even for \code{mapType} such as 'marker' or 'AS'. The function will scan the folder of your working directory for raster with the same name as \code{varEnvName} (and commonly used extension for raster) and put it as background.
 #' @param SAMethod char If \code{mapType} contains 'AS', then you must specify the method for setting the weights of neighbours. Can be one of 'knn' (k-nearest neighbours) or 'distance' 
-#' @param SAMThreshold char If \code{mapType} contains 'AS' and \code{SAMethod} id 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)
+#' @param SAThreshold char If \code{mapType} contains 'AS' and \code{SAMethod} id 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)
 #' @param saveType char One of NULL, 'png' or 'pdf'. If NULL is set, the maps will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory.
 #' @param rasterName char If a raster file with the environmental variable distribution exists with a different name than \code{varEnvName}, provide it here (including extension)
 #' @param simultaneous boolean If TRUE and \code{mapType} contains several kinds of maps, all maps corresponding to the same marker will be plotted on the same window. The resulting maps can be very small.
 #' @return None 
 #' @examples
+#' \dontrun{
 #' # Map of marker
 #' plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
 #'      gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
@@ -615,6 +624,7 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
 #' plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
 #'      gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
 #'      mapType=c('marker', 'popStr'), varEnvName='bio1', simultaneous=TRUE)
+#' }
 #' @export
 plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName, mapType, varEnvName, SAMethod=NULL, SAThreshold=NULL, saveType=NULL, rasterName=NULL, simultaneous=FALSE){
 
@@ -764,7 +774,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
         }else {
           #If raster not found, put countries as background
           country=data('wrld_simpl', package='maptools')
-          raster::plot(wrld_simpl,xlim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])),ylim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])))
+          raster::plot(country,xlim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])),ylim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])))
         }
         
         #Draw lines between original location and scattered one (if not scattered, the lines will be masked by the points)
@@ -790,15 +800,16 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
           ### autocorrelation
           #Calculate autocorrelation
           #knearneigh, dnearneigh
-          if(method=='knn'){
+          if(SAMethod=='knn'){
             knn=spdep::knearneigh(envData,5)
             nb=spdep::knn2nb(knn)
-          } else if (method=='distance'){
+          } else if (SAMethod=='distance'){
             nb=spdep::dnearneigh(envData,0,20)
           }
           nblist=spdep::nb2listw(nb, zero.policy=TRUE) 
           #iglobal=spdep::moran.test(as.vector(pres),nblist, na.action=na.omit)
           ilocal=spdep::localmoran(as.vector(pres),nblist, zero.policy=TRUE,na.action=na.exclude)
+          ilocalPval=spdep::moran.mc(as.vector(pres),nblist, zero.policy=TRUE,na.action=na.exclude)
           #Define color for map
           color=vector('character',nrow(ilocal))
           color[ilocal[,'Ii']<(-0.5)]='blue4'
@@ -809,9 +820,12 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
           color[is.na(ilocal[,'Ii'])]='white'
           #Define pch of points in map according to significance
           pointch=vector('integer',nrow(ilocal))
-          pointch[ilocal[,'Pr(z > 0)']<=(0.05)]=19
-          pointch[ilocal[,'Pr(z > 0)']>(0.05)]=21
-          pointch[is.na(ilocal[,'Pr(z > 0)'])]=19
+          # pointch[ilocal[,'Pr(z > 0)']<=(0.05)]=19
+          # pointch[ilocal[,'Pr(z > 0)']>(0.05)]=21
+          # pointch[is.na(ilocal[,'Pr(z > 0)'])]=19
+          pointch[ilocalPval[,'p.value']<=(0.05)]=19
+          pointch[ilocalPval[,'p.value']>(0.05)]=21
+          pointch[is.na(ilocalPval[,'p.value'])]=19
           #Draw points
           raster::plot(scattered_point$layout,col=color,pch=pointch,cex=1.2,bg='grey',add=TRUE)
         }
@@ -824,14 +838,14 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
           raster.pal=terrain.colors( 100 )
           
           image(1, 1:100, t(seq_along(1:100)), col=raster.pal, axes=FALSE , xlab="", ylab="")
-          axis(4, at=(pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)]-min(raster_df[,varEnvName], na.rm=TRUE))/(max(raster_df[,varEnvName], na.rm=TRUE)-min(raster_df[,varEnvName], na.rm=TRUE))*100, label=pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)])
+          axis(4, at=(pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)]-min(raster_df[,varEnvName], na.rm=TRUE))/(max(raster_df[,varEnvName], na.rm=TRUE)-min(raster_df[,varEnvName], na.rm=TRUE))*100, labels=pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)])
           text(1,107,'Raster')
         } else {
           if(mapType[t]=='env'){
             # Point legend
             par(mar=c(2,1,3,2), xpd=NA)
             image(1, 1:100, t(seq_along(1:100)), col=new.pal, axes=FALSE, xlab="", ylab="")
-            axis(4, at=(pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)]-min(envData@data[,varEnvName], na.rm=TRUE))/(max(envData@data[,varEnvName], na.rm=TRUE)-min(envData@data[,varEnvName], na.rm=TRUE))*100, label=pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)])
+            axis(4, at=(pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)]-min(envData@data[,varEnvName], na.rm=TRUE))/(max(envData@data[,varEnvName], na.rm=TRUE)-min(envData@data[,varEnvName], na.rm=TRUE))*100, labels=pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)])
             text(1,107,'Points')
             plot.new()
             next
@@ -847,7 +861,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
           par(mar=c(2,1,3,2), xpd=NA)
           pop.pal=colorRampPalette(c("white", "black"))( 100 )
           image(1, 1:100, t(seq_along(1:100)), col=pop.pal, axes=FALSE , xlab="", ylab="")
-          axis(4, at=(pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)]-min(envData@data[,popStrCol], na.rm=TRUE))/(max(envData@data[,popStrCol], na.rm=TRUE)-min(envData@data[,popStrCol], na.rm=TRUE))*100, label=pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)])
+          axis(4, at=(pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)]-min(envData@data[,popStrCol], na.rm=TRUE))/(max(envData@data[,popStrCol], na.rm=TRUE)-min(envData@data[,popStrCol], na.rm=TRUE))*100, labels=pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)])
           text(1,107,'Poulation')
         } else if(mapType[t]=='AS'){
           # Point legend

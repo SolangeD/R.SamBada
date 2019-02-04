@@ -8,8 +8,10 @@
 #' @param mgfThresh double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations relie on gentoypes
 #' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (\code{prepareGeno} or \code{sambadaParallel}) has been already run in the R active session.
 #' @param interactiveChecks logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for mafThresh, missingnessThresh, mgfThresh (optional, default value=FALSE)
+#' @param verbose logical Turn on verbose mode
 #' @return None
 #' @examples
+#' \dontrun{
 #' #With ped input file
 #' prepareGeno('myPlinkFile.ped',mafThresh=0.05, missingnessThresh=0.05,
 #'      mgfThresh=0.8,interactiveChecks=TRUE)
@@ -17,6 +19,7 @@
 #' #With gds input file
 #' prepareGeno('myGDSFile.gds',mafThresh=0.05, missingnessThresh=0.05,
 #'      mgfThresh=0.8,interactiveChecks=FALSE)
+#' }
 #' @export
 prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NULL,mgfThresh=NULL, directory=NULL, interactiveChecks=FALSE, verbose=FALSE){
 
@@ -257,6 +260,7 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
 #' @param verbose logical If TRUE, indication on process will be shown
 #' @return None 
 #' @examples
+#' \dontrun{
 #' #Own raster + worldclim download
 #' createEnv(rasterName=c('prec.tif','tmin.sdat'),locationFileName='MyFile.shp',
 #'       rasterProj=c(4326,21781), worldclim=TRUE,interactiveChecks=TRUE)
@@ -264,8 +268,9 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
 #' #Worldclim download only
 #' createEnv(locationFileName='MyFile.csv',x='Longitude',y='Latitude',locationProj=4326, 
 #'       worldclim=TRUE,interactiveChecks=FALSE)
+#' }
 #' @export
-createEnv=function(locationFileName, x,y,locationProj, separator=',', rasterName, rasterProj=NULL,directory=FALSE, worldclim=TRUE, srtm=FALSE, interactiveChecks, verbose=TRUE){
+createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=',', rasterName, rasterProj=NULL,directory=FALSE, worldclim=TRUE, srtm=FALSE, interactiveChecks, verbose=TRUE){
   
   ### Load required library
   
@@ -622,6 +627,7 @@ createEnv=function(locationFileName, x,y,locationProj, separator=',', rasterName
 #' @param verbose boolean If true show information about progress of the process
 #' @return None
 #' @examples
+#' \dontrun{
 #' #Calculating PCA-based population structure
 #' prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
 #'      mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
@@ -635,6 +641,7 @@ createEnv=function(locationFileName, x,y,locationProj, separator=',', rasterName
 #' #Without calculating population structure.
 #' prepareEnv('myFile-env.csv',0.8,'Nom',' ', x='Longitude',y='Latitude', 
 #'      locationProj=4326, interactiveChecks = TRUE)
+#' }
 #' @export
 prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc=0.5, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
   #setwd("/home/lasigadmin/R/test2/src")

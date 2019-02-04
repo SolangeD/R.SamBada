@@ -1,5 +1,5 @@
 #' @title Run sambada on parallel cores
-#' @description Read sambadas input file to retrieve necessary information (num indiv etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. See sambada's documentation for more information.
+#' @description Read sambadas input file to retrieve necessary information (num indiv etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
 #' @author Solange Gaillard, Sylvie Stucki
 #' @param genoFile The name of the file in the current directory of genetic information, complient with samBada's format (use prepareGeno to transform it)
 #' @param envFile  The name of the file in the current directory of environmental information (use \code{link{createEnv}} to create it and \code{link{prepareEnv}} to reduce the correlated dataset and check order)
@@ -19,16 +19,17 @@
 #' @param subsetVarEnv char or vector of char Name(s) of the column(s) in the environmental data to be included in the analysis while the other columns are set as inactive. Default NULL 
 #' @param subsetVarMark char or vector of char Name(s) of the column(s) in the molecular data to be included in the analysis while the other columns are set as inactive. Default NULL 
 #' @param headers logical Presence or absence of variable names in input files Default TRUE
-#' @param All additional parameters in samBada: see documentation. In case you have to specify several words, you can either specify them in one string and separate them with a space or add a vector string
 #' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (prepareGeno or sambadaParallel) has been already run in the R active session.
 #' @param keepAllFiles logical If TRUE, all parameter files and splitted genofile and log-files are not removed. Default FALSE
 #' @examples
+#' \dontrun{
 #' #With all default parameter
 #' sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID')
 #' 
 #' #With population structure
-#' sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID'
+#' sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID',
 #'      dimMax=2, saveType='END ALL', populationVar='pop1')
+#' }
 #' @export
 sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NULL, wordDelim=' ', saveType='END BEST 0.05', populationVar=NULL, spatial=NULL, autoCorr=NULL, shapeFile=NULL, outputFile=NULL, colSupEnv=NULL, colSupMark=NULL, subsetVarEnv=NULL, subsetVarMark=NULL, headers=TRUE, directory=NULL, keepAllFiles=FALSE){
 
@@ -117,7 +118,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
       stop("Package \"foreach\" needed for this function to work. Please install it.", call. = FALSE)
     }
   }
-  library('doParallel')
+  requireNamespace('doParallel')
   
   ### Open genofile to count number of mark and indiv
   print("Setting up parameter file for Supervision") 
@@ -260,7 +261,8 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
     print("Number of cores used: 1, running sambada without splitting marker file")
     paramFile=paste0(genoFileShort,'-param.txt') #name of paramFile: genoFile (without -recode and without .csv) + -param.txt
     write_sambada_parameter(paramFile, params, 'sambada')
-    sambada(paramFile, envFile, genoFile)
+    system(paste('sambada',paramFile, envFile, genoFile))
+    #sambada(paramFile, envFile, genoFile)
     return(NA)
   }
   
@@ -307,15 +309,15 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
   cl = parallel::makeCluster(cores)
   doParallel::registerDoParallel(cl)
   #Close cluster on exit
-  on.exit(tryCatch({ stopCluster(cl)}, error=function(e){})) #If already closed, do nothing
+  on.exit(tryCatch({ parallel::stopCluster(cl)}, error=function(e){})) #If already closed, do nothing
   
   ### Run sambada on parallel 
   # use foreach function
   ##finalMatrix = foreach(i=0:(cores-1), .combine=cbind, .packages='test2') %dopar% {tempMatrix = sambada(paste0(genoFileShort,'_param',i,'.txt'),envFile,paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
-  finalMatrix = foreach(i=0:(cores-1), .combine=cbind, .packages='sambadaOnR') %dopar% {tempMatrix = system(paste0('sambada ',genoFileShort,'_param',i,'.txt ',envFile,' ',genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
+  finalMatrix = foreach::foreach(i=0:(cores-1), .combine=cbind, .packages='sambadaOnR') %dopar% {tempMatrix = system(paste0('sambada ',genoFileShort,'_param',i,'.txt ',envFile,' ',genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
   
   #Close cluser
-  stopCluster(cl)
+  parallel::stopCluster(cl)
   
   #Supervision merge
   print("Running supervision to merge the files")
