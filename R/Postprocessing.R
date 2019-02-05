@@ -567,7 +567,7 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
       p <- p + ggplot2::scale_x_continuous(name ="Position")
     }
     if(!is.null(threshold)){
-      p <- p + ggplot2::geom_hline(threshold, color='red', size)
+      p <- p + ggplot2::geom_hline(threshold, color='red')
     }
     # Problem when serveral chromo and chromosomes not side by side
     if(!is.null(saveType)){
@@ -608,7 +608,7 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
 #' @param mapType char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (envrionmental variable distribution), 'popStr' (population variable on continuous scale), 'popPieChart' (appartnance to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.
 #' @param varEnvName char Name of the environmental variable. If a raster of the variable is located in your working directory, you can provide \code{varEnvName} even for \code{mapType} such as 'marker' or 'AS'. The function will scan the folder of your working directory for raster with the same name as \code{varEnvName} (and commonly used extension for raster) and put it as background.
 #' @param SAMethod char If \code{mapType} contains 'AS', then you must specify the method for setting the weights of neighbours. Can be one of 'knn' (k-nearest neighbours) or 'distance' 
-#' @param SAThreshold char If \code{mapType} contains 'AS' and \code{SAMethod} id 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)
+#' @param SAThreshold char If \code{mapType} contains 'AS' and \code{SAMethod} is 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)
 #' @param saveType char One of NULL, 'png' or 'pdf'. If NULL is set, the maps will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory.
 #' @param rasterName char If a raster file with the environmental variable distribution exists with a different name than \code{varEnvName}, provide it here (including extension)
 #' @param simultaneous boolean If TRUE and \code{mapType} contains several kinds of maps, all maps corresponding to the same marker will be plotted on the same window. The resulting maps can be very small.
@@ -686,7 +686,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
   if('AS' %in% mapType & is.null(SAMethod)) stop('SAMethod must be not null if mapType include AS')
   if('AS' %in% mapType & is.null(SAThreshold)) stop('SAThreshold must be not null if mapType include AS')
   if('AS' %in% mapType) if(SAMethod=='knn' & SAThreshold%%1!=0) stop ("SAThreshold should be an integer if SAMethod is 'knn'")
-  if(!is.null(saveType)) if(saveType %in% c('png','pdf')) stop("saveType should be one of NULL,'png','pdf'")
+  if(!is.null(saveType)) if(!(saveType %in% c('png','pdf'))) stop("saveType should be one of NULL,'png','pdf'")
   if(!is.null(rasterName)) if(typeof(rasterName)!='character') stop('rasterName argument should be a character')
   if(!is.null(rasterName)) if(!file.exists(rasterName)) stop('rasterName file not found')
   
@@ -725,7 +725,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
     #Get Marker info
     if('marker' %in%  mapType | 'AS' %in% mapType ){
       #Open gds File
-      pres=genoToMarker(gds_obj, markerName)
+      pres=genoToMarker(gds_obj, markerName[m])
       
     }
     #Try to find corresponding raster
@@ -734,18 +734,24 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
     if(exists('rasterName')) {
       rm(rasterName)
     }
-    if(regexpr('bio',varEnvName[m])>0){
-      if(file.exists(paste0('wc0.5/',varEnvName[m],'.tif'))){
-        rasterName=paste0('wc0.5/',varEnvName[m],'.tif')
+    if(length(varEnvName)>1){
+      varEnvName2=varEnvName[m]
+    } else {
+      varEnvName2=varEnvName
+    }
+    
+    if(regexpr('bio',varEnvName2)>0){
+      if(file.exists(paste0('wc0.5/',varEnvName2,'.tif'))){
+        rasterName=paste0('wc0.5/',varEnvName2,'.tif')
       }
-    } else if (regexpr('bio',varEnvName[m])>0) {
-      if(file.exists(paste0('srtm/',varEnvName[m],'.tif'))){
-        rasterName=paste0('srtm/',varEnvName[m],'.tif')
+    } else if (regexpr('bio',varEnvName2)>0) {
+      if(file.exists(paste0('srtm/',varEnvName2,'.tif'))){
+        rasterName=paste0('srtm/',varEnvName2,'.tif')
       }
     } else {
       for(aE in 1:length(allowedExtension))
-        if(file.exists(paste0(varEnvName[m],'.',allowedExtension(aE)))){
-          rasterName=paste0(varEnvName[m],'.',allowedExtension(aE))
+        if(file.exists(paste0(varEnvName2,'.',allowedExtension(aE)))){
+          rasterName=paste0(varEnvName2,'.',allowedExtension(aE))
           break
         }
     }
@@ -757,148 +763,151 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
     }
     
     for(t in 1:length(mapType)){
-      if((mapType[t] %in% c('marker','AS')) | (simultaneous==FALSE & m==1) | simultaneous==TRUE) {
-        if(saveType=='pdf'){
-          grDevices::pdf(paste0(mapType[t],'.pdf'))
-        } else if (saveType=='png'){
-          grDevices::png(paste0(mapType[t],'.png'))
-        }
-        par(mar=c(2,2,2,2), xpd=FALSE)
-        #if(t==1){
-        #Draw background
-        if(exists('rasterName')){
-          #If raster found, put it as background
-          #Attention mettre les coordonnées de scattered point ou envData???
-          raster::image(raster, asp=1, maxpixels=10000000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
-          
-        }else {
-          #If raster not found, put countries as background
-          country=data('wrld_simpl', package='maptools')
-          raster::plot(country,xlim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])),ylim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])))
-        }
+      # if((mapType[t] %in% c('marker','AS')) | (simultaneous==TRUE & m==1) | simultaneous==FALSE) {
+      #   if(!is.null(saveType)){
+      #     if(saveType=='pdf'){
+      #       grDevices::pdf(paste0(mapType[t],'_map.pdf'))
+      #     } else if (saveType=='png'){
+      #       grDevices::png(paste0(mapType[t],'_map.png'))
+      #     }
+      #   }
+      # }
+      par(mar=c(2,2,2,2), xpd=FALSE)
+      #if(t==1){
+      #Draw background
+      if(exists('rasterName')){
+        #If raster found, put it as background
+        #Attention mettre les coordonnées de scattered point ou envData???
+        raster::image(raster, asp=1, maxpixels=10000000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
         
-        #Draw lines between original location and scattered one (if not scattered, the lines will be masked by the points)
-        for(i in 1:nrow(envData)){
-          lines(c(envData@coords[i,x],scattered_point$layout@coords[i,'x']),c(envData@coords[i,y],scattered_point$layout@coords[i,'y']), col='antiquewhite3')
+      }else {
+        #If raster not found, put countries as background
+        country=data('wrld_simpl', package='maptools')
+        raster::plot(country,xlim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])),ylim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])))
+      }
+      
+      #Draw lines between original location and scattered one (if not scattered, the lines will be masked by the points)
+      for(i in 1:nrow(envData)){
+        lines(c(envData@coords[i,x],scattered_point$layout@coords[i,'x']),c(envData@coords[i,y],scattered_point$layout@coords[i,'y']), col='antiquewhite3')
+      }
+      
+      #Draw points
+      if(mapType[t]=='marker'){
+        raster::plot(scattered_point$layout,col=colors()[pres*19+5],pch=16,add=TRUE)
+      } else if(mapType[t]=='env' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
+        #Define color palette
+        new.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
+        raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,varEnvName]-min(envData@data[,varEnvName]))/(max(envData@data[,varEnvName])-min(envData@data[,varEnvName]))*100)],pch=20,add=TRUE)
+      } else if(mapType[t]=='popStr' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
+          new.pal=colorRampPalette(c("white","black"))( 100 )
+          raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,popStrCol]-min(envData@data[,popStrCol]))/(max(envData@data[,popStrCol])-min(envData@data[,popStrCol]))*100)],pch=16,add=TRUE)
+      } else if(mapType[t]=='popPieChart' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
+        for(i in 1:nrow(scattered_point$layout)){ 
+          mapplots::add.pie(z=as.double(abs(1/envData@data[i,popStrCol])),x=scattered_point$layout@coords[i,'x'], scattered_point$layout@coords[i,'y'], labels=NA, col=terrain.colors(3), radius=size*2)
         }
-        
+      } else if(mapType[t]=='AS'){
+        ### autocorrelation
+        #Calculate autocorrelation
+        #knearneigh, dnearneigh
+        if(SAMethod=='knn'){
+          knn=spdep::knearneigh(envData,5)
+          nb=spdep::knn2nb(knn)
+        } else if (SAMethod=='distance'){
+          nb=spdep::dnearneigh(envData,0,20)
+        }
+        nblist=spdep::nb2listw(nb, zero.policy=TRUE) 
+        #iglobal=spdep::moran.test(as.vector(pres),nblist, na.action=na.omit)
+        ilocal=spdep::localmoran(as.vector(pres+1),nblist, zero.policy=TRUE,na.action=na.exclude)
+        #ilocalPval=spdep::moran.mc(as.vector(pres),nblist, nSim, zero.policy=TRUE,na.action=na.exclude)
+        #Define color for map
+        color=vector('character',nrow(ilocal))
+        color[ilocal[,'Ii']<(-0.5)]='blue4'
+        color[ilocal[,'Ii']<(-0.1) & ilocal[,'Ii']>=(-0.5)]='lightblue3'
+        color[ilocal[,'Ii']<(0.1) & ilocal[,'Ii']>=(-0.1)]='wheat'
+        color[ilocal[,'Ii']<(0.5) & ilocal[,'Ii']>=(0.1)]='salmon'
+        color[ilocal[,'Ii']>=0.5]='red3'
+        color[is.na(ilocal[,'Ii'])]='white'
+        #Define pch of points in map according to significance
+        pointch=vector('integer',nrow(ilocal))
+        pointch[ilocal[,'Pr(z > 0)']<=(0.05)]=19
+        pointch[ilocal[,'Pr(z > 0)']>(0.05)]=21
+        pointch[is.na(ilocal[,'Pr(z > 0)'])]=19
+        # pointch[ilocalPval$p.value<=(0.05)]=19
+        # pointch[ilocalPval$p.value>(0.05)]=21
+        # pointch[is.na(ilocalPval$p.value)]=19
         #Draw points
-        if(mapType[t]=='marker'){
-          raster::plot(scattered_point$layout,col=colors()[pres*19+5],pch=16,add=TRUE)
-        } else if(mapType[t]=='env' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
-          #Define color palette
-          new.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
-          raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,varEnvName]-min(envData@data[,varEnvName]))/(max(envData@data[,varEnvName])-min(envData@data[,varEnvName]))*100)],pch=20,add=TRUE)
-        } else if(mapType[t]=='popStr' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
-            new.pal=colorRampPalette(c("white","black"))( 100 )
-            raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,popStrCol]-min(envData@data[,popStrCol]))/(max(envData@data[,popStrCol])-min(envData@data[,popStrCol]))*100)],pch=16,add=TRUE)
-        } else if(mapType[t]=='popPieChart' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
-          for(i in 1:nrow(scattered_point$layout)){ 
-            mapplots::add.pie(z=as.double(abs(1/envData@data[i,popStrCol])),x=scattered_point$layout@coords[i,'x'], scattered_point$layout@coords[i,'y'], labels=NA, col=terrain.colors(3), radius=size*2)
-          }
-        } else if(mapType[t]=='AS'){
-          ### autocorrelation
-          #Calculate autocorrelation
-          #knearneigh, dnearneigh
-          if(SAMethod=='knn'){
-            knn=spdep::knearneigh(envData,5)
-            nb=spdep::knn2nb(knn)
-          } else if (SAMethod=='distance'){
-            nb=spdep::dnearneigh(envData,0,20)
-          }
-          nblist=spdep::nb2listw(nb, zero.policy=TRUE) 
-          #iglobal=spdep::moran.test(as.vector(pres),nblist, na.action=na.omit)
-          ilocal=spdep::localmoran(as.vector(pres),nblist, zero.policy=TRUE,na.action=na.exclude)
-          ilocalPval=spdep::moran.mc(as.vector(pres),nblist, zero.policy=TRUE,na.action=na.exclude)
-          #Define color for map
-          color=vector('character',nrow(ilocal))
-          color[ilocal[,'Ii']<(-0.5)]='blue4'
-          color[ilocal[,'Ii']<(-0.1) & ilocal[,'Ii']>=(-0.5)]='lightblue3'
-          color[ilocal[,'Ii']<(0.1) & ilocal[,'Ii']>=(-0.1)]='wheat'
-          color[ilocal[,'Ii']<(0.5) & ilocal[,'Ii']>=(0.1)]='salmon'
-          color[ilocal[,'Ii']>=0.5]='red3'
-          color[is.na(ilocal[,'Ii'])]='white'
-          #Define pch of points in map according to significance
-          pointch=vector('integer',nrow(ilocal))
-          # pointch[ilocal[,'Pr(z > 0)']<=(0.05)]=19
-          # pointch[ilocal[,'Pr(z > 0)']>(0.05)]=21
-          # pointch[is.na(ilocal[,'Pr(z > 0)'])]=19
-          pointch[ilocalPval[,'p.value']<=(0.05)]=19
-          pointch[ilocalPval[,'p.value']>(0.05)]=21
-          pointch[is.na(ilocalPval[,'p.value'])]=19
-          #Draw points
-          raster::plot(scattered_point$layout,col=color,pch=pointch,cex=1.2,bg='grey',add=TRUE)
-        }
+        raster::plot(scattered_point$layout,col=color,pch=pointch,cex=1.2,bg='grey',add=TRUE)
+      }
+      
+      #Draw legend
+      if(exists('rasterName')){
+        #Raster legend
+        par(mar=c(2,1,3,2), xpd=NA)
+        #raster.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
+        raster.pal=terrain.colors( 100 )
         
-        #Draw legend
-        if(exists('rasterName')){
-          #Raster legend
-          par(mar=c(2,1,3,2), xpd=NA)
-          #raster.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
-          raster.pal=terrain.colors( 100 )
-          
-          image(1, 1:100, t(seq_along(1:100)), col=raster.pal, axes=FALSE , xlab="", ylab="")
-          axis(4, at=(pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)]-min(raster_df[,varEnvName], na.rm=TRUE))/(max(raster_df[,varEnvName], na.rm=TRUE)-min(raster_df[,varEnvName], na.rm=TRUE))*100, labels=pretty(raster_df[,varEnvName])[2:(length(pretty(raster_df[,varEnvName]))-1)])
-          text(1,107,'Raster')
-        } else {
-          if(mapType[t]=='env'){
-            # Point legend
-            par(mar=c(2,1,3,2), xpd=NA)
-            image(1, 1:100, t(seq_along(1:100)), col=new.pal, axes=FALSE, xlab="", ylab="")
-            axis(4, at=(pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)]-min(envData@data[,varEnvName], na.rm=TRUE))/(max(envData@data[,varEnvName], na.rm=TRUE)-min(envData@data[,varEnvName], na.rm=TRUE))*100, labels=pretty(envData@data[,varEnvName])[2:(length(pretty(envData@data[,varEnvName]))-1)])
-            text(1,107,'Points')
-            plot.new()
-            next
-          }
-        }
-        if(mapType[t]=='popPieChart'){
+        image(1, 1:100, t(seq_along(1:100)), col=raster.pal, axes=FALSE , xlab="", ylab="")
+        axis(4, at=(pretty(raster_df[,varEnvName2])[2:(length(pretty(raster_df[,varEnvName2]))-1)]-min(raster_df[,varEnvName2], na.rm=TRUE))/(max(raster_df[,varEnvName2], na.rm=TRUE)-min(raster_df[,varEnvName2], na.rm=TRUE))*100, labels=pretty(raster_df[,varEnvName2])[2:(length(pretty(raster_df[,varEnvName2]))-1)])
+        text(1,107,'Raster')
+      } else {
+        if(mapType[t]=='env'){
           # Point legend
-          #par(mar=c(2,1,3,2), xpd=NA)
-            points(rep(0,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),pch=19, col=terrain.colors(length(popStrCol)))
-            text(rep(0.1,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),popStrCol, pos=4)
-            text(1,-10,'Population')          
-        } else if(mapType[t]=='popStr'){
           par(mar=c(2,1,3,2), xpd=NA)
-          pop.pal=colorRampPalette(c("white", "black"))( 100 )
-          image(1, 1:100, t(seq_along(1:100)), col=pop.pal, axes=FALSE , xlab="", ylab="")
-          axis(4, at=(pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)]-min(envData@data[,popStrCol], na.rm=TRUE))/(max(envData@data[,popStrCol], na.rm=TRUE)-min(envData@data[,popStrCol], na.rm=TRUE))*100, labels=pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)])
-          text(1,107,'Poulation')
-        } else if(mapType[t]=='AS'){
-          # Point legend
-          #par(mar=c(2,1,3,2), xpd=NA)
+          image(1, 1:100, t(seq_along(1:100)), col=new.pal, axes=FALSE, xlab="", ylab="")
+          axis(4, at=(pretty(envData@data[,varEnvName2])[2:(length(pretty(envData@data[,varEnvName2]))-1)]-min(envData@data[,varEnvName2], na.rm=TRUE))/(max(envData@data[,varEnvName2], na.rm=TRUE)-min(envData@data[,varEnvName2], na.rm=TRUE))*100, labels=pretty(envData@data[,varEnvName2])[2:(length(pretty(envData@data[,varEnvName2]))-1)])
+          text(1,107,'Points')
           plot.new()
-          points(rep(0,10),c(seq(from=1, by=-0.1, length.out=5),seq(from=0.4, by=-0.1, length.out=5)),pch=c(19,19,19,19,19,21,21,21,21,21), col=c('blue4','lightblue3','wheat','salmon','red3','blue4','lightblue3','wheat','salmon','red3'), bg='gray')
-          text(rep(0.1,10),c(seq(from=1, by=-0.1, length.out=5),seq(from=0.4, by=-0.1, length.out=5)),c('< -0.5','-0.5 - -0.1','-0.1 - 0.1','0.1 - 0.5','> 0.5'), pos=4)
-          text(0,1.1,'I (signif)', pos=4)
-          text(0, 0.5,'I (not signif)', pos=4)
-        } else if(mapType[t]=='marker'){
-          plot.new()
-          points(c(0,0),c(1,0.8),pch=19, col=c(colors()[5],colors()[24]))
-          text(c(0.1,0.1),c(1,0.8),c('Absent','Present'),pos=4)
-        }
-      #}
-        if(simultaneous==FALSE & t<length(mapType)){
-          if(is.null(saveType)){
-            continue = readline(prompt="Would you like to continue? (press x to exit, any other letter to continue): ")
-            if(continue=='x'){
-              return(NA)
-            } 
-          } else {
-            dev.off()
-          }
+          next
         }
       }
-      if(m<length(markerName)){
-        if(is.null(saveType)){
-          continue = readline(prompt="Would you like to continue? (press x to exit, any other letter to continue): ")
-          if(continue=='x'){
-            return(NA)
-          }
-        } else {
-          dev.off()
+      if(mapType[t]=='popPieChart'){
+        # Point legend
+        #par(mar=c(2,1,3,2), xpd=NA)
+          points(rep(0,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),pch=19, col=terrain.colors(length(popStrCol)))
+          text(rep(0.1,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),popStrCol, pos=4)
+          text(1,-10,'Population')          
+      } else if(mapType[t]=='popStr'){
+        par(mar=c(2,1,3,2), xpd=NA)
+        pop.pal=colorRampPalette(c("white", "black"))( 100 )
+        image(1, 1:100, t(seq_along(1:100)), col=pop.pal, axes=FALSE , xlab="", ylab="")
+        axis(4, at=(pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)]-min(envData@data[,popStrCol], na.rm=TRUE))/(max(envData@data[,popStrCol], na.rm=TRUE)-min(envData@data[,popStrCol], na.rm=TRUE))*100, labels=pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)])
+        text(1,107,'Poulation')
+      } else if(mapType[t]=='AS'){
+        # Point legend
+        #par(mar=c(2,1,3,2), xpd=NA)
+        plot.new()
+        points(rep(0,10),c(seq(from=1, by=-0.1, length.out=5),seq(from=0.4, by=-0.1, length.out=5)),pch=c(19,19,19,19,19,21,21,21,21,21), col=c('blue4','lightblue3','wheat','salmon','red3','blue4','lightblue3','wheat','salmon','red3'), bg='gray')
+        text(rep(0.1,10),c(seq(from=1, by=-0.1, length.out=5),seq(from=0.4, by=-0.1, length.out=5)),c('< -0.5','-0.5 - -0.1','-0.1 - 0.1','0.1 - 0.5','> 0.5'), pos=4)
+        text(0,1.1,'I (signif)', pos=4)
+        text(0, 0.5,'I (not signif)', pos=4)
+      } else if(mapType[t]=='marker'){
+        plot.new()
+        points(c(0,0),c(1,0.8),pch=19, col=c(colors()[5],colors()[24]))
+        text(c(0.1,0.1),c(1,0.8),c('Absent','Present'),pos=4)
+      }
+    #}
+      if(simultaneous==FALSE & is.null(saveType) & t<length(mapType)){
+        continue = readline(prompt="Would you like to continue? (press x to exit, any other letter to continue): ")
+        if(continue=='x'){
+          return(NA)
+        } 
+      } else if (simultaneous==FALSE & !is.null(saveType)){
+        dev.copy(get(saveType), paste0(mapType[t],m,'_map.',saveType))  
+        dev.off()
+      }
+      
+      if(m<length(markerName) & is.null(saveType)){
+        continue = readline(prompt="Would you like to continue? (press x to exit, any other letter to continue): ")
+        if(continue=='x'){
+          return(NA)
         }
       }
     }
+    if(simultaneous==TRUE & !is.null(saveType)){
+      dev.copy(get(saveType), paste0(mapType[t],m,'_map.',saveType))  
+      dev.off()        
+    }
+    
   }
   
 }
