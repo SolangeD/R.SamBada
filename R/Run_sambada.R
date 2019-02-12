@@ -239,6 +239,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
   params["NUMMARK"]=nummark
   params["NUMINDIV"]=numIndiv
   params["IDINDIV"]=paste(idEnv, idGeno)
+  params["STOREY"]=""
   
   add_opt=c('dimMax', 'saveType', 'populationVar', 'spatial', 'autoCorr', 'shapeFile','outputFile', 'colSupEnv', 'colSupMark', 'subsetVarEnv', 'subsetVarMark')
   for(i in 1:length(add_opt)){
@@ -308,6 +309,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
   print("Running sambada on parallel cores")
   cl = parallel::makeCluster(cores)
   doParallel::registerDoParallel(cl)
+  `%dopar%` <- foreach::`%dopar%`
   #Close cluster on exit
   on.exit(tryCatch({ parallel::stopCluster(cl)}, error=function(e){})) #If already closed, do nothing
   
@@ -328,17 +330,17 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
 
   for(i in 0:(cores-1)){
     #add up histograms
-    ##fileStorey=paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'-storey.csv')
-    ##storey=read.table(fileStorey)
+    fileStorey=paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'-storey.csv')
+    storey=read.table(fileStorey)
     if(i==0){
-      ##storeyTot=storey
+      storeyTot=storey
     } else {
-      ##storeyTot=rbind(storeyTot[1:2,2:ncol(storeyTot)],storeyTot[3:6,2:ncol(storeyTot)]+storey[3:6,2:ncol(storeyTot)])
-      ##storeyTot=cbind(storey[,1],storeyTot)
+      storeyTot=rbind(storeyTot[1:2,2:ncol(storeyTot)],storeyTot[3:6,2:ncol(storeyTot)]+storey[3:6,2:ncol(storeyTot)])
+      storeyTot=cbind(storey[,1],storeyTot)
     }
     if(keepAllFiles==FALSE){
       #Cleaning supervisions mess
-      ##file.remove(fileStorey)
+      file.remove(fileStorey)
       file.remove(paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))
       file.remove(paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'-log.csv'))
       file.remove(paste0(genoFileShort,'_param',i,'.txt'))
@@ -351,7 +353,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
   if(keepAllFiles==FALSE){
     file.remove(paste0(genoFileShort,'_paramSupervision.txt'))
   }
-  ##write.table(storeyTot, paste0(genoFileShort,'-storey.csv'), row.names=FALSE, col.names=FALSE)
+  write.table(storeyTot, paste0(genoFileShort,'-storey.csv'), row.names=FALSE, col.names=FALSE)
   
   for(dim in 0:dimMax){
     file.rename(paste0(genoFileShort,'-res-',dim,'.csv'), paste0(genoFileShort,'-Out-',dim,'.csv'))

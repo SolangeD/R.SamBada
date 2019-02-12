@@ -683,6 +683,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
   if(typeof(varEnvName)!='character') stop('varEnvName argument should be a character')
   if(!is.null(SAMethod)) if(!(SAMethod %in% c('knn','distance'))) stop('SAMethod should be one of knn or distance')
   if(!is.null(SAThreshold)) if(typeof(SAThreshold)!='double') stop ('SAThreshold should be numeric')
+  if(('AS' %in% mapType | 'marker' %in% mapType) & is.null(markerName)) stop('markerName cannot be null if mapType is "AS" or "marker"')
   if('AS' %in% mapType & is.null(SAMethod)) stop('SAMethod must be not null if mapType include AS')
   if('AS' %in% mapType & is.null(SAThreshold)) stop('SAThreshold must be not null if mapType include AS')
   if('AS' %in% mapType) if(SAMethod=='knn' & SAThreshold%%1!=0) stop ("SAThreshold should be an integer if SAMethod is 'knn'")
@@ -697,9 +698,23 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
   sp::proj4string(envData)=sp::CRS(paste0("+init=epsg:",locationProj))
   
   #Define layout
-  if(length(mapType)>1 & simultaneous==TRUE){
-    numrow=2*length(mapType)
-    matrixLayout=rep(c(1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,3),length(mapType))+rep(seq(from=0, by=3, length=length(mapType)),each=20)
+  numSimPlot=0 #number of simultaneous plots
+  if('marker' %in% mapType) numSimPlot=numSimPlot+1
+  if('AS' %in% mapType) numSimPlot=numSimPlot+1
+  if('env' %in% mapType) numSimPlot=numSimPlot+1
+  if('popStr' %in% mapType) numSimPlot=numSimPlot+length(popStrCol)
+  if('popPieChart' %in% mapType) numSimPlot=numSimPlot+1
+  #Define the order in which plots should appear
+  allMapType=c('marker','AS','env','popStr','popPieChart')
+  mapTypeb=allMapType[allMapType %in% mapType]
+  if('popStr' %in% mapTypeb){
+    mapTypeb=c(mapTypeb, rep('popStr',length(popStrCol)-1))
+  }
+  mapType2=rep(mapTypeb, max(1,length(markerName)))
+  
+  if(numSimPlot>1 & simultaneous==TRUE){
+    numrow=2*numSimPlot
+    matrixLayout=rep(c(1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,3),numSimPlot)+rep(seq(from=0, by=3, length=numSimPlot),each=20)
   } else {
     numrow=2
     matrixLayout=c(1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,3)
@@ -721,64 +736,79 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
 
   
   #Draw plots
-  for(m in 1:length(markerName)){ #Problem if null (ex want to draw pop )
-    #Get Marker info
-    if('marker' %in%  mapType | 'AS' %in% mapType ){
-      #Open gds File
-      pres=genoToMarker(gds_obj, markerName[m])
+  numMark=0
+  numEnv=0
+  numPopCol=0
+  for(t in 1:length(mapType2)){
+    if(mapType2[t]=='marker' | (mapType2[t]=='AS' & mapType2[max(1,t-1)]!='marker')){
+      numMark=numMark+1
+    } else if(mapType2[t]=='env'){
+      numEnv=numEnv+1
+    } else if(mapType2[t]=='popStr'){
+      if(numPopCol==length(popStrCol)){
+        numPopCol=0
+      }
+      numPopCol=numPopCol+1
+    } 
+    numEnv=max(numEnv, numMark)
+    
+    if(simultaneous==TRUE & !is.null(saveType)){ #####!!!!!!!!!!!!!!!!!!!!!!!!!############
+      if('marker' %in% mapType2 | 'AS' %in% mapType2){
+        mapName=paste0(markerName[numMark],'_map.',saveType)
+      } else if ('env' %in% mapType2){
+        mapName=paste0(varEnvName[numEnv],'_map.',saveType)
+      } else {
+        mapName=paste0('popStr_map.',saveType)
+      }
+      
+    } else if (simultaneous==FALSE & !is.null(saveType)){
       
     }
-    #Try to find corresponding raster
-    if(m>1)
-    allowedExtension=c('bil','tif')
-    if(exists('rasterName')) {
-      rm(rasterName)
-    }
-    if(length(varEnvName)>1){
-      varEnvName2=varEnvName[m]
-    } else {
-      varEnvName2=varEnvName
-    }
-    
-    if(regexpr('bio',varEnvName2)>0){
-      if(file.exists(paste0('wc0.5/',varEnvName2,'.tif'))){
-        rasterName=paste0('wc0.5/',varEnvName2,'.tif')
+    #for(m in 1:loopNum){
+      #Get Marker info
+      if('marker' %in%  mapType | 'AS' %in% mapType ){
+        #Open gds File
+        pres=genoToMarker(gds_obj, markerName[numMark])
       }
-    } else if (regexpr('bio',varEnvName2)>0) {
-      if(file.exists(paste0('srtm/',varEnvName2,'.tif'))){
-        rasterName=paste0('srtm/',varEnvName2,'.tif')
+      #Try to find corresponding raster
+      allowedExtension=c('bil','tif')
+      if(exists('rasterName')) {
+        rm(rasterName)
       }
-    } else {
-      for(aE in 1:length(allowedExtension))
-        if(file.exists(paste0(varEnvName2,'.',allowedExtension(aE)))){
-          rasterName=paste0(varEnvName2,'.',allowedExtension(aE))
-          break
+      if(length(varEnvName)>1){
+        varEnvName2=varEnvName[numEnv]
+      } else {
+        varEnvName2=varEnvName
+      }
+      
+      if(regexpr('bio',varEnvName2)>0){
+        if(file.exists(paste0('wc0.5/',varEnvName2,'.tif'))){
+          rasterName=paste0('wc0.5/',varEnvName2,'.tif')
         }
-    }
-    #Open raster
-    if(exists('rasterName')){
-      raster=raster::raster(rasterName)
-      #Get real raster data
-      raster_df=as.data.frame(raster::sampleRegular(raster, size=1e5, asRaster=FALSE), xy=TRUE)
-    }
-    
-    for(t in 1:length(mapType)){
-      # if((mapType[t] %in% c('marker','AS')) | (simultaneous==TRUE & m==1) | simultaneous==FALSE) {
-      #   if(!is.null(saveType)){
-      #     if(saveType=='pdf'){
-      #       grDevices::pdf(paste0(mapType[t],'_map.pdf'))
-      #     } else if (saveType=='png'){
-      #       grDevices::png(paste0(mapType[t],'_map.png'))
-      #     }
-      #   }
-      # }
+      } else if (regexpr('bio',varEnvName2)>0) {
+        if(file.exists(paste0('srtm/',varEnvName2,'.tif'))){
+          rasterName=paste0('srtm/',varEnvName2,'.tif')
+        }
+      } else {
+        for(aE in 1:length(allowedExtension))
+          if(file.exists(paste0(varEnvName2,'.',allowedExtension(aE)))){
+            rasterName=paste0(varEnvName2,'.',allowedExtension(aE))
+            break
+          }
+      }
+      #Open raster
+      if(exists('rasterName')){
+        raster=raster::raster(rasterName)
+        #Get real raster data
+        raster_df=as.data.frame(raster::sampleRegular(raster, size=1e5, asRaster=FALSE), xy=TRUE)
+      }
+      
       par(mar=c(2,2,2,2), xpd=FALSE)
-      #if(t==1){
       #Draw background
       if(exists('rasterName')){
         #If raster found, put it as background
         #Attention mettre les coordonnées de scattered point ou envData???
-        raster::image(raster, asp=1, maxpixels=10000000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
+        raster::image(raster, asp=1, maxpixels=1000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
         
       }else {
         #If raster not found, put countries as background
@@ -792,20 +822,20 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       }
       
       #Draw points
-      if(mapType[t]=='marker'){
+      if(mapType2[t]=='marker'){
         raster::plot(scattered_point$layout,col=colors()[pres*19+5],pch=16,add=TRUE)
-      } else if(mapType[t]=='env' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
+      } else if(mapType2[t]=='env'){
         #Define color palette
         new.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
         raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,varEnvName]-min(envData@data[,varEnvName]))/(max(envData@data[,varEnvName])-min(envData@data[,varEnvName]))*100)],pch=20,add=TRUE)
-      } else if(mapType[t]=='popStr' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
+      } else if(mapType2[t]=='popStr'){
           new.pal=colorRampPalette(c("white","black"))( 100 )
-          raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,popStrCol]-min(envData@data[,popStrCol]))/(max(envData@data[,popStrCol])-min(envData@data[,popStrCol]))*100)],pch=16,add=TRUE)
-      } else if(mapType[t]=='popPieChart' & ((simultaneous==FALSE & m==1) | simultaneous==TRUE) ){
+          raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,popStrCol[numPopCol]]-min(envData@data[,popStrCol[numPopCol]]))/(max(envData@data[,popStrCol[numPopCol]])-min(envData@data[,popStrCol[numPopCol]]))*100)],pch=16,add=TRUE)
+      } else if(mapType2[t]=='popPieChart'){
         for(i in 1:nrow(scattered_point$layout)){ 
           mapplots::add.pie(z=as.double(abs(1/envData@data[i,popStrCol])),x=scattered_point$layout@coords[i,'x'], scattered_point$layout@coords[i,'y'], labels=NA, col=terrain.colors(3), radius=size*2)
         }
-      } else if(mapType[t]=='AS'){
+      } else if(mapType2[t]=='AS'){
         ### autocorrelation
         #Calculate autocorrelation
         #knearneigh, dnearneigh
@@ -848,7 +878,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
         
         image(1, 1:100, t(seq_along(1:100)), col=raster.pal, axes=FALSE , xlab="", ylab="")
         axis(4, at=(pretty(raster_df[,varEnvName2])[2:(length(pretty(raster_df[,varEnvName2]))-1)]-min(raster_df[,varEnvName2], na.rm=TRUE))/(max(raster_df[,varEnvName2], na.rm=TRUE)-min(raster_df[,varEnvName2], na.rm=TRUE))*100, labels=pretty(raster_df[,varEnvName2])[2:(length(pretty(raster_df[,varEnvName2]))-1)])
-        text(1,107,'Raster')
+        text(1,107,varEnvName2)
       } else {
         if(mapType[t]=='env'){
           # Point legend
@@ -860,19 +890,19 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
           next
         }
       }
-      if(mapType[t]=='popPieChart'){
+      if(mapType2[t]=='popPieChart'){
         # Point legend
         #par(mar=c(2,1,3,2), xpd=NA)
           points(rep(0,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),pch=19, col=terrain.colors(length(popStrCol)))
           text(rep(0.1,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),popStrCol, pos=4)
           text(1,-10,'Population')          
-      } else if(mapType[t]=='popStr'){
+      } else if(mapType2[t]=='popStr'){
         par(mar=c(2,1,3,2), xpd=NA)
         pop.pal=colorRampPalette(c("white", "black"))( 100 )
         image(1, 1:100, t(seq_along(1:100)), col=pop.pal, axes=FALSE , xlab="", ylab="")
-        axis(4, at=(pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)]-min(envData@data[,popStrCol], na.rm=TRUE))/(max(envData@data[,popStrCol], na.rm=TRUE)-min(envData@data[,popStrCol], na.rm=TRUE))*100, labels=pretty(envData@data[,popStrCol])[2:(length(pretty(envData@data[,popStrCol]))-1)])
+        axis(4, at=(pretty(envData@data[,popStrCol[numPopCol]])[2:(length(pretty(envData@data[,popStrCol[numPopCol]]))-1)]-min(envData@data[,popStrCol[numPopCol]], na.rm=TRUE))/(max(envData@data[,popStrCol[numPopCol]], na.rm=TRUE)-min(envData@data[,popStrCol[numPopCol]], na.rm=TRUE))*100, labels=pretty(envData@data[,popStrCol[numPopCol]])[2:(length(pretty(envData@data[,popStrCol[numPopCol]]))-1)])
         text(1,107,'Poulation')
-      } else if(mapType[t]=='AS'){
+      } else if(mapType2[t]=='AS'){
         # Point legend
         #par(mar=c(2,1,3,2), xpd=NA)
         plot.new()
@@ -880,34 +910,25 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
         text(rep(0.1,10),c(seq(from=1, by=-0.1, length.out=5),seq(from=0.4, by=-0.1, length.out=5)),c('< -0.5','-0.5 - -0.1','-0.1 - 0.1','0.1 - 0.5','> 0.5'), pos=4)
         text(0,1.1,'I (signif)', pos=4)
         text(0, 0.5,'I (not signif)', pos=4)
-      } else if(mapType[t]=='marker'){
+      } else if(mapType2[t]=='marker'){
         plot.new()
         points(c(0,0),c(1,0.8),pch=19, col=c(colors()[5],colors()[24]))
         text(c(0.1,0.1),c(1,0.8),c('Absent','Present'),pos=4)
       }
-    #}
-      if(simultaneous==FALSE & is.null(saveType) & t<length(mapType)){
+      if((simultaneous==FALSE & is.null(saveType) & t<length(mapType2)) | (t%%numSimPlot==0 & t<length(mapType2))){
         continue = readline(prompt="Would you like to continue? (press x to exit, any other letter to continue): ")
         if(continue=='x'){
           return(NA)
         } 
       } else if (simultaneous==FALSE & !is.null(saveType)){
-        dev.copy(get(saveType), paste0(mapType[t],m,'_map.',saveType))  
+        dev.copy(get(saveType), mapName)  
         dev.off()
       }
-      
-      if(m<length(markerName) & is.null(saveType)){
-        continue = readline(prompt="Would you like to continue? (press x to exit, any other letter to continue): ")
-        if(continue=='x'){
-          return(NA)
-        }
-      }
-    }
+    #}
     if(simultaneous==TRUE & !is.null(saveType)){
-      dev.copy(get(saveType), paste0(mapType[t],m,'_map.',saveType))  
+      dev.copy(get(saveType), mapName)  
       dev.off()        
     }
-    
   }
   
 }

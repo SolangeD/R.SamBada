@@ -18,22 +18,22 @@ downloadSambada = function(directory = NULL){
 	temp <- tempfile()
 	#Download compressed folder from GitHub according to right OS
 	if(env=='Windows'){
-		utils::download.file("https://github.com/Sylvie/sambada/releases/download/v0.7.1/sambada-0.7.1-windows.zip",temp)
+		utils::download.file("https://github.com/Sylvie/sambada/releases/download/v0.8.0alpha4/sambada-0.8.0alpha4-windows.zip",temp)
 	  #Unzip the file
 	  utils::unzip(temp, exdir = directory)
 	  changePath(paste0(directory,'/binaries'))
 	}
 	else if(env=='Linux'){
-		utils::download.file("https://github.com/Sylvie/sambada/releases/download/v0.7.1/sambada-0.7.1-ubuntu.tar.gz",temp)
+		utils::download.file("https://github.com/Sylvie/sambada/releases/download/v0.8.0alpha4/sambada-0.8.0alpha4-ubuntu.tar.gz",temp)
 	  #Untar the file => Needs twice?
 	  utils::untar(temp, exdir = directory)
-	  changePath(paste0(directory,'/sambada-0.7.1-ubuntu/binaries'))
+	  changePath(paste0(directory,'/sambada-0.8.0alpha4-ubuntu/binaries'))
 	}
 	else if(env=='MacOS'){
-		utils::download.file("https://github.com/Sylvie/sambada/releases/download/v0.7.1/sambada-0.7.1-osx.tar.gz",temp)
+		utils::download.file("https://github.com/Sylvie/sambada/releases/download/v0.8.0alpha4/sambada-0.8.0alpha4osx.tar.gz",temp)
 	  #Untar the file
 	  utils::untar(temp, exdir = directory)	
-	  changePath(paste0(directory,'/sambada-0.7.1-osx/binaries'))
+	  changePath(paste0(directory,'/sambada-0.8.0alpha4-osx/binaries'))
 	}
 	else{
 		stop('Unknown operating system. Please download sambada manually from GitHub')
