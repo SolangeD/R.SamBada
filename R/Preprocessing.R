@@ -827,12 +827,6 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
     
     # Run PCA from SNPRelate package
 
-    #numIndiv=length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "sample.id")))
-    #if(numIndiv>100){
-    #  numvect=100
-    #} else {
-    #  numvect=numIndiv
-    #}
     if(!is.null(ldThresh)){
       ld_filtered=SNPRelate::snpgdsLDpruning(gds_obj, ld.threshold=ldThresh)
       numvect=min(length(unlist(ld_filtered)),100)
@@ -841,7 +835,6 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
       numvect=min(length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.id"))),100)
       pca=SNPRelate::snpgdsPCA(gds_obj,maf=mafThresh, missing.rate=missingnessThresh, eigen.cnt = numvect)
     }
-    
     # Choose best number of PC if numPc<1
     varprop=pca$varprop[1:numvect]
     if(numPc<1){
@@ -850,7 +843,6 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
       numPc=NbPCs2(varprop,numPc)
       if(numPc==length(varprop))stop('Leap in proportion of variance of PCA not found within the first 100 principal component')
     } 
-    
     # Plot VP of first 100 axes and show chosen number of pc
     if(interactiveChecks==TRUE){
       barplot(varprop, main='Variance proportion of first 100 axes', xlab='axis number', ylab='proportion variance explained')
