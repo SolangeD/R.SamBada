@@ -68,14 +68,15 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
   if(!(saveType[1] %in% c('END','REAL'))) stop("The first word of saveType should be either END or REAL")
   if(!(saveType[2] %in% c('ALL','SIGNIF','BEST'))) stop("The second word of saveType should be either ALL, SIGNIF or BEST")
   if(saveType[2] %in% c('SIGNIF','BEST')){
-    if(!(grepl("[[:digit:]\\.-]",saveType[3]))) stop("The third word of saveType should be a number between 0 and 1")
-    if(as.numeric(saveType[3])>1 | as.numeric(saveType[3])<0) stop("The third word of saveType should be a number between 0 and 1")
+    if(!(grepl("[[:digit:]\\.-]",saveType[3]))) stop("The third word of saveType should be a number")
+    #if(as.numeric(saveType[3])>1 | as.numeric(saveType[3])<0) stop("The third word of saveType should be a number between 0 and 1")
   }
 
   #check populationVar
-  if(!(populationVar %in% c('FIRST','LAST','NONE'))) stop("populationVar should be either FIRST,LAST or NONE")
-  
-  
+  if(!is.null(populationVar)){
+    if(!(populationVar %in% c('FIRST','LAST','NONE'))) stop("populationVar should be either FIRST,LAST or NONE")
+  }
+
   #check spatial (first two columns checked later)
   if(!is.null(spatial)){
     spatial[3:5]=toupper(spatial[3:5])
@@ -335,8 +336,8 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
     if(i==0){
       storeyTot=storey
     } else {
-      storeyTot=rbind(storeyTot[1:2,2:ncol(storeyTot)],storeyTot[3:6,2:ncol(storeyTot)]+storey[3:6,2:ncol(storeyTot)])
-      storeyTot=cbind(storey[,1],storeyTot)
+      storeyTot=rbind(storeyTot[1:2,2:ncol(storeyTot)],storeyTot[3:nrow(storeyTot),2:ncol(storeyTot)]+storey[3:nrow(storeyTot),2:ncol(storeyTot)])
+      storeyTot=cbind(storey[,1],storeyTot, row.names=NULL)
     }
     if(keepAllFiles==FALSE){
       #Cleaning supervisions mess

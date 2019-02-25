@@ -64,41 +64,67 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   storeyTot=read.table(paste0(sambadaname,'-storey.csv'))
   # Check that it looks correct!
   
-  # blabla
   
-  m=sum(storeyTot[3,2:ncol(storeyTot)]) #Number of models
-  #p-value
+  
+  #p-value and start of qvalue
   if(popStr==TRUE){
     pvalueG=pchisq(output$GscorePop, 1, lower.tail=F)
-    pvalueW=pchisq(output$WaldScorePop, 1, lower.tail=F)    
+    pvalueW=pchisq(output$WaldScorePop, 1, lower.tail=F)
+    m=sum(storeyTot[nrow(storeyTot),2:ncol(storeyTot)]) #Number of models
+    pi_lambdaG=cumsum(t(as.vector(storeyTot[(nrow(storeyTot)-1),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
+    pi_lambdaW=cumsum(t(as.vector(storeyTot[nrow(storeyTot),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
   } else {
     pvalueG=pchisq(output$Gscore, 1, lower.tail=F)
-    pvalueW=pchisq(output$WaldScore, 1, lower.tail=F)    
+    pvalueW=pchisq(output$WaldScore, 1, lower.tail=F)  
+    m=sum(storeyTot[(3+(dimMax-1)*4),2:ncol(storeyTot)]) #Number of models
+    pi_lambdaG=cumsum(t(as.vector(storeyTot[(3+(dimMax-1)*4),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
+    pi_lambdaW=cumsum(t(as.vector(storeyTot[(5+(dimMax-1)*4),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
   }
+  pvalueG_Bon=pvalueG*m
+  pvalueW_Bon=pvalueW*m
 
   #Qvalue
   #estimate pi0
   #pi0 function
-  pi_lambdaG=cumsum(t(as.vector(storeyTot[3,2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
-  splineG=splinefun(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG) #in qvalue package, use spline.smooth (and predict)
-  pi0G=splineG(1)
+  
+  #splineG=splinefun(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG) #in qvalue package, use spline.smooth (and predict)
+  #pi0G=splineG(1)
+  splineG <- stats::smooth.spline(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG, df = 3)
+  pi0G <- predict(splineG, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
+  pi0G <- min(pi0G[1], 1)
   if(interactiveChecks==TRUE){
     ####plot histo + estimated pi0
-    
+    plot(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG, xlab='pValue_G', ylim=c(min(pi0G-0.05, min(pi_lambdaG)),1.01))
+    graphics::abline(h=pi0G, col='red')
+    cont=readline('Do you want to continue? (press x to exit, any other letter to continue): ')
+    if(cont=='x'){
+      return(NA)
+    }
   }
-  pi_lambdaW=cumsum(t(as.vector(storeyTot[5,2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
-  splineW=splinefun(storeyTot[1,2:ncol(storeyTot)], pi_lambdaW)
-  pi0W=splineW(1)
+  
+  #splineW=splinefun(storeyTot[1,2:ncol(storeyTot)], pi_lambdaW)
+  #pi0W=splineW(1)
+  splineW <- stats::smooth.spline(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaW, df = 3)
+  pi0W <- predict(splineW, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
+  pi0W <- min(pi0W[1], 1)
   if(interactiveChecks==TRUE){
     ####plot histo + estimated pi0
+    plot(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaW, xlab='pValue_W', ylim=c(min(pi0W-0.05, min(pi_lambdaW)),1.01))
+    graphics::abline(h=pi0W, col='red')
+    cont=readline('Do you want to continue? (press x to exit, any other letter to continue): ')
+    if(cont=='x'){
+      return(NA)
+    }
     
   }
   #Calculate qvalue
   i=length(pvalueG):1
-  qvalueG=pi0G * pmin(1, cummin(pvalueG[length(pvalueG):1] * m /i ))[length(pvalueG):1] #from qvalue package
-  qvalueW=pi0W * pmin(1, cummin(pvalueW[order(pvalueW, decreasing=TRUE)] * m /i ))[order(pvalueW, decreasing=TRUE)]
+  qvalueG=pi0G * pmin(1, cummin(pvalueG[order(pvalueG, decreasing=TRUE)] * m /i ))[order(order(pvalueG, decreasing=TRUE))] #from qvalue package
+  qvalueW=pi0W * pmin(1, cummin(pvalueW[order(pvalueW, decreasing=TRUE)] * m /i ))[order(order(pvalueW, decreasing=TRUE))]
+  #qvalueG2=qvalue::qvalue(pvalueG)$qvalues #check with values from qvalue package
   #Add it to the output vector
-  output=cbind(output, "pvalueG"=pvalueG, "pvalueW"=pvalueW, "qvalueG"=qvalueG, "qvalueW"=qvalueW)
+  #output=cbind(output, "pvalueG"=pvalueG, "pvalueW"=pvalueW, "pvalueG_Bon"=pvalueG_Bon, "pvalueW_Bon"=pvalueW_Bon,"qvalueG"=qvalueG, "qvalueG2"=qvalueG2,"qvalueW"=qvalueW)
+  output=cbind(output, "pvalueG"=pvalueG, "pvalueW"=pvalueW, "pvalueG_Bon"=pvalueG_Bon, "pvalueW_Bon"=pvalueW_Bon,"qvalueG"=qvalueG, "qvalueW"=qvalueW)
   
   ### get snp chromosome and position from gds file
   # open gds file
@@ -256,7 +282,11 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   prevPos=data.frame(prevPos, "chrPos"=rownames(prevPos))
   subset=merge(subset,prevPos,by='chr', sort=FALSE, all.x=TRUE)
   subset$color=colors()[as.integer(as.character(subset$chrPos))%%2+6] 
-  subset$xcoord=subset$pos+subset$maxPos
+  if(length(chromo)>1 | chromo=='all'){
+    subset$xcoord=subset$maxPos+subset$pos
+  } else {
+    subset$xcoord=subset$pos
+  }
 
   #Define layout of webpage
   ui <- shiny::shinyUI(shiny::fluidPage(
@@ -324,10 +354,13 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
         if (is.null(f)) {
           "Select a point!" 
         }else {
-          selectBP=subset[which(subset$pos+subset$maxPos==f$x),'pos']
-          selectBP=selectBP[1]
-          selectCHR=subset[which(subset$pos+subset$maxPos==f$x),'chr']
-          selectCHR=selectCHR[1]
+          if(length(chromo)>1 | chromo=='all'){
+            selectSNP=subset[which(subset$pos+subset$maxPos==f$x),c('pos','chr')]
+          } else {
+            selectSNP=subset[which(subset$pos==f$x),c('pos','chr')]
+          }
+          selectBP=selectSNP[1]$pos
+          selectCHR=selectSNP[1]$chr
           #Query ensembl database to get nearby genes
           #c=tryCatch({biomaRt::getBM(attributes=c('chromosome_name','ensembl_gene_id','wikigene_name','start_position','end_position','description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)}, error=function(e){"no gene found!"})
           #c
@@ -343,19 +376,22 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           if (is.null(f)) {
             "Select a point!" 
           }else {
-            selectBP=subset[which(subset$pos+subset$maxPos==f$x),'pos']
-            selectBP=selectBP[1]
-            selectCHR=subset[which(subset$pos+subset$maxPos==f$x),'chr']
-            selectCHR=selectCHR[1]
+            if(length(chromo)>1 | chromo=='all'){
+              selectSNP=subset[which(subset$pos+subset$maxPos==f$x),c('pos','chr')]
+            } else {
+              selectSNP=subset[which(subset$pos==f$x),c('pos','chr')]
+            }
+            selectSNP=selectSNP[1]
             server <- "https://rest.ensembl.org"
             #Get reference allele from gds
-            selectSNP=subset[which(subset$pos+subset$maxPos==f$x),'snp']
-            selectSNP=selectSNP[1]
-            snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==selectSNP$snp)
+            snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
             alleles=gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.allele"), start=c(snp_id), count=c(1))
             alternative_allele=substr(alleles,3,3)
-            ext <- paste0("/vep/",species,"/region/",selectCHR,":",selectBP-1,"-",selectBP,"/",alternative_allele,"?")
-            r <- httr::GET(paste(server, ext, sep = ""), httr::content_type("application/json"))
+            base_allele=substr(alleles,1,1)
+            ext <- paste0("/vep/",species,"/region/",selectSNP$chr,":",selectSNP$pos,"/")
+            r <- httr::GET(paste(server, ext,alternative_allele, sep = ""), httr::content_type("application/json"))
+            #Try both allele as reference allele
+            r<-tryCatch({httr::stop_for_status(r)} , error=function(e){return(httr::GET(paste(server, ext, base_allele,sep = ""), httr::content_type("application/json")))}, finally={r})
             httr::stop_for_status(r)  
             cont=httr::content(r)
             cont[[1]]$most_severe_consequence
@@ -393,13 +429,13 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
       if (is.null(f)) {
         "Select a point!" 
       }else {
-        selectBP=subset[which(subset$pos+subset$maxPos==f$x),'pos']
-        selectBP=selectBP[1]
-        selectCHR=subset[which(subset$pos+subset$maxPos==f$x),'chr']
-        selectCHR=selectCHR[1]
-        selectSNP=subset[which(subset$pos+subset$maxPos==f$x),'snp']
+        if(length(chromo)>1 | chromo=='all'){
+          selectSNP=subset[which(subset$pos+subset$maxPos==f$x),c('chr','pos','snp')]
+        } else {
+          selectSNP=subset[which(subset$pos==f$x),c('chr','pos','snp')]
+        }
         selectSNP=selectSNP[1]
-        infoOutput=data.frame('snp'=selectSNP, 'chr'=selectCHR, 'BP'=selectBP)
+        infoOutput=data.frame('snp'=selectSNP$snp, 'chr'=selectSNP$chr, 'BP'=selectSNP$pos)
         infoOutput
       }
     })
@@ -410,7 +446,11 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
       if (is.null(f)) {
         "Select a point!" 
       }else {
-        selectSNP=subset[which(subset$pos+subset$maxPos==f$x),'snp']
+        if(length(chromo)>1 | chromo=='all'){
+          selectSNP=subset[which(subset$pos+subset$maxPos==f$x),'snp']
+        } else {
+          selectSNP=subset[which(subset$pos==f$x),'snp']
+        }
         selectSNP=selectSNP[1]
         otherVar=sambadaOutput[sambadaOutput$snp==selectSNP$snp,]
         otherVar=data.frame('Marker'=otherVar$Marker, 'Var'=otherVar$Env_1, 'p/q-value'=otherVar[[valueName]])
@@ -431,12 +471,14 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           popCol=envData[,popStrCol]
           ID=envData[,IDCol]
           # Get marker and snp
-          selectSNP=subset[which(subset$pos+subset$maxPos==g$x),'snp']
+          if(length(chromo)>1 | chromo=='all'){
+            selectSNP=subset[which(subset$pos+subset$maxPos==g$x),c('chr','pos','Marker')]
+          } else {
+            selectSNP=subset[which(subset$pos==g$x),c('chr','pos','Marker')]
+          }
           selectSNP=selectSNP[1]
-          selectMarker=subset[which(subset$pos+subset$maxPos==g$x),'Marker']
-          selectMarker=selectMarker[1]$Marker
           #Retrieve genotype
-          snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==selectSNP$snp)
+          snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
           
           # #Check SNP in LD in the area, too be implemented
           # snp1 = gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "genotype"), start=c(1,snp_id), count=c(-1,1))
@@ -445,7 +487,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           # SNPRelate::snpgdsLDpair(snp1, snp2, method = "corr")
           
           geno=SNPRelate::snpgdsGetGeno(gds_obj, snp.id=snp_id)
-          pres=genoToMarker(gds_obj, selectMarker)
+          pres=genoToMarker(gds_obj, selectSNP$Marker)
           xy=data.frame(x,y,varenv,ID, geno, pres, popCol)
          
           pal1 <- c("antiquewhite2", "black")
@@ -454,14 +496,16 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           graph <- plotly::add_trace(graph,data=xy, x=x,y=y, type='scatter',mode='markers', color=pres, marker=list(showscale=FALSE), name='marker', colors=pal1, text=ID,hoverinfo = c("color"))
           graph <- plotly::hide_colorbar(graph)  
           graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers', x=~x,y=~y, name='varenv', marker=list(color=~varenv,colorscale = 'YlOrRd', showscale=TRUE, colorbar=list(len=0.3, title='varenv',y=1)))
-          if(length(popStrCol)==1){
-            graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name='pop1', marker=list(color=~popCol,colorscale = 'Greens', showscale=TRUE, colorbar=list(len=0.3, title='pops', y=0.7)))
-          } else {  
-            minpop=min(xy[,popStrCol])
-            maxpop=max(xy[,popStrCol])
-            graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name='pop1', marker=list(color=~get(popStrCol[1]),colorscale = 'Greens', cmin=minpop, cmax=maxpop, showscale=TRUE, colorbar=list(len=0.2, title='pops', y=0.75)))
-            for(p in 2:length(popStrCol)){
-              graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name=paste0('pop',p), marker=list(color=~get(popStrCol[p]),colorscale = 'Greens',cmin=minpop, cmax=maxpop,  showscale=FALSE))
+          if(!is.null(popStrCol)){
+            if(length(popStrCol)==1){
+              graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name='pop1', marker=list(color=~popCol,colorscale = 'Greens', showscale=TRUE, colorbar=list(len=0.3, title='pops', y=0.7)))
+            } else {  
+              minpop=min(xy[,popStrCol])
+              maxpop=max(xy[,popStrCol])
+              graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name='pop1', marker=list(color=~get(popStrCol[1]),colorscale = 'Greens', cmin=minpop, cmax=maxpop, showscale=TRUE, colorbar=list(len=0.2, title='pops', y=0.75)))
+              for(p in 2:length(popStrCol)){
+                graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name=paste0('pop',p), marker=list(color=~get(popStrCol[p]),colorscale = 'Greens',cmin=minpop, cmax=maxpop,  showscale=FALSE))
+              }
             }
           }
           graph
@@ -478,13 +522,15 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           varenv=envData[,varEnv]
           popCol=envData[,popStrCol]
           # Get marker and snp
-          selectSNP=subset[which(subset$pos+subset$maxPos==g$x),'snp']
+          if(length(chromo)>1 | chromo=='all'){
+            selectSNP=subset[which(subset$pos+subset$maxPos==g$x),c('chr','pos','Marker')]
+          } else {
+            selectSNP=subset[which(subset$pos==g$x),c('chr','pos','Marker')]
+          }
           selectSNP=selectSNP[1]
-          selectMarker=subset[which(subset$pos+subset$maxPos==g$x),'Marker']
-          selectMarker=selectMarker[1]$Marker
           #Retrieve genotype
-          snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==selectSNP$snp)
-          pres=genoToMarker(gds_obj, selectMarker)
+          snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
+          pres=genoToMarker(gds_obj, selectSNP$Marker)
           xy=data.frame(varenv, pres, popCol)
           boxplot(varenv~pres, data=xy)
         }
@@ -509,12 +555,14 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 #' @param chromo char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)
 #' @param saveType char One of NULL, 'png' or 'pdf'. If NULL is set, the plot will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory with the name 'manhattan-' followed by varEnv.
 #' @param threshold double A digit number indicating a value to draw a threshold line
+#' @param highlight char Name of the genotype to highlight in red on plot (should be SNPName_Genotype e.g. 'ARS-BFGL-NGS-106879_AA')
+#' @return The last plot object (if several \code{varEnv} are specified, only the last one is returned)
 #' @examples
 #' \dontrun{
 #' plotManhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
 #' }
 #' @export
-plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=NULL, threshold=NULL){
+plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=NULL, threshold=NULL, highlight=NULL){
   ### Checks
   #preparedOutput
   if(!('sambadaOutput' %in% names(preparedOutput))) stop('preparedOutput should have a component named samabadaOutput. Use the result of the function prepare_output')
@@ -542,21 +590,38 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
       subset=subset[with(subset, which(chr %in% chromo)),]
     }
     if(nrow(subset)==0) stop('No record found in sambada output corresponding to the chosen chromosome (chromo argument)')
-    #subset$pval=-log10(subset[,get(valueName)])
-    subset$pval=-log10(subset[,'pvalueG'])
+    subset$pval=-log10(subset[,get(valueName)])
     
     prevPos=data.frame("chr"=chrMaxPos$Group.1, "maxPos"=cumsum(as.numeric(chrMaxPos$x))-chrMaxPos$x)
     prevPos=data.frame(prevPos, "chrPos"=rownames(prevPos))
     subset=merge(subset,prevPos,by='chr', sort=FALSE, all.x=TRUE)
-    subset$color=colors()[as.integer(as.character(subset$chrPos))%%2+6]
-    subset$xcoord=subset$maxPos+subset$pos
+    subset$color=as.character(as.integer(as.character(subset$chrPos))%%2)
+    if(!is.null(highlight)){
+      subset[subset$Marker %in% highlight,]$color='3'
+    }
+    if(length(chromo)>1 | chromo=='all'){
+      subset$xcoord=subset$maxPos+subset$pos
+    } else {
+      subset$xcoord=subset$pos
+    }
     
     #Prepare manhattan
     rhg_cols=c("#CCCC99","#999966")
-    p <- ggplot2::ggplot(data=subset, ggplot2::aes_string(x='xcoord', y='pval', colour='color', label='snp', text='pos'), showlegend=FALSE) 
-    p <- p + ggplot2::geom_point(size=1)
+    #p <- ggplot2::ggplot(data=subset, ggplot2::aes_string(x='xcoord', y='pval', colour='color', label='snp', text='pos'), showlegend=FALSE) 
+    #p <- p + ggplot2::geom_point(size=1)
+    p <- ggplot2::ggplot(data=subset, showlegend=FALSE)
+    p <- p + ggplot2::geom_point(ggplot2::aes_string(x='xcoord', y='pval', colour='color'),size=1)
+    if(!is.null(highlight)){
+      p <- p + ggplot2::geom_point(data = subset(subset, color == '3'),ggplot2::aes_string(x='xcoord', y='pval', colour='color'),size=1)
+    }
     p <- p + ggplot2::theme(legend.position="none")
-    p <- p + ggplot2::scale_color_manual(values=c("#8B8378", "#CDC0B0"))
+    if(!is.null(highlight) & (length(chromo)>1 | chromo=='all')){
+      p <- p + ggplot2::scale_color_manual(values=c("#8B8378", "#CDC0B0", '#FF0000'))
+    } else if (!is.null(highlight) & length(chromo)==1){
+      p <- p + ggplot2::scale_color_manual(values=c("#8B8378", '#FF0000'))
+    } else {
+      p <- p + ggplot2::scale_color_manual(values=c("#8B8378", "#CDC0B0"))
+    }
     p <- p + ggplot2::scale_y_continuous(name =paste0("-log10(",valueName,")"))
     p <- p + ggplot2::ggtitle(varEnv[i])
     if(length(chromo)>1){
@@ -567,7 +632,7 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
       p <- p + ggplot2::scale_x_continuous(name ="Position")
     }
     if(!is.null(threshold)){
-      p <- p + ggplot2::geom_hline(threshold, color='red')
+      p <- p + ggplot2::geom_hline(yintercept=-log10(threshold), colour='red')
     }
     # Problem when serveral chromo and chromosomes not side by side
     if(!is.null(saveType)){
@@ -592,6 +657,7 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
       }
     }
   }
+  return(p)
 }
 
 

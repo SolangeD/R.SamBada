@@ -242,6 +242,15 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
   system(paste('recode-plink',numIndiv,numSNP,paste(filename_short,'_filtered',sep=''),paste0(filename_short,'.csv')))
 }
 
+#' @title Set the location of samples through a local web-application with interactive map
+#' @description Helps the user defining the location of samples by opening a local web page. If the html fails to open, one must open georeftool.html manually in any web browser: the file is located within the extdata folder of the package. Once opened, the user must upload a file with at least one column corresponding to sample IDs. He can then specify the name of the column corresponding to lat/long if present. For samples without location, he must select the individuals on the list shown and click on a point of the map. The location of the map will be assigned to the chosen samples. When finished, the new file can be downloaded.
+#' @author Oliver Selmoni, Solange Gaillard
+#' @examples 
+#' setLocation()
+setLocation=function(){
+  html=system.file("extdata", "georeftool.html", package = "sambadaOnR")
+  utils::browseURL(html)
+}
 
 #' @title Create env file from raster file(s) and/or glabal database present in the raster r package
 #' @description Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or glabal database present in the raster r package
@@ -672,6 +681,7 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
   if(!is.null(numPc)){ 
     if(typeof(numPc)!='double')stop("numPc must be a number")
     if(numPc>1 & numPc%%1!=0) stop("If numPc>1, numPc must be an integer")
+    if(is.null(genoFile))stop("genoFile must be specified if numPc is not null")
   }
   
   if(!is.null(numPop)){ 
@@ -862,7 +872,11 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
     
     #Retrieve right number of pc
     popvect2=popvect2[,1:(numPc+1)] #First column=ID, keep numPc axis 
-    colnames(popvect2)=c('sampleid',paste0('pop',1:(numPc)))
+    if(numPc==0){
+      colnames(popvect2)=c('sampleid')
+    } else {
+      colnames(popvect2)=c('sampleid',paste0('pop',1:(numPc)))
+    }
     
     if(nrow(popvect_tot)!=nrow(pca$eigenvect)){
       stop(paste0('All IDs in envFile and genoFile do not match. Found ',nrow(pca$eigenvect),' match out of ',nrow(popvect_tot),' indiv'))
@@ -870,7 +884,7 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
     
 
     
-    if(!is.null(numPop)){
+    if(!is.null(numPop) & numPc>0){
       changePopNum=TRUE
       while(changePopNum==TRUE){ #The user can interactively change the number of population. Loop begins again 
         
