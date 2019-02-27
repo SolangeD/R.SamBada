@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Geographic Referencing Tool</title>
+    <style>
+      #map {
+        width: 70%;
+        height: 90vh;
+        float: left;
+      }
+      #box {
+        width: 30%;
+        height: 90vh;
+        float: left;
+        overflow-x: scroll; 
+        overflow-y:scroll;
+      }
+    </style>
+    <link rel="stylesheet" href="https://openlayers.org/en/v5.3.0/css/ol.css" type="text/css">
+    <script src="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/build/ol.js"></script>
+    
+  </head>
+  <body>
+    <h1>Geographic Referencing Tool</h1>
+    <div id='box'>
+    </div>
+    <div id='mappanel'>
+    <p id='ppp'></p>
+    <div id="map" ></div>
+
+    </div>
+
+    <script>
+    
+    // create background map
+
+var raster = new ol.layer.Tile({
+  source: new ol.source.OSM()
+});
+
+// create vector layer for coordinates
+
+var source = new ol.source.Vector({wrapX: false});
+
+var vector = new ol.layer.Vector({source: source});
+
+var map = new ol.Map({
+  layers: [raster, vector],
+  target: 'map',
+  view: new ol.View({
+    center: [0, 4000000],
+    zoom: 3
+  })
+});
+
+// Function to Create Object from CSV
+var myObj = []
+var idcol = ''
+var latcol = ''
+var loncol = ''
+
+function processFile() {
+
+    var theFile = document.getElementById("myFile").files[0];
+    if (theFile) {
+
+        var myReader = new FileReader();
+   
+        myReader.onload = function(e) {
+            var content = myReader.result;
+            var lines = content.split(/\r\n|\n/); // use regexp to match different line separtors 
+            var obkeys = lines[0].split(",")
+
+            for (var count = 0; count < lines.length; count++) {
+                var individual= {}
+                var rowContent = lines[count].split(",");
+
+                if (count > 0) { 
+                    if (rowContent.length >= 1) {
+   
+                        for (var i = 0; i < rowContent.length; i++) {
+                            individual[obkeys[i]] = rowContent[i]
+                        }                    
+                        myObj.push(individual)
+                }}
+            }
+
+            checkcolID(obkeys)
+
+            
+        }
+   myReader.readAsText(theFile);
+   }
+    return false;
+   }
+
+
+// Create function to ask which columns to use for ID
+
+function checkcolID(colnames) {
+
+    box = document.getElementById('box')
+    box.innerHTML=''
+
+    idform = document.createElement('select')
+    textform = document.createElement('p')
+    textform.textContent = 'Choose a column containing samples IDs'
+
+    box.appendChild(textform)
+
+    for (o in colnames) {
+
+        op = document.createElement('option')
+        op.value = colnames[o]
+        op.textContent = colnames[o]
+        idform.appendChild(op)
+    }
+
+    box.appendChild(idform)
+
+    idcol = idform.value
+
+    subbutton = document.createElement('button')
+    subbutton.textContent='OK'
+    subbutton.onclick = function() { checkIDs(colnames)}
+
+    box.appendChild(subbutton)
+
+
+
+}
+
+// Function to check that ids are unique
+
+function checkIDs(colnames) {
+
+    listIDs = []
+
+    for (var i=1; i<myObj.length; i++) {
+
+        listIDs.push(myObj[i][idcol])
+    }
+
+    if (listIDs.length==listIDs.filter(onlyUnique).length) { checkCOLcoord(colnames)
+    } else { alert("IDs must be unique!") }
+
+
+}
+
+// function to provide unique element from an array
+
+function onlyUnique(value, index, self) { 
+    return self.indexOf(value) === index;
+}
+
+
+// Function to get columns containing coordinates 
+
+function checkCOLcoord(colnames) {
+
+    box = document.getElementById('box')
+    box.innerHTML=''
+
+    lonform = document.createElement('select')
+    latform = document.createElement('select')
+    textform = document.createElement('p')
+    textform.textContent = 'Choose columns containing samples coordinates'
+
+    lontxt= document.createElement('p')
+    lontxt.textContent = 'Longitude:'
+    lattxt = document.createElement('p')
+    lattxt.textContent = 'Latitude:'
+
+    box.appendChild(textform)
+
+    op1 = document.createElement('option')
+    op1.value = 'unknown'
+    op1.textContent = 'not available'
+    lonform.appendChild(op1)
+
+    op2 = document.createElement('option')
+    op2.value = 'unknown'
+    op2.textContent = 'not available'
+    latform.appendChild(op2)
+
+    for (o in colnames) {
+        if (colnames[o] == idcol) {continue}
+        else {
+        op1 = document.createElement('option')
+        op2 = document.createElement('option')
+        op1.value = colnames[o]
+        op2.value = colnames[o]
+        op1.textContent = colnames[o]
+        op2.textContent = colnames[o]
+        lonform.appendChild(op1)
+        latform.appendChild(op2)
+        }
+    }
+
+    box.appendChild(lontxt)
+    box.appendChild(lonform)
+    box.appendChild(lattxt)
+    box.appendChild(latform)
+
+    subbutton = document.createElement('button')
+    subbutton.textContent='OK'
+    subbutton.onclick = function() { 
+        if (lonform.value =='unknown') { // if longitude column is missing -> create in myObj
+            for (var i=0; i < myObj.length; i++) {
+                myObj[i]['Longitude'] = ''
+                loncol = 'Longitude'
+            } } else {        loncol = lonform.value        }
+        if (latform.value =='unknown') { // if latitude column is missing -> create in myObj
+            for (var i=0; i < myObj.length; i++) {
+                myObj[i]['Latitude'] = ''
+                latcol = 'Latitude'
+            } } else {        latcol = latform.value        }
+        if (loncol == latcol && lonform.value!='unknown') {alert('Longitude and Latitude columns must be different!') 
+    } else {astab()}
+
+    }
+
+    box.appendChild(subbutton)
+
+
+}
+
+// Function to create check that coordinates 
+
+function astab(){
+
+    var o = myObj
+
+    drawobj()
+    var panel = document.getElementById("box");
+    panel.innerHTML=''
+    var table = document.createElement("table");
+    
+    var head = document.createElement("tr");
+
+    var headID = document.createElement("th");
+    headID.textContent = 'SampleID'
+
+    var headLON = document.createElement("th");
+    headLON.textContent = 'Longitude'
+
+    var headLAT = document.createElement("th");
+    headLAT.textContent = 'Latitude'
+
+
+    head.appendChild(headID)
+    head.appendChild(headLON)
+    head.appendChild(headLAT)
+
+
+    var selectall = document.createElement('input')
+    selectall.type = 'checkbox'
+    selectall.id = 'selectall'
+    selectall.onclick = checkAll
+    var placesa = document.createElement('th')
+    
+    placesa.appendChild(selectall)
+    head.appendChild(placesa)
+
+    table.appendChild(head)
+    
+    for (i=0; i<o.length; i++) {
+
+        var row = document.createElement("tr");
+        
+        for (var l in o[i]) {
+
+            if (l==loncol || l==latcol) {  
+                var cellElement = document.createElement("td");
+                var incoord = parseFloat(o[i][l])
+                if (isNaN(incoord)) {var outcoord=''}
+                else {var outcoord = round(incoord, 5)}
+                var cellContent = document.createTextNode(outcoord);
+            } else if (l==idcol){
+
+            var cellElement = document.createElement("td");
+            var cellContent = document.createTextNode(o[i][l]);
+            }
+            cellElement.appendChild(cellContent);
+            row.appendChild(cellElement);
+        }
+
+    if (o[i][loncol]!=''&o[i][latcol]!='') {
+        row.setAttribute('style', 'color:grey')}
+    var checkbox = document.createElement("input")
+    checkbox.setAttribute("type" , 'checkbox')
+    checkbox.setAttribute("id" , 'cb'+i)
+
+    row.appendChild(checkbox)
+    table.appendChild(row);
+    
+    }
+    panel.appendChild(table)
+    var button = document.createElement("button")
+    var buttontext = document.createTextNode('Select coordinate')
+    button.appendChild(buttontext)
+    button.setAttribute("id" , 'mybutton')
+    button.onclick = AddPoint;
+    panel.appendChild(button)
+
+    var removecoord = document.createElement('button')
+    removecoord.textContent ='Remove Coordinate'
+    removecoord.onclick = removecoordinate
+    removecoord.id = 'rembutton'
+    panel.appendChild(removecoord)
+
+
+    
+    var ppp = document.getElementById('ppp')
+    ppp.innerHTML=''
+
+    var sendButton = document.createElement('button')
+    sendButton.textContent = 'Export Coordinates'
+    sendButton.style = 'background-color: lightgreen; padding: 10px'
+    sendButton.onclick = downloadCSV
+
+    ppp.appendChild(sendButton)
+
+}
+
+// Funcction to create input for processfile
+createINPUT()
+
+function createINPUT() {
+
+    var inform = document.createElement('form')
+    inform.onsubmit = processFile
+
+    var fileinput = document.createElement('input')
+    fileinput.setAttribute('type', 'file')
+    fileinput.setAttribute('id', 'myFile')
+    
+    var filesubmit = document.createElement('input')
+    filesubmit.setAttribute('type', 'submit')
+    filesubmit.setAttribute('value', 'Process File')
+
+    inform.appendChild(fileinput)
+    inform.appendChild(filesubmit)
+
+    var panel = document.getElementById("box");
+    panel.appendChild(inform)
+
+
+}
+
+// Create Draw-point-function
+
+var draw; 
+function AddPoint() {
+
+    document.getElementById('mybutton').style.visibility = "hidden"
+    document.getElementById('rembutton').style.visibility = "hidden"
+
+    var boxpan = document.getElementById('box') 
+    var cancelbutton = document.createElement('button')
+    cancelbutton.textContent='Cancel'
+    cancelbutton.id = 'cancelbutton'
+    cancelbutton.onclick= cancel
+    boxpan.append(cancelbutton)
+
+    draw = new ol.interaction.Draw({
+      source: source,
+      type: "Point"
+    });
+    draw.on('drawend', function(evt) { 
+        var currentFeature = evt.feature;//this is the feature fired the event
+        map.removeInteraction(draw)
+        var numFeatures = currentFeature.getGeometry().getCoordinates(); 
+        var c_numFeatures = ol.proj.transform(numFeatures, 'EPSG:3857', 'EPSG:4326');
+        document.getElementById('mybutton').style.visibility = "visible"
+        document.getElementById('rembutton').style.visibility = "visible"
+        var i
+        for (i=0; i<myObj.length; i++) {
+                if (document.getElementById("cb"+i).checked ==true) { 
+                    myObj[i][latcol]=c_numFeatures[1]
+                    myObj[i][loncol]=c_numFeatures[0]     
+                }           
+        }
+        astab()  
+
+
+    });
+    map.addInteraction(draw);
+}
+
+// Function to (un)check all checkboxes
+var c=0
+function checkAll(){ 
+    if (c==0) {
+        var checked = true
+        c=1}
+    else {var checked = false
+        c=0}
+    var inputs = document.getElementsByTagName("input");
+    for (var i = 0; i < inputs.length; i++) { 
+        if (inputs[i].type == "checkbox") { 
+            inputs[i].checked = checked; 
+        }  
+    }  
+}
+
+// Function remove-coordinate button
+function removecoordinate() {
+    var i
+    for (i=0; i<myObj.length; i++) {
+        if (document.getElementById("cb"+i).checked ==true) { 
+            myObj[i][loncol]=''
+            myObj[i][latcol]=''
+        } 
+    }
+    astab()
+}
+
+// Function to Draw on Map only features that are in the object  myObj
+function drawobj() {
+
+    source.clear() // clear source after adding a point 
+
+    for (var i=0; i<myObj.length; i++) {
+
+        if (myObj[i][loncol] != ''& myObj[i][latcol] != '') {
+                    var prova = new ol.Feature({
+                        geometry: new ol.geom.Point(ol.proj.transform([parseFloat(myObj[i][loncol]),parseFloat(myObj[i][latcol])] , 'EPSG:4326','EPSG:3857')),
+                        id_: myObj[i][idcol]})   
+                    source.addFeature(prova) // add to source 
+        }
+    }
+}
+
+
+// Cancel function
+
+function cancel() {
+
+    map.removeInteraction(draw)
+    astab()
+
+}
+
+// Function to round coordinates
+
+function round(value, decimals) {
+    return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+  }
+
+// Function to download updated csv table
+
+function downloadCSV() {
+    csvstring = Object.keys(myObj[0]).join()+'\n'
+    for (var i=0; i<myObj.length; i++) {
+        csvstring=csvstring+(Object.values(myObj[i]).join()+'\n')
+    }
+    var filename = 'samples_coordinates.csv'
+    var blob = new Blob([csvstring], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+            navigator.msSaveBlob(blob, filename);
+    } else {
+            var link = document.createElement("a");
+            if (link.download !== undefined) { // feature detection
+                // Browsers that support HTML5 download attribute
+                var url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+}
+
+
+
+    
+    
+    
+    </script>
+
+
+  </body>
+</html>
