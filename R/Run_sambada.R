@@ -316,8 +316,8 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
   
   ### Run sambada on parallel 
   # use foreach function
-  ##finalMatrix = foreach(i=0:(cores-1), .combine=cbind, .packages='test2') %dopar% {tempMatrix = sambada(paste0(genoFileShort,'_param',i,'.txt'),envFile,paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
-  finalMatrix = foreach::foreach(i=0:(cores-1), .combine=cbind, .packages='sambadaOnR') %dopar% {tempMatrix = system(paste0('sambada ',genoFileShort,'_param',i,'.txt ',envFile,' ',genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
+  ##finalMatrix = foreach(i=0:(cores-1), .combine=cbind, .packages='RSambada') %dopar% {tempMatrix = sambada(paste0(genoFileShort,'_param',i,'.txt'),envFile,paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
+  finalMatrix = foreach::foreach(i=0:(cores-1), .combine=cbind, .packages='base') %dopar% {tempMatrix = system(paste0('sambada ',genoFileShort,'_param',i,'.txt ',envFile,' ',genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
   
   #Close cluser
   parallel::stopCluster(cl)

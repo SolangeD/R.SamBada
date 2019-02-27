@@ -246,9 +246,12 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
 #' @description Helps the user defining the location of samples by opening a local web page. If the html fails to open, one must open georeftool.html manually in any web browser: the file is located within the extdata folder of the package. Once opened, the user must upload a file with at least one column corresponding to sample IDs. He can then specify the name of the column corresponding to lat/long if present. For samples without location, he must select the individuals on the list shown and click on a point of the map. The location of the map will be assigned to the chosen samples. When finished, the new file can be downloaded.
 #' @author Oliver Selmoni, Solange Gaillard
 #' @examples 
+#' \dontrun{
 #' setLocation()
+#' }
+#' @export
 setLocation=function(){
-  html=system.file("extdata", "georeftool.html", package = "sambadaOnR")
+  html=system.file("extdata", "georeftool.html", package = "RSambada")
   utils::browseURL(html)
 }
 
@@ -653,10 +656,7 @@ createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=
 #' }
 #' @export
 prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc=0.5, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
-  #setwd("/home/lasigadmin/R/test2/src")
-  #envFile='ADAPTmap2-env.csv'
-  #separator=';'
-  
+
   ### Check inputs ###
   
   if(is.null(envFile)) stop("envFile argument is required")
@@ -857,7 +857,7 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
     if(interactiveChecks==TRUE){
       barplot(varprop, main='Variance proportion of first 100 axes', xlab='axis number', ylab='proportion variance explained')
       abline(v=numPc,col="red")
-      numPc2 = readline(prompt="Would you like to choose a different number of pc? (press any letter if no, or enter a new number): ")
+      numPc2 = readline(prompt=paste("Number of PCs chosen: ",numPc,". Would you like to choose a different number of pc? (press any letter if no, or enter a new number): "))
       if(grepl("[[:digit:]\\.-]",numPc2)){
         numPc=as.integer(numPc2)
       }

@@ -90,7 +90,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   #splineG=splinefun(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG) #in qvalue package, use spline.smooth (and predict)
   #pi0G=splineG(1)
   splineG <- stats::smooth.spline(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG, df = 3)
-  pi0G <- predict(splineG, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
+  pi0G <- stats::predict(splineG, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
   pi0G <- min(pi0G[1], 1)
   if(interactiveChecks==TRUE){
     ####plot histo + estimated pi0
@@ -105,7 +105,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   #splineW=splinefun(storeyTot[1,2:ncol(storeyTot)], pi_lambdaW)
   #pi0W=splineW(1)
   splineW <- stats::smooth.spline(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaW, df = 3)
-  pi0W <- predict(splineW, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
+  pi0W <- stats::predict(splineW, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
   pi0W <- min(pi0W[1], 1)
   if(interactiveChecks==TRUE){
     ####plot histo + estimated pi0
@@ -180,7 +180,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 #' @param y char The name of the column corresponding to the y-coordinate in the env file. Can be set to null if x is null.
 #' @param valueName char Name of the p- or q-value one wish to plot the manhattan on. This can be either pvalueG, pvalueW, qvalueG, qvalueW for G- or Waldscore respectively.
 #' @param chromo char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)
-#' @param gdsFile char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv) and .gds
+#' @param gdsFile char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv or -env-export.csv) and .gds
 #' @param IDCol char The name of the column in envFile corresponding to the ID of the individuall. If provided, hover on the output map will give the id of the animal
 #' @param popStrCol char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available reprenting population structure.
 #' @return None 
@@ -612,7 +612,7 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
     p <- ggplot2::ggplot(data=subset, showlegend=FALSE)
     p <- p + ggplot2::geom_point(ggplot2::aes_string(x='xcoord', y='pval', colour='color'),size=1)
     if(!is.null(highlight)){
-      p <- p + ggplot2::geom_point(data = subset(subset, color == '3'),ggplot2::aes_string(x='xcoord', y='pval', colour='color'),size=1)
+      p <- p + ggplot2::geom_point(data = subset(subset, subset$color == '3'),ggplot2::aes_string(x='xcoord', y='pval', colour='color'),size=1)
     }
     p <- p + ggplot2::theme(legend.position="none")
     if(!is.null(highlight) & (length(chromo)>1 | chromo=='all')){
@@ -874,7 +874,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       if(exists('rasterName')){
         #If raster found, put it as background
         #Attention mettre les coordonnées de scattered point ou envData???
-        raster::image(raster, asp=1, maxpixels=1000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
+        raster::image(raster, asp=1, maxpixels=10000000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
         
       }else {
         #If raster not found, put countries as background
@@ -987,12 +987,12 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
           return(NA)
         } 
       } else if (simultaneous==FALSE & !is.null(saveType)){
-        dev.copy(get(saveType), mapName)  
+        grDevices::dev.copy(get(saveType), mapName)  
         dev.off()
       }
     #}
     if(simultaneous==TRUE & !is.null(saveType)){
-      dev.copy(get(saveType), mapName)  
+      grDevices::dev.copy(get(saveType), mapName)  
       dev.off()        
     }
   }
