@@ -1,4 +1,4 @@
-Package: sambadaOnR
+Package: RSambada
 Type: Package
 Title: Processing pipeline for Sambada from pre to post processing
 Version: 1.0
