@@ -5,7 +5,7 @@
 \title{Manhattan plot}
 \usage{
 plotManhattan(preparedOutput, varEnv, valueName, chromo = "all",
-  saveType = NULL, threshold = NULL)
+  saveType = NULL, threshold = NULL, highlight = NULL)
 }
 \arguments{
 \item{preparedOutput}{char The prepared output list from prepare_output function}
@@ -19,6 +19,11 @@ plotManhattan(preparedOutput, varEnv, valueName, chromo = "all",
 \item{saveType}{char One of NULL, 'png' or 'pdf'. If NULL is set, the plot will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory with the name 'manhattan-' followed by varEnv.}
 
 \item{threshold}{double A digit number indicating a value to draw a threshold line}
+
+\item{highlight}{char Name of the genotype to highlight in red on plot (should be SNPName_Genotype e.g. 'ARS-BFGL-NGS-106879_AA')}
+}
+\value{
+The last plot object (if several \code{varEnv} are specified, only the last one is returned)
 }
 \description{
 Plot the manhattan plot for a given environmental data

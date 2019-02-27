@@ -27,7 +27,7 @@ plotResultInteractive(preparedOutput, varEnv, envFile, species = NULL,
 
 \item{chromo}{char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)}
 
-\item{gdsFile}{char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv) and .gds}
+\item{gdsFile}{char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv or -env-export.csv) and .gds}
 
 \item{IDCol}{char The name of the column in envFile corresponding to the ID of the individuall. If provided, hover on the output map will give the id of the animal}
 

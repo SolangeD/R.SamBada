@@ -29,7 +29,7 @@ plotMap(envFile, x, y, locationProj, popStrCol, gdsFile, markerName,
 
 \item{SAMethod}{char If \code{mapType} contains 'AS', then you must specify the method for setting the weights of neighbours. Can be one of 'knn' (k-nearest neighbours) or 'distance'}
 
-\item{SAThreshold}{char If \code{mapType} contains 'AS' and \code{SAMethod} id 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)}
+\item{SAThreshold}{char If \code{mapType} contains 'AS' and \code{SAMethod} is 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)}
 
 \item{saveType}{char One of NULL, 'png' or 'pdf'. If NULL is set, the maps will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory.}
 
