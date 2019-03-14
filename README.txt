@@ -11,10 +11,10 @@ RSambada R-package
 * To install this R-package
 install.packages('devtools')
 require('devtools')
-install_github('SolangeD/RSambada', build_vignettes=TRUE)
+install_github('SolangeD/R.SamBada', build_vignettes=TRUE)
 
 * to start with 
-Read RSambada-manual.pdf
+Read R.SamBada-manual.pdf
 Get documentation from sambada https://github.com/Sylvie/sambada 
 Once installed, read the vignette with
-	vignette('RSambada')
+	vignette('R.SamBada')

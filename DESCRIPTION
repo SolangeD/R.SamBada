@@ -1,10 +1,10 @@
-Package: RSambada
+Package: R.SamBada
 Type: Package
 Title: Processing pipeline for Sambada from pre to post processing
 Version: 1.0
 Date: 2019-01-16
-Author: Solange Gaillard, Sylvie Stucki, Oliver Selmoni, Elia Vajana
-Maintainer: Your Name <your@email.com>
+Author: Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana
+Maintainer: Solange Duruz <solange.duruz@alumni.epfl.ch>
 Description: Processing pipeline for Sambada from pre to post processing.
 License: GPL (>= 2)
 Imports: SNPRelate,
