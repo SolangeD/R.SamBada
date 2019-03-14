@@ -1,6 +1,6 @@
 #' @title Run sambada on parallel cores
 #' @description Read sambadas input file to retrieve necessary information (num indiv etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
-#' @author Solange Gaillard, Sylvie Stucki
+#' @author Solange Duruz, Sylvie Stucki
 #' @param genoFile The name of the file in the current directory of genetic information, complient with samBada's format (use prepareGeno to transform it)
 #' @param envFile  The name of the file in the current directory of environmental information (use \code{link{createEnv}} to create it and \code{link{prepareEnv}} to reduce the correlated dataset and check order)
 #' @param idGeno Name of the column in the \code{genoFile} corresponding to the id of the animals
@@ -316,7 +316,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, dimMax=1, cores=NUL
   
   ### Run sambada on parallel 
   # use foreach function
-  ##finalMatrix = foreach(i=0:(cores-1), .combine=cbind, .packages='RSambada') %dopar% {tempMatrix = sambada(paste0(genoFileShort,'_param',i,'.txt'),envFile,paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
+  ##finalMatrix = foreach(i=0:(cores-1), .combine=cbind, .packages='R.SamBada') %dopar% {tempMatrix = sambada(paste0(genoFileShort,'_param',i,'.txt'),envFile,paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
   finalMatrix = foreach::foreach(i=0:(cores-1), .combine=cbind, .packages='base') %dopar% {tempMatrix = system(paste0('sambada ',genoFileShort,'_param',i,'.txt ',envFile,' ',genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
   
   #Close cluser

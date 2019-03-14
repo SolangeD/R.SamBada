@@ -1,4 +1,5 @@
 #' @title Prepare output (usefull for all postprocessing analysis)
+#' @author Solange Duruz, Sylvie Stucki
 #' @description Read sambada's output and prepare it by retrieving the snp position and chromosome (usefull for plotting manhattan)
 #' @param sambadaname char The name of the genofile without extension name given to sambada (or outputfile of sambada without the ending -Out-Dim.csv)
 #' @param dimMax integer The maximum number of dimension given in sambada
@@ -62,38 +63,38 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   ### calculate p- and q-value: 
   #Read histogram
   storeyTot=read.table(paste0(sambadaname,'-storey.csv'))
-  # Check that it looks correct!
-  
-  
-  
+
   #p-value and start of qvalue
   if(popStr==TRUE){
     pvalueG=pchisq(output$GscorePop, 1, lower.tail=F)
     pvalueW=pchisq(output$WaldScorePop, 1, lower.tail=F)
     m=sum(storeyTot[nrow(storeyTot),2:ncol(storeyTot)]) #Number of models
+    #calculate lambda for G and Wald score
     pi_lambdaG=cumsum(t(as.vector(storeyTot[(nrow(storeyTot)-1),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
     pi_lambdaW=cumsum(t(as.vector(storeyTot[nrow(storeyTot),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
   } else {
     pvalueG=pchisq(output$Gscore, 1, lower.tail=F)
     pvalueW=pchisq(output$WaldScore, 1, lower.tail=F)  
     m=sum(storeyTot[(3+(dimMax-1)*4),2:ncol(storeyTot)]) #Number of models
+    #calculate lambda for G and Wald score
     pi_lambdaG=cumsum(t(as.vector(storeyTot[(3+(dimMax-1)*4),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
     pi_lambdaW=cumsum(t(as.vector(storeyTot[(5+(dimMax-1)*4),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
   }
+  #Bonferroni correction
   pvalueG_Bon=pvalueG*m
   pvalueW_Bon=pvalueW*m
 
   #Qvalue
-  #estimate pi0
-  #pi0 function
   
+  #Qvalue based on Gscore
   #splineG=splinefun(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG) #in qvalue package, use spline.smooth (and predict)
   #pi0G=splineG(1)
   splineG <- stats::smooth.spline(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG, df = 3)
+  #Estimate pi0 for Gscore
   pi0G <- stats::predict(splineG, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
   pi0G <- min(pi0G[1], 1)
   if(interactiveChecks==TRUE){
-    ####plot histo + estimated pi0
+    #plot histo
     plot(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG, xlab='pValue_G', ylim=c(min(pi0G-0.05, min(pi_lambdaG)),1.01))
     graphics::abline(h=pi0G, col='red')
     cont=readline('Do you want to continue? (press x to exit, any other letter to continue): ')
@@ -102,9 +103,11 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
     }
   }
   
+  #Qvalue based on Walsdscore
   #splineW=splinefun(storeyTot[1,2:ncol(storeyTot)], pi_lambdaW)
   #pi0W=splineW(1)
   splineW <- stats::smooth.spline(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaW, df = 3)
+  #Estimate pi0 for Waldscore
   pi0W <- stats::predict(splineW, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
   pi0W <- min(pi0W[1], 1)
   if(interactiveChecks==TRUE){
@@ -117,13 +120,13 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
     }
     
   }
+  
   #Calculate qvalue
   i=length(pvalueG):1
   qvalueG=pi0G * pmin(1, cummin(pvalueG[order(pvalueG, decreasing=TRUE)] * m /i ))[order(order(pvalueG, decreasing=TRUE))] #from qvalue package
   qvalueW=pi0W * pmin(1, cummin(pvalueW[order(pvalueW, decreasing=TRUE)] * m /i ))[order(order(pvalueW, decreasing=TRUE))]
-  #qvalueG2=qvalue::qvalue(pvalueG)$qvalues #check with values from qvalue package
-  #Add it to the output vector
-  #output=cbind(output, "pvalueG"=pvalueG, "pvalueW"=pvalueW, "pvalueG_Bon"=pvalueG_Bon, "pvalueW_Bon"=pvalueW_Bon,"qvalueG"=qvalueG, "qvalueG2"=qvalueG2,"qvalueW"=qvalueW)
+  
+  #Add calculated value to output
   output=cbind(output, "pvalueG"=pvalueG, "pvalueW"=pvalueW, "pvalueG_Bon"=pvalueG_Bon, "pvalueW_Bon"=pvalueW_Bon,"qvalueG"=qvalueG, "qvalueW"=qvalueW)
   
   ### get snp chromosome and position from gds file
@@ -145,8 +148,8 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   map2=cbind.data.frame(all_chr, all_snp, as.integer(all_pos))
   colnames(map2)=c('chr','snp','pos')
   
-  # Merge both information
-  # add q.value
+  ### Merge both information (p/qvalue and snp position)
+
   #Merge acts like join in SQL
   output2=merge(cbind.data.frame('snp'=substr(output[, 1]$Marker, start = 1, stop = nchar(c(output[,1])$Marker) - 3), output), map2[,c('chr','snp','pos')], by='snp', sort=FALSE, all.x=TRUE)
   
@@ -170,7 +173,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 
 #' @title Interactive plotting of results
 #' @description Plots the manhattan plot for a given environmental variable. The plot is interactive and a map of the distribution of the marker can be retrieved as well as nearby genes listed in Ensembl.
-#' @author Solange Gaillard
+#' @author Solange Duruz
 #' @param preparedOutput char The prepared output list from prepare_output function
 #' @param varEnv char The name of the environmental variable one wish to study (as in the header of \code{envFIle})
 #' @param envFile char The file containing the input environmental variable of sambada. 
@@ -217,10 +220,6 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   if(sum(popStrCol %in% names(envDataTest))!=length(popStrCol))stop('All elements of popStrCol-argument should be part of the header of the envFile')
   #valueName
   if(!(valueName %in% names(preparedOutput$sambadaOutput)))stop('valueName should be a component of preparedOutput$sambadaOutput. Use the result of the function prepare_output as preparedOutput')
-  #chromo
-  # if('all' %in% chromo){
-  # }  
-
 
   # Test if required libraries are installed
   if (!requireNamespace("SNPRelate", quietly = TRUE)) {
@@ -242,6 +241,40 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
     stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
   }
   
+  #Read envFile and output
+  envData = read.csv(envFile, header=TRUE, sep=" ")
+  sambadaOutput = preparedOutput$sambadaOutput
+  chrSNPNum = preparedOutput$chrSNPNum
+  chrMaxPos = preparedOutput$chrMaxPos
+    
+  #Connection to ensembl database
+  ensemblOutput = ensembl_connection(species, TRUE)
+  snp = ensemblOutput$snp
+  ensembl = ensemblOutput$ensembl
+  
+  #Prepare Manhattan 
+  #Only model involving chosen varenv
+  subset=sambadaOutput[which(sambadaOutput[,'Env_1']==varEnv),]
+  if(nrow(subset)==0) stop('No records found in sambada output corresponding to the chosen environmental variable (varEnv argument)')
+  #Only models in specified chromosome
+  if(length(chromo)>1){
+    subset=subset[with(subset, which(chr %in% chromo)),]
+  } else if(chromo != 'all' ){
+    subset=subset[with(subset, which(chr %in% chromo)),]
+  }
+  if(nrow(subset)==0) stop('No record found in sambada output corresponding to the chosen chromosome (chromo argument)')
+  subset$pval=-log10(subset[,get(valueName)])
+  #Calculate final position (if several chromosome, shift the position, otherwise take initial position)
+  prevPos=data.frame("chr"=chrMaxPos$Group.1, "maxPos"=cumsum(as.numeric(chrMaxPos$x))-chrMaxPos$x)
+  prevPos=data.frame(prevPos, "chrPos"=rownames(prevPos))
+  subset=merge(subset,prevPos,by='chr', sort=FALSE, all.x=TRUE)
+  subset$color=colors()[as.integer(as.character(subset$chrPos))%%2+6] 
+  if(length(chromo)>1 | chromo=='all'){
+    subset$xcoord=subset$maxPos+subset$pos
+  } else {
+    subset$xcoord=subset$pos
+  }
+  
   #Define and open GDS file
   if(is.null(gdsFile)){
     gdsFile = paste0(gsub('-env-export.csv','',envFile),'.gds')
@@ -253,40 +286,6 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
     }
   }
   gds_obj=SNPRelate::snpgdsOpen(gdsFile)
-  #on.exit(SNPRelate::snpgdsClose(gds_obj))
-  
-  #Read envFile and output
-  envData = read.csv(envFile, header=TRUE, sep=" ")
-  sambadaOutput = preparedOutput$sambadaOutput
-  chrSNPNum = preparedOutput$chrSNPNum
-  chrMaxPos = preparedOutput$chrMaxPos
-    
-  #Connection to ensembl database
-
-  ensemblOutput = ensembl_connection(species, TRUE)
-  snp = ensemblOutput$snp
-  ensembl = ensemblOutput$ensembl
-  
-  #Prepare Manhattan 
-  subset=sambadaOutput[which(sambadaOutput[,'Env_1']==varEnv),]
-  if(nrow(subset)==0) stop('No records found in sambada output corresponding to the chosen environmental variable (varEnv argument)')
-  if(length(chromo)>1){
-    subset=subset[with(subset, which(chr %in% chromo)),]
-  } else if(chromo != 'all' ){
-    subset=subset[with(subset, which(chr %in% chromo)),]
-  }
-  if(nrow(subset)==0) stop('No record found in sambada output corresponding to the chosen chromosome (chromo argument)')
-  subset$pval=-log10(subset[,get(valueName)])
-  
-  prevPos=data.frame("chr"=chrMaxPos$Group.1, "maxPos"=cumsum(as.numeric(chrMaxPos$x))-chrMaxPos$x)
-  prevPos=data.frame(prevPos, "chrPos"=rownames(prevPos))
-  subset=merge(subset,prevPos,by='chr', sort=FALSE, all.x=TRUE)
-  subset$color=colors()[as.integer(as.character(subset$chrPos))%%2+6] 
-  if(length(chromo)>1 | chromo=='all'){
-    subset$xcoord=subset$maxPos+subset$pos
-  } else {
-    subset$xcoord=subset$pos
-  }
 
   #Define layout of webpage
   ui <- shiny::shinyUI(shiny::fluidPage(
@@ -326,7 +325,6 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   
   server <- function(input, output, session) {
     #Prepare manhattan
-    rhg_cols=c("#CCCC99","#999966")
     p <- ggplot2::ggplot(data=subset, ggplot2::aes_string(x='xcoord', y='pval', colour='color', label='snp', text='pos'), showlegend=FALSE) 
     p <- p + ggplot2::geom_point(size=1)
     p <- p + ggplot2::theme(legend.position="none")
@@ -339,8 +337,6 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
     } else {
       p <- p + ggplot2::scale_x_continuous(name ="Position")
     }
-    # Problem when serveral chromo and chromosomes not side by side
-
 
     # Manhattan
     output$manhattan <- plotly::renderPlotly({
@@ -365,11 +361,19 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           #c=tryCatch({biomaRt::getBM(attributes=c('chromosome_name','ensembl_gene_id','wikigene_name','start_position','end_position','description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)}, error=function(e){"no gene found!"})
           #c
           biomaRt::getBM(attributes=c('chromosome_name','ensembl_gene_id','wikigene_name','start_position','end_position','description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)
-
+          #Google link => doesn't work because open a local webpage
+          #     test=biomaRt::getBM(attributes=c('description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)
+          #     test=substr(test,1,regexpr(pattern ='\\[',test)[1]-1)
+          #     test=gsub(" ", "+", test)
+          #     #renderUI({tagList("URL link:", url)})
+          #     #renderUI({tags$a(href = 'www.google.com/search?q=carbohydrate+sulfotransferase','www.google.com/search?q=carbohydrate+sulfotransferase')})
+          #     tags$div(class="header", checked=NA,
+          #              tags$a(href=paste0('www.google.com/search?q=',test), test))
         }
           
       })
-      #When clicked: query Ensembl
+    }
+      #When clicked: query Ensembl VCE to get the variant consequence
       if(!is.null(species)){
         output$event4 <- shiny::renderPrint({
           f <- plotly::event_data("plotly_click")
@@ -398,30 +402,6 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           }
         })
       }
-      # output$event4 <- shiny::renderPrint({
-      #   f <- plotly::event_data("plotly_click")
-      #   if (is.null(f)) {
-      #     "Select a point!" 
-      #   }else {
-      #     selectBP=subset[which(subset$pos+subset$maxPos==f$x),'pos']
-      #     selectBP=selectBP[1]
-      #     selectCHR=subset[which(subset$pos+subset$maxPos==f$x),'chr']
-      #     selectCHR=selectCHR[1]
-      #     #Query ensembl database to get nearby genes
-      #     #c=tryCatch({biomaRt::getBM(attributes=c('chromosome_name','ensembl_gene_id','wikigene_name','start_position','end_position','description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)}, error=function(e){"no gene found!"})
-      #     #c
-      #     #biomaRt::getBM(attributes=c('chromosome_name','ensembl_gene_id','wikigene_name','start_position','end_position','description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)
-      #     test=biomaRt::getBM(attributes=c('description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)
-      #     test=substr(test,1,regexpr(pattern ='\\[',test)[1]-1)
-      #     test=gsub(" ", "+", test)
-      #     #renderUI({tagList("URL link:", url)})
-      #     #renderUI({tags$a(href = 'www.google.com/search?q=carbohydrate+sulfotransferase','www.google.com/search?q=carbohydrate+sulfotransferase')})
-      #     tags$div(class="header", checked=NA,
-      #              tags$a(href=paste0('www.google.com/search?q=',test), test))
-      #   }
-      #   
-      # })
-    }
     
     #When clicked: give position of SNP
     output$event2<- shiny::renderPrint({
@@ -480,7 +460,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           #Retrieve genotype
           snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
           
-          # #Check SNP in LD in the area, too be implemented
+          # #Check SNP in LD in the area, not yet implemented
           # snp1 = gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "genotype"), start=c(1,snp_id), count=c(-1,1))
           # #loop on nearby snps, break when ld too small
           # snp2 = gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "genotype"), start=c(1,snp_id+1), count=c(-1,1))
@@ -493,9 +473,12 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           pal1 <- c("antiquewhite2", "black")
           
           graph <- plotly::plot_ly()
+          #Plot marker distribution
           graph <- plotly::add_trace(graph,data=xy, x=x,y=y, type='scatter',mode='markers', color=pres, marker=list(showscale=FALSE), name='marker', colors=pal1, text=ID,hoverinfo = c("color"))
           graph <- plotly::hide_colorbar(graph)  
+          #Plot environmental variable
           graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers', x=~x,y=~y, name='varenv', marker=list(color=~varenv,colorscale = 'YlOrRd', showscale=TRUE, colorbar=list(len=0.3, title='varenv',y=1)))
+          #Plot population structure
           if(!is.null(popStrCol)){
             if(length(popStrCol)==1){
               graph <- plotly::add_markers(graph,data=xy, inherit=FALSE, mode='markers',x=~x,y=~y, name='pop1', marker=list(color=~popCol,colorscale = 'Greens', showscale=TRUE, colorbar=list(len=0.3, title='pops', y=0.7)))
@@ -513,42 +496,44 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
         
       })
     } 
-      #When clicked shows boxplot
-      output$boxplot <- shiny::renderPlot({
-        g <- plotly::event_data("plotly_click")
-        if(is.null(g)) {
-          #plotly::plot_ly(type='scatter', mode='markers')
-        } else{
-          varenv=envData[,varEnv]
-          popCol=envData[,popStrCol]
-          # Get marker and snp
-          if(length(chromo)>1 | chromo=='all'){
-            selectSNP=subset[which(subset$pos+subset$maxPos==g$x),c('chr','pos','Marker')]
-          } else {
-            selectSNP=subset[which(subset$pos==g$x),c('chr','pos','Marker')]
-          }
-          selectSNP=selectSNP[1]
-          #Retrieve genotype
-          snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
-          pres=genoToMarker(gds_obj, selectSNP$Marker)
-          xy=data.frame(varenv, pres, popCol)
-          boxplot(varenv~pres, data=xy)
+    
+    #When clicked shows boxplot
+    output$boxplot <- shiny::renderPlot({
+      g <- plotly::event_data("plotly_click")
+      if(is.null(g)) {
+        #plotly::plot_ly(type='scatter', mode='markers')
+      } else{
+        varenv=envData[,varEnv]
+        popCol=envData[,popStrCol]
+        # Get marker and snp
+        if(length(chromo)>1 | chromo=='all'){
+          selectSNP=subset[which(subset$pos+subset$maxPos==g$x),c('chr','pos','Marker')]
+        } else {
+          selectSNP=subset[which(subset$pos==g$x),c('chr','pos','Marker')]
         }
-      })
-      
-      session$onSessionEnded(function() {
-        shiny::stopApp()
-        SNPRelate::snpgdsClose(gds_obj)
-      })
+        selectSNP=selectSNP[1]
+        #Retrieve genotype
+        snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
+        pres=genoToMarker(gds_obj, selectSNP$Marker)
+        xy=data.frame(varenv, pres, popCol)
+        boxplot(varenv~pres, data=xy)
+      }
+    })
+    
+    #When close browser, stop the app to stop the function and close the gds file
+    session$onSessionEnded(function() {
+      shiny::stopApp()
+      SNPRelate::snpgdsClose(gds_obj)
+    })
   }
   
   shiny::shinyApp(ui, server)
-  #shiny::stopApp()
+
 }
 
 #' @title Manhattan plot 
 #' @description Plot the manhattan plot for a given environmental data
-#' @author Solange Gaillard
+#' @author Solange Duruz
 #' @param preparedOutput char The prepared output list from prepare_output function
 #' @param varEnv char The name of the environmental variable one wish to study. Can be a vector of char if you want to plot several varEnv at a row. If \code{saveType} is NULL, the program prompts to continue. If \code{saveType} is png or pdf, several files are saved
 #' @param valueName char Name of the p- or q-value one wish to plot the manhattan on. This can be either pvalueG, pvalueW, qvalueG, qvalueW for G- or Waldscore respectively.
@@ -582,8 +567,10 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
   chrMaxPos = preparedOutput$chrMaxPos
   
   for(i in 1:length(varEnv)){
+    #Only chosen varEnv
     subset=sambadaOutput[which(sambadaOutput[,'Env_1']==varEnv[i]),]
     if(nrow(subset)==0) stop('No records found in sambada output corresponding to the chosen environmental variable (varEnv[i] argument)')
+    #Only chosen chromosome
     if(length(chromo)>1){
       subset=subset[with(subset, which(chr %in% chromo)),]
     } else if(chromo != 'all' ){
@@ -591,7 +578,8 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
     }
     if(nrow(subset)==0) stop('No record found in sambada output corresponding to the chosen chromosome (chromo argument)')
     subset$pval=-log10(subset[,get(valueName)])
-    
+
+    #Calculate final position (if several chromosome, shift the position, otherwise take initial position)
     prevPos=data.frame("chr"=chrMaxPos$Group.1, "maxPos"=cumsum(as.numeric(chrMaxPos$x))-chrMaxPos$x)
     prevPos=data.frame(prevPos, "chrPos"=rownames(prevPos))
     subset=merge(subset,prevPos,by='chr', sort=FALSE, all.x=TRUE)
@@ -606,9 +594,6 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
     }
     
     #Prepare manhattan
-    rhg_cols=c("#CCCC99","#999966")
-    #p <- ggplot2::ggplot(data=subset, ggplot2::aes_string(x='xcoord', y='pval', colour='color', label='snp', text='pos'), showlegend=FALSE) 
-    #p <- p + ggplot2::geom_point(size=1)
     p <- ggplot2::ggplot(data=subset, showlegend=FALSE)
     p <- p + ggplot2::geom_point(ggplot2::aes_string(x='xcoord', y='pval', colour='color'),size=1)
     if(!is.null(highlight)){
@@ -616,14 +601,19 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
     }
     p <- p + ggplot2::theme(legend.position="none")
     if(!is.null(highlight) & (length(chromo)>1 | chromo=='all')){
+      #If SNP(s) must be highlighted + at least two chromosome, define 3 colors (2 greys, 1 red)
       p <- p + ggplot2::scale_color_manual(values=c("#8B8378", "#CDC0B0", '#FF0000'))
     } else if (!is.null(highlight) & length(chromo)==1){
+      #If no SNP must be highlighted + at least two chromosome, define 2 colors (2 greys)
       p <- p + ggplot2::scale_color_manual(values=c("#8B8378", '#FF0000'))
     } else {
+      #If SNP(s) must be highlighted + one chromosome, define 2 colors (1 grey, 1 red)
       p <- p + ggplot2::scale_color_manual(values=c("#8B8378", "#CDC0B0"))
     }
     p <- p + ggplot2::scale_y_continuous(name =paste0("-log10(",valueName,")"))
     p <- p + ggplot2::ggtitle(varEnv[i])
+    
+    #x-label: either chromosome number if several chromosomes, or bp
     if(length(chromo)>1){
       p <- p + ggplot2::scale_x_continuous(name ="Chromosome", breaks=prevPos$maxPos[chromo], labels=as.character(prevPos$chr[chromo]))
     } else if (chromo == 'all'){
@@ -634,7 +624,7 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
     if(!is.null(threshold)){
       p <- p + ggplot2::geom_hline(yintercept=-log10(threshold), colour='red')
     }
-    # Problem when serveral chromo and chromosomes not side by side
+
     if(!is.null(saveType)){
       if(saveType=='png'){
         png(paste0('manhattan-',varEnv[i],'.png'))
@@ -657,13 +647,14 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
       }
     }
   }
+  #Only returns the last plot
   return(p)
 }
 
 
 #' @title Plotting of maps 
 #' @description Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
-#' @author Solange Gaillard
+#' @author Solange Duruz
 #' @param envFile char The file containing the input environmental variable of sambada. 
 #' @param x char The name of the column corresponding to the x-coordinate in the envFile. Can be set to null if unknown, in this case the maps will not be available
 #' @param y char The name of the column corresponding to the y-coordinate in the env file. Can be set to null if x is null.
@@ -794,13 +785,11 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
   #par(mar=c(2,2,2,2))
   
   #Jitter the points to avoid overlapp 
-  # Est-ce que dev.size va marcher???
   size=0.1*max((max(envData@coords[,x])-min(envData@coords[,x]))/dev.size(units='cm')[1],(max(envData@coords[,y])-min(envData@coords[,y]))/dev.size(units='cm')[2])
   data_df=data.frame(size=rep(size,nrow(envData)),x=envData@coords[,x],y=envData@coords[,y])
   scattered_point=packcircles::circleRepelLayout(data_df,NULL,NULL,xysizecols=c('x','y','size'),sizetype='radius',maxiter = 50)
   sp::coordinates(scattered_point$layout)=c('x','y')
 
-  
   #Draw plots
   numMark=0
   numEnv=0

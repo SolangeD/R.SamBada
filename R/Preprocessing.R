@@ -1,6 +1,6 @@
 #' @title Prepare genomic input
 #' @description Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options. The output file has the same name as the input file but with a .csv extension
-#' @author Solange Gaillard, Oliver Selmoni
+#' @author Solange Duruz, Oliver Selmoni
 #' @param fileName char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen
 #' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)
 #' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)
@@ -244,20 +244,20 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
 
 #' @title Set the location of samples through a local web-application with interactive map
 #' @description Helps the user defining the location of samples by opening a local web page. If the html fails to open, one must open georeftool.html manually in any web browser: the file is located within the extdata folder of the package. Once opened, the user must upload a file with at least one column corresponding to sample IDs. He can then specify the name of the column corresponding to lat/long if present. For samples without location, he must select the individuals on the list shown and click on a point of the map. The location of the map will be assigned to the chosen samples. When finished, the new file can be downloaded.
-#' @author Oliver Selmoni, Solange Gaillard
+#' @author Oliver Selmoni, Solange Duruz
 #' @examples 
 #' \dontrun{
 #' setLocation()
 #' }
 #' @export
 setLocation=function(){
-  html=system.file("extdata", "georeftool.html", package = "RSambada")
+  html=system.file("extdata", "georeftool.html", package = "R.SamBada")
   utils::browseURL(html)
 }
 
 #' @title Create env file from raster file(s) and/or glabal database present in the raster r package
 #' @description Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or glabal database present in the raster r package
-#' @author Solange Gaillard
+#' @author Solange Duruz
 #' @param locationFileName char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file
 #' @param x char Name of the x (or longitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
 #' @param y char Name of the y (or latitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
@@ -617,7 +617,7 @@ createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=
 
 #' @title Prepare environmental input
 #' @description Writes a new environmental file that sambada can work with after having removed too correlated variables. Also calculates population structure from a PCA in SNPRelate and add it at the end of the environmental file
-#' @author Solange Gaillard, Oliver Selmoni
+#' @author Solange Duruz, Oliver Selmoni
 #' @param envFile char Name of the input environmental file (must be in active directory). Can be .csv or .shp
 #' @param maxCorr double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted
 #' @param idName char Name of the id in the environmental file matching the one of \code{genoFile}
