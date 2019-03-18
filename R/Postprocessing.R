@@ -665,7 +665,7 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
 #' @param mapType char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (envrionmental variable distribution), 'popStr' (population variable on continuous scale), 'popPieChart' (appartnance to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.
 #' @param varEnvName char Name of the environmental variable. If a raster of the variable is located in your working directory, you can provide \code{varEnvName} even for \code{mapType} such as 'marker' or 'AS'. The function will scan the folder of your working directory for raster with the same name as \code{varEnvName} (and commonly used extension for raster) and put it as background.
 #' @param SAMethod char If \code{mapType} contains 'AS', then you must specify the method for setting the weights of neighbours. Can be one of 'knn' (k-nearest neighbours) or 'distance' 
-#' @param SAThreshold char If \code{mapType} contains 'AS' and \code{SAMethod} is 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)
+#' @param SAThreshold char If \code{mapType} contains 'AS' and \code{SAMethod} is 'knn' then the number of neighbours. If \code{SAMethod} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)
 #' @param saveType char One of NULL, 'png' or 'pdf'. If NULL is set, the maps will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory.
 #' @param rasterName char If a raster file with the environmental variable distribution exists with a different name than \code{varEnvName}, provide it here (including extension)
 #' @param simultaneous boolean If TRUE and \code{mapType} contains several kinds of maps, all maps corresponding to the same marker will be plotted on the same window. The resulting maps can be very small.
@@ -817,7 +817,15 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       }
       
     } else if (simultaneous==FALSE & !is.null(saveType)){
-      
+      if('marker' %in% mapType2[t]){
+        mapName=paste0(markerName[numMark],'_map.',saveType)
+      } else if('AS' %in% mapType2[t]){
+        mapName=paste0(markerName[numMark],'_AS_map.',saveType)
+      } else if ('env' %in% mapType2[t]){
+        mapName=paste0(varEnvName[numEnv],'_map.',saveType)
+      } else {
+        mapName=paste0('popStr_map.',saveType)
+      }      
     }
     #for(m in 1:loopNum){
       #Get Marker info
@@ -868,7 +876,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       }else {
         #If raster not found, put countries as background
         country=data('wrld_simpl', package='maptools')
-        raster::plot(country,xlim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])),ylim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,y])))
+        raster::plot(country,xlim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,x])),ylim=c(min(sp::coordinates(envData)[,y]),max(sp::coordinates(envData)[,y])))
       }
       
       #Draw lines between original location and scattered one (if not scattered, the lines will be masked by the points)
@@ -882,7 +890,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       } else if(mapType2[t]=='env'){
         #Define color palette
         new.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
-        raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,varEnvName]-min(envData@data[,varEnvName]))/(max(envData@data[,varEnvName])-min(envData@data[,varEnvName]))*100)],pch=20,add=TRUE)
+        raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,varEnvName]-min(envData@data[,varEnvName]))/(max(envData@data[,varEnvName])-min(envData@data[,varEnvName]))*100)],pch=16,add=TRUE)
       } else if(mapType2[t]=='popStr'){
           new.pal=colorRampPalette(c("white","black"))( 100 )
           raster::plot(scattered_point$layout, col=new.pal[round((envData@data[,popStrCol[numPopCol]]-min(envData@data[,popStrCol[numPopCol]]))/(max(envData@data[,popStrCol[numPopCol]])-min(envData@data[,popStrCol[numPopCol]]))*100)],pch=16,add=TRUE)
@@ -935,28 +943,28 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
         axis(4, at=(pretty(raster_df[,varEnvName2])[2:(length(pretty(raster_df[,varEnvName2]))-1)]-min(raster_df[,varEnvName2], na.rm=TRUE))/(max(raster_df[,varEnvName2], na.rm=TRUE)-min(raster_df[,varEnvName2], na.rm=TRUE))*100, labels=pretty(raster_df[,varEnvName2])[2:(length(pretty(raster_df[,varEnvName2]))-1)])
         text(1,107,varEnvName2)
       } else {
-        if(mapType[t]=='env'){
-          # Point legend
-          par(mar=c(2,1,3,2), xpd=NA)
-          image(1, 1:100, t(seq_along(1:100)), col=new.pal, axes=FALSE, xlab="", ylab="")
-          axis(4, at=(pretty(envData@data[,varEnvName2])[2:(length(pretty(envData@data[,varEnvName2]))-1)]-min(envData@data[,varEnvName2], na.rm=TRUE))/(max(envData@data[,varEnvName2], na.rm=TRUE)-min(envData@data[,varEnvName2], na.rm=TRUE))*100, labels=pretty(envData@data[,varEnvName2])[2:(length(pretty(envData@data[,varEnvName2]))-1)])
-          text(1,107,'Points')
-          plot.new()
-          next
-        }
+        plot.new()
+        par(mar=c(2,1,3,2), xpd=NA)
       }
+
       if(mapType2[t]=='popPieChart'){
         # Point legend
         #par(mar=c(2,1,3,2), xpd=NA)
           points(rep(0,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),pch=19, col=terrain.colors(length(popStrCol)))
           text(rep(0.1,length(popStrCol)),seq(from=-20, by=-10, length.out=length(popStrCol)),popStrCol, pos=4)
           text(1,-10,'Population')          
+      } else if(mapType[t]=='env'){
+        # Point legend
+        par(mar=c(2,1,3,2), xpd=NA)
+        image(1, 1:100, t(seq_along(1:100)), col=new.pal, axes=FALSE, xlab="", ylab="")
+        axis(4, at=(pretty(envData@data[,varEnvName2])[2:(length(pretty(envData@data[,varEnvName2]))-1)]-min(envData@data[,varEnvName2], na.rm=TRUE))/(max(envData@data[,varEnvName2], na.rm=TRUE)-min(envData@data[,varEnvName2], na.rm=TRUE))*100, labels=pretty(envData@data[,varEnvName2])[2:(length(pretty(envData@data[,varEnvName2]))-1)])
+        text(1,107,varEnvName2)
       } else if(mapType2[t]=='popStr'){
         par(mar=c(2,1,3,2), xpd=NA)
         pop.pal=colorRampPalette(c("white", "black"))( 100 )
         image(1, 1:100, t(seq_along(1:100)), col=pop.pal, axes=FALSE , xlab="", ylab="")
         axis(4, at=(pretty(envData@data[,popStrCol[numPopCol]])[2:(length(pretty(envData@data[,popStrCol[numPopCol]]))-1)]-min(envData@data[,popStrCol[numPopCol]], na.rm=TRUE))/(max(envData@data[,popStrCol[numPopCol]], na.rm=TRUE)-min(envData@data[,popStrCol[numPopCol]], na.rm=TRUE))*100, labels=pretty(envData@data[,popStrCol[numPopCol]])[2:(length(pretty(envData@data[,popStrCol[numPopCol]]))-1)])
-        text(1,107,'Poulation')
+        text(1,107,'Population')
       } else if(mapType2[t]=='AS'){
         # Point legend
         #par(mar=c(2,1,3,2), xpd=NA)

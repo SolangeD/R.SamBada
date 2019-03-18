@@ -966,7 +966,12 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
         
         #Calculate distance to centroid
         for(j in 1:numPop){
-          dist_j=sqrt((pca$eigenvect[,1]-mean(pca$eigenvect[t(clust$cluster==j),1]))^2+(pca$eigenvect[,2]-mean(pca$eigenvect[t(clust$cluster==j),2]))^2)
+          #dist_j=sqrt((pca$eigenvect[,1]-mean(pca$eigenvect[t(clust$cluster==j),1]))^2+(pca$eigenvect[,2]-mean(pca$eigenvect[t(clust$cluster==j),2]))^2)
+          dist_j=0
+          for(kk in 1:numPc){
+            dist_j=dist_j+(pca$eigenvect[,kk]-mean(pca$eigenvect[t(clust$cluster==j),kk]))^2
+          }
+          dist_j=sqrt(dist_j)
           if(j==1){
             dist=dist_j
           }else{
