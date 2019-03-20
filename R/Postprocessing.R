@@ -1,13 +1,13 @@
-#' @title Prepare output (usefull for all postprocessing analysis)
+#' @title Prepare output (useful for all postprocessing analysis)
 #' @author Solange Duruz, Sylvie Stucki
-#' @description Read sambada's output and prepare it by retrieving the snp position and chromosome (usefull for plotting manhattan)
+#' @description Read sambada's output and prepare it by retrieving the snp position and chromosome (useful for plotting manhattan)
 #' @param sambadaname char The name of the genofile without extension name given to sambada (or outputfile of sambada without the ending -Out-Dim.csv)
 #' @param dimMax integer The maximum number of dimension given in sambada
 #' @param gdsFile char Name of the gds file associated with sambada's input file. If null, will try with \code{sambadaname}.gds
 #' @param popStr logical Indicates whether sambada was run using the POPSTRVAR parameter (i.e. population structure was taken into account). Default false
 #' @param nrows integer Specifies the number of line to read from the input file. Useful if saveType END ALL was used in sambada and that the number of models run is large so that the reading and processing is too slow. The saveType END parameter ensures that most significant models are located at the top of the file.
 #' @param interactiveChecks logical
-#' @return a list containing a) $sambadaOutput a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) $chrSNPNum The total number of SNPs in each chromosme c) $chrMaxPos The highest position found in each chromosome
+#' @return a list containing a) $sambadaOutput a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) $chrSNPNum The total number of SNPs in each chromosome c) $chrMaxPos The highest position found in each chromosome
 #' @examples
 #' \dontrun{
 #' prepare_output('myFile',1)
@@ -184,8 +184,8 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 #' @param valueName char Name of the p- or q-value one wish to plot the manhattan on. This can be either pvalueG, pvalueW, qvalueG, qvalueW for G- or Waldscore respectively.
 #' @param chromo char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)
 #' @param gdsFile char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv or -env-export.csv) and .gds
-#' @param IDCol char The name of the column in envFile corresponding to the ID of the individuall. If provided, hover on the output map will give the id of the animal
-#' @param popStrCol char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available reprenting population structure.
+#' @param IDCol char The name of the column in envFile corresponding to the ID of the individual. If provided, hover on the output map will give the id of the animal
+#' @param popStrCol char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available representing population structure.
 #' @return None 
 #' @examples
 #' \dontrun{
@@ -659,10 +659,10 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
 #' @param x char The name of the column corresponding to the x-coordinate in the envFile. Can be set to null if unknown, in this case the maps will not be available
 #' @param y char The name of the column corresponding to the y-coordinate in the env file. Can be set to null if x is null.
 #' @param gdsFile char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv) and .gds
-#' @param popStrCol char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available reprenting population structure.
+#' @param popStrCol char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available representing population structure.
 #' @param locationProj integer EPSG code of the geographical projection in the envFile
 #' @param markerName name of the marker to be plotter if \code{mapType} is 'marker' or 'AS'. \code{markerName} can be found in preparedOutput$sambadaOutput[,''] where preparedOutput would be the result of the function \code{prepareOutput}
-#' @param mapType char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (envrionmental variable distribution), 'popStr' (population variable on continuous scale), 'popPieChart' (appartnance to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.
+#' @param mapType char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (environmental variable distribution), 'popStr' (population variable on continuous scale), 'popPieChart' (belonging to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.
 #' @param varEnvName char Name of the environmental variable. If a raster of the variable is located in your working directory, you can provide \code{varEnvName} even for \code{mapType} such as 'marker' or 'AS'. The function will scan the folder of your working directory for raster with the same name as \code{varEnvName} (and commonly used extension for raster) and put it as background.
 #' @param SAMethod char If \code{mapType} contains 'AS', then you must specify the method for setting the weights of neighbours. Can be one of 'knn' (k-nearest neighbours) or 'distance' 
 #' @param SAThreshold char If \code{mapType} contains 'AS' and \code{SAMethod} is 'knn' then the number of neighbours. If \code{SAMethod} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)
@@ -870,12 +870,12 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       #Draw background
       if(exists('rasterName')){
         #If raster found, put it as background
-        #Attention mettre les coordonnées de scattered point ou envData???
+        #Put coordinates of scattered point or envData???
         raster::image(raster, asp=1, maxpixels=10000000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
         
       }else {
         #If raster not found, put countries as background
-        country=data('wrld_simpl', package='maptools')
+        country=data('wrld_simpl', package='maptools', envir=environment())
         raster::plot(country,xlim=c(min(sp::coordinates(envData)[,x]),max(sp::coordinates(envData)[,x])),ylim=c(min(sp::coordinates(envData)[,y]),max(sp::coordinates(envData)[,y])))
       }
       

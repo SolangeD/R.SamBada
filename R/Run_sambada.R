@@ -1,7 +1,7 @@
 #' @title Run sambada on parallel cores
 #' @description Read sambadas input file to retrieve necessary information (num indiv etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
 #' @author Solange Duruz, Sylvie Stucki
-#' @param genoFile The name of the file in the current directory of genetic information, complient with samBada's format (use prepareGeno to transform it)
+#' @param genoFile The name of the file in the current directory of genetic information, compliant with samBada's format (use prepareGeno to transform it)
 #' @param envFile  The name of the file in the current directory of environmental information (use \code{link{createEnv}} to create it and \code{link{prepareEnv}} to reduce the correlated dataset and check order)
 #' @param idGeno Name of the column in the \code{genoFile} corresponding to the id of the animals
 #' @param idEnv Name of the column in the \code{envFile} corresponding to the id of the animals
@@ -10,8 +10,8 @@
 #' @param wordDelim char Word delimiter of input file(s). Default ' ', 
 #' @param saveType composed of three words 1) one of 'end' or 'real' to save the result during the analysis or at the end (allows sorting of result) 2) one of 'all' or 'best' to save all models or only significant models 3) If 'best' specify the threshold of significance (before applying Bonferroni's correction). Default 'END BEST 0.05', 
 #' @param populationVar one of 'first' or 'last'. This option indicates whether any explanatory variables represent the population structure. If present, the said population variables must be gathered in the input file, either on the left or on the right side of the group of environmental variables. Default null.
-#' @param spatial composed of 5 words 1) Column name (or number) for longitude 2) Column name (or number) for latitude 3) one of 'sperical' or 'cartesian': to indicate the type of coordinate 4) one of 'distance', 'gaussian', bisquare' or 'nearest': type of weighting scheme (see sambadoc) 4) Number bandwith of weighting function Input type is (double). Units are in [m] for spherical coordinates; for cartesian coordinates, units match those of the samples' positions. Case nearest: Input type is (int)
-#' @param autoCorr composed of 3 words. 1) one of global, local or both: to indicate the type of spatial autocorrelation to compute. 2) one of env, mark or both: to inidicate the variables on which to compute the analysis 3) integer The number of permutation to compute the pseudo p-value. Ex 'global both 999'
+#' @param spatial composed of 5 words 1) Column name (or number) for longitude 2) Column name (or number) for latitude 3) one of 'spherical' or 'cartesian': to indicate the type of coordinate 4) one of 'distance', 'gaussian', bisquare' or 'nearest': type of weighting scheme (see sambadoc) 4) Number bandwidth of weighting function Input type is (double). Units are in [m] for spherical coordinates; for cartesian coordinates, units match those of the samples' positions. Case nearest: Input type is (int)
+#' @param autoCorr composed of 3 words. 1) one of global, local or both: to indicate the type of spatial autocorrelation to compute. 2) one of env, mark or both: to indicate the variables on which to compute the analysis 3) integer The number of permutation to compute the pseudo p-value. Ex 'global both 999'
 #' @param shapeFile one of yes or no. With this option, the LISA are saved as a shapefile (in addition to the usual output)
 #' @param outputFile char Base name(s) for the results file(s). Default: construction from input file with suffixes (e.g. -Out-) 
 #' @param colSupEnv char or vector of char Name(s) of the column(s) in the environmental data to be excluded from the analysis. Default NULL 
@@ -19,8 +19,8 @@
 #' @param subsetVarEnv char or vector of char Name(s) of the column(s) in the environmental data to be included in the analysis while the other columns are set as inactive. Default NULL 
 #' @param subsetVarMark char or vector of char Name(s) of the column(s) in the molecular data to be included in the analysis while the other columns are set as inactive. Default NULL 
 #' @param headers logical Presence or absence of variable names in input files Default TRUE
-#' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (prepareGeno or sambadaParallel) has been already run in the R active session.
-#' @param keepAllFiles logical If TRUE, all parameter files and splitted genofile and log-files are not removed. Default FALSE
+#' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directory path is permanently stored in the PATH environmental variable or if a function invoking sambada executable (prepareGeno or sambadaParallel) has been already run in the R active session.
+#' @param keepAllFiles logical If TRUE, all parameter files and split genofile and log-files are not removed. Default FALSE
 #' @examples
 #' \dontrun{
 #' #With all default parameter

@@ -4,10 +4,10 @@
 #' @param fileName char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen
 #' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)
 #' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)
-#' @param ldThresh double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering (if null no filtering on LD will be computed)
-#' @param mgfThresh double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations relie on gentoypes
-#' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (\code{prepareGeno} or \code{sambadaParallel}) has been already run in the R active session.
-#' @param interactiveChecks logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for mafThresh, missingnessThresh, mgfThresh (optional, default value=FALSE)
+#' @param ldThresh double A number between 0 and 1 specifying the linkage disequilibrium (LD) rate filtering (if null no filtering on LD will be computed)
+#' @param mgfThresh double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations rely on genotypes
+#' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directory path is permanently stored in the PATH environmental variable or if a function invoking sambada executable (\code{prepareGeno} or \code{sambadaParallel}) has been already run in the R active session.
+#' @param interactiveChecks logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for \code{mafThresh}, \code{missingnessThresh}, \code{mgfThresh} (optional, default value=FALSE)
 #' @param verbose logical Turn on verbose mode
 #' @return None
 #' @examples
@@ -107,6 +107,77 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
   on.exit(SNPRelate::snpgdsClose(gds_obj))
   
   ### Filtering ###
+  MGF <- NULL
+  Rcpp::cppFunction("
+    NumericVector MGF(NumericMatrix xx, double maxMGFAllowed){
+      int xrow = xx.nrow() ;
+      int xcol = xx.ncol();
+      int aa;
+      int Aa;
+      int AA;
+      int sum_max;
+      int mgf;
+      NumericVector yy(xcol);
+      NumericVector yybool(xcol);
+      NumericVector yysnpid(xcol);
+      int k=0;
+      for(int i = 0; i < xcol; i++) {
+      aa=0;
+      Aa=0;
+      AA=0;
+      for(int j = 0; j < xrow; j++){
+      if(xx(j,i)==0){
+      aa++;
+      }
+      else if(xx(j,i)==1){
+      Aa++;
+      }
+      else if(xx(j,i)==2){
+      AA++;
+      }
+      }
+      if(aa>=Aa){
+      sum_max=aa;
+      if(AA>aa){
+      sum_max=AA;
+      }
+      }
+      else{
+      if(AA>=Aa){
+      sum_max=AA;
+      }
+      else{
+      sum_max=Aa;
+      }
+      }
+      if(aa+AA+Aa>0){
+      mgf=(sum_max*100)/(aa+Aa+AA);
+      }
+      else{
+      mgf=0;
+      }
+      yy(i)=mgf;
+      if(mgf>maxMGFAllowed*100){
+      yybool(i)=0;
+      
+      }
+      else{
+      yybool(i)=1;
+      yysnpid(k)=i+1;
+      k++;
+      }
+      
+      }
+      
+      //NumericVector yysnpid2(k);
+      //yysnpid2(yysnpid.begin() , yysnpid.begin() + k);
+      if(maxMGFAllowed>=0){
+      return yysnpid;
+      }
+      else{
+      return yy;
+      }
+  }")
   
   if(verbose==TRUE){
     print('Filtering using SNPRelate in process')
@@ -181,7 +252,7 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
   if(is.null(missingnessThresh)){
     missingnessThresh=NaN
   } 
-  if(is.null(ldThresh)){ #Filtrer à la main or use snpgdsSelectSNP
+  if(is.null(ldThresh)){ #Manual filter or use snpgdsSelectSNP
     #if(!exists('snpSummary')){
     #  snpSummary=SNPRelate::snpgdsSNPRateFreq(gds_obj, with.snp.id=TRUE)
     #}
@@ -255,8 +326,8 @@ setLocation=function(){
   utils::browseURL(html)
 }
 
-#' @title Create env file from raster file(s) and/or glabal database present in the raster r package
-#' @description Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or glabal database present in the raster r package
+#' @title Create env file from raster file(s) and/or global database present in the raster r package
+#' @description Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or global database present in the raster r package
 #' @author Solange Duruz
 #' @param locationFileName char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file
 #' @param x char Name of the x (or longitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
@@ -264,7 +335,7 @@ setLocation=function(){
 #' @param separator char The separator used to separate columns in your \code{locationFileName}
 #' @param locationProj integer Coordinate system EPSG code of the \code{locationFileName}. If \code{locationFileName} is already georeferenced, this argument will be skipped. Required if \code{locationFileName} extension is csv.
 #' @param rasterName char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory. Can be set to null if worldclim or srtm are set to TRUE.
-#' @param rasterProj integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlyer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)
+#' @param rasterProj integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlayer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)
 #' @param directory logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rasterName} will be loaded
 #' @param worldclim logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
 #' @param srtm logical If TRUE the SRTM (altitude) variables will be downloaded at a resolution ... Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
@@ -626,15 +697,15 @@ createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=
 #' @param numPc double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC (the program will find the first leap in the proportion of variance where the ratio (difference in variance between PC x and x+1)/(variance of PC x) is greater than NumPc. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genoFile} is null 
 #' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)
 #' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering when computing PCS(if null no filtering on missing rate will be computed)
-#' @param ldThresh double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering before computing the PCA (if null no filtereing on LD will be computed)
-#' @param numPop integer If not null, clustering based on \code{numPc} first PC will be computed to devide into \code{numPop} populations. If -1 automatic detection of number of cluster (elbow method if \code{clustMethod}='kmeans', maximise branch length if \code{clustMethod}='hclust'). If null, no clustering will be computed: if \code{genoFile} is set, principal component scores will be included as population information in the final file.
+#' @param ldThresh double A number between 0 and 1 specifying the linkage disequilibrium (LD) rate filtering before computing the PCA (if null no filtering on LD will be computed)
+#' @param numPop integer If not null, clustering based on \code{numPc} first PC will be computed to divide into \code{numPop} populations. If -1 automatic detection of number of cluster (elbow method if \code{clustMethod}='kmeans', maximise branch length if \code{clustMethod}='hclust'). If null, no clustering will be computed: if \code{genoFile} is set, principal component scores will be included as population information in the final file.
 #' @param clustMethod char One of 'kmeans' or 'hclust' for K-means and hierarchical clustering respectively. Default 'kmeans'
 #' @param interactiveChecks logical If TRUE, plots will show up showing number of populations chosen, and correlation between variables and the user can interactively change the chosen threshold for \code{maxCorr} and \code{numPop} (optional, default value=FALSE)
-#' @param includeCol character vector Columns in the envrionmental file to be considered as variables. If none specified, all numeric variables will be considered as env var except for the id
-#' @param excludeCol character vector Columns in the envrionmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as env var except for the id
-#' @param popStrCol character vector Columns in the envrionmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files
-#' @param x character Name of the column corresponding to the x coordinate (or longitude if sperical coordinate). If not null, x column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.
-#' @param y character Name of the column corresponding to the y coordinate (or latitude if sperical coordinate). If not null, y column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.
+#' @param includeCol character vector Columns in the environmental file to be considered as variables. If none specified, all numeric variables will be considered as env var except for the id
+#' @param excludeCol character vector Columns in the environmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as env var except for the id
+#' @param popStrCol character vector Columns in the environmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files
+#' @param x character Name of the column corresponding to the x coordinate (or longitude if spherical coordinate). If not null, x column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.
+#' @param y character Name of the column corresponding to the y coordinate (or latitude if spherical coordinate). If not null, y column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.
 #' @param locationProj integer EPSG code of the projection of x-y coordinate
 #' @param verbose boolean If true show information about progress of the process
 #' @return None
@@ -979,14 +1050,14 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
           }
         }
         
-        #Pie chart => bloquer ratio x/y + mieux définir la taille des pies
+        #Pie chart => lock ratio x/y + better define pie size
         if(interactiveChecks==TRUE & !is.null(x)){
             #Transform env to a spatial object, set projection and reproject to mercator
             location=env
             sp::coordinates(location)=c(x,y)
             sp::proj4string(location)=paste0('+init=epsg:',locationProj)
             sp::spTransform(location, '+init=epsg:4326')
-            country=data('wrld_simpl', package='maptools')
+            country=data('wrld_simpl', package='maptools', envir=environment())
             plot(country,xlim=c(min(sp::coordinates(location)[,'Longitude']),max(sp::coordinates(location)[,'Longitude'])),ylim=c(min(sp::coordinates(location)[,'Latitude']),max(sp::coordinates(location)[,'Latitude'])))
             rad=abs(max(sp::coordinates(location)[,'Longitude'])-min(sp::coordinates(location)[,'Longitude']))/50
             for(i in 1:nrow(location)){
