@@ -17,19 +17,19 @@ plotMap(envFile, x, y, locationProj, popStrCol, gdsFile, markerName,
 
 \item{locationProj}{integer EPSG code of the geographical projection in the envFile}
 
-\item{popStrCol}{char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available reprenting population structure.}
+\item{popStrCol}{char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available representing population structure.}
 
 \item{gdsFile}{char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv) and .gds}
 
 \item{markerName}{name of the marker to be plotter if \code{mapType} is 'marker' or 'AS'. \code{markerName} can be found in preparedOutput$sambadaOutput[,''] where preparedOutput would be the result of the function \code{prepareOutput}}
 
-\item{mapType}{char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (envrionmental variable distribution), 'popStr' (population variable on continuous scale), 'popPieChart' (appartnance to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.}
+\item{mapType}{char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (environmental variable distribution), 'popStr' (population variable on continuous scale), 'popPieChart' (belonging to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.}
 
 \item{varEnvName}{char Name of the environmental variable. If a raster of the variable is located in your working directory, you can provide \code{varEnvName} even for \code{mapType} such as 'marker' or 'AS'. The function will scan the folder of your working directory for raster with the same name as \code{varEnvName} (and commonly used extension for raster) and put it as background.}
 
 \item{SAMethod}{char If \code{mapType} contains 'AS', then you must specify the method for setting the weights of neighbours. Can be one of 'knn' (k-nearest neighbours) or 'distance'}
 
-\item{SAThreshold}{char If \code{mapType} contains 'AS' and \code{SAMethod} is 'knn' then the number of neighbours. If \code{SAThreshold} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)}
+\item{SAThreshold}{char If \code{mapType} contains 'AS' and \code{SAMethod} is 'knn' then the number of neighbours. If \code{SAMethod} is 'distance' then the distance in map-unit (unless you use a spherical projection (latitude/longitude), in which case you should use km)}
 
 \item{saveType}{char One of NULL, 'png' or 'pdf'. If NULL is set, the maps will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory.}
 
@@ -57,5 +57,5 @@ plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop
 }
 }
 \author{
-Solange Gaillard
+Solange Duruz
 }

@@ -27,21 +27,21 @@ prepareEnv(envFile, maxCorr, idName, separator = " ", genoFile = NULL,
 
 \item{missingnessThresh}{double A number between 0 and 1 specifying the missing rate filtering when computing PCS(if null no filtering on missing rate will be computed)}
 
-\item{ldThresh}{double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering before computing the PCA (if null no filtereing on LD will be computed)}
+\item{ldThresh}{double A number between 0 and 1 specifying the linkage disequilibrium (LD) rate filtering before computing the PCA (if null no filtering on LD will be computed)}
 
-\item{numPop}{integer If not null, clustering based on \code{numPc} first PC will be computed to devide into \code{numPop} populations. If -1 automatic detection of number of cluster (elbow method if \code{clustMethod}='kmeans', maximise branch length if \code{clustMethod}='hclust'). If null, no clustering will be computed: if \code{genoFile} is set, principal component scores will be included as population information in the final file.}
+\item{numPop}{integer If not null, clustering based on \code{numPc} first PC will be computed to divide into \code{numPop} populations. If -1 automatic detection of number of cluster (elbow method if \code{clustMethod}='kmeans', maximise branch length if \code{clustMethod}='hclust'). If null, no clustering will be computed: if \code{genoFile} is set, principal component scores will be included as population information in the final file.}
 
 \item{clustMethod}{char One of 'kmeans' or 'hclust' for K-means and hierarchical clustering respectively. Default 'kmeans'}
 
-\item{includeCol}{character vector Columns in the envrionmental file to be considered as variables. If none specified, all numeric variables will be considered as env var except for the id}
+\item{includeCol}{character vector Columns in the environmental file to be considered as variables. If none specified, all numeric variables will be considered as env var except for the id}
 
-\item{excludeCol}{character vector Columns in the envrionmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as env var except for the id}
+\item{excludeCol}{character vector Columns in the environmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as env var except for the id}
 
-\item{popStrCol}{character vector Columns in the envrionmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files}
+\item{popStrCol}{character vector Columns in the environmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files}
 
-\item{x}{character Name of the column corresponding to the x coordinate (or longitude if sperical coordinate). If not null, x column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.}
+\item{x}{character Name of the column corresponding to the x coordinate (or longitude if spherical coordinate). If not null, x column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.}
 
-\item{y}{character Name of the column corresponding to the y coordinate (or latitude if sperical coordinate). If not null, y column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.}
+\item{y}{character Name of the column corresponding to the y coordinate (or latitude if spherical coordinate). If not null, y column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.}
 
 \item{locationProj}{integer EPSG code of the projection of x-y coordinate}
 
@@ -73,5 +73,5 @@ prepareEnv('myFile-env.csv',0.8,'Nom',' ', x='Longitude',y='Latitude',
 }
 }
 \author{
-Solange Gaillard, Oliver Selmoni
+Solange Duruz, Oliver Selmoni
 }

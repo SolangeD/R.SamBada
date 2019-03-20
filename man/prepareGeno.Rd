@@ -15,13 +15,13 @@ prepareGeno(fileName, mafThresh = NULL, missingnessThresh = NULL,
 
 \item{missingnessThresh}{double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)}
 
-\item{ldThresh}{double A number between 0 and 1 specifying the linkage desiquilibrium (LD) rate filtering (if null no filtering on LD will be computed)}
+\item{ldThresh}{double A number between 0 and 1 specifying the linkage disequilibrium (LD) rate filtering (if null no filtering on LD will be computed)}
 
-\item{mgfThresh}{double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations relie on gentoypes}
+\item{mgfThresh}{double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations rely on genotypes}
 
-\item{directory}{char The directory where binaries of sambada are saved. This parameter is not necessary if directoy path is permanently stored in the PATH environmental variable or if a function invoking samabada executable (\code{prepareGeno} or \code{sambadaParallel}) has been already run in the R active session.}
+\item{directory}{char The directory where binaries of sambada are saved. This parameter is not necessary if directory path is permanently stored in the PATH environmental variable or if a function invoking sambada executable (\code{prepareGeno} or \code{sambadaParallel}) has been already run in the R active session.}
 
-\item{interactiveChecks}{logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for mafThresh, missingnessThresh, mgfThresh (optional, default value=FALSE)}
+\item{interactiveChecks}{logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for \code{mafThresh}, \code{missingnessThresh}, \code{mgfThresh} (optional, default value=FALSE)}
 
 \item{verbose}{logical Turn on verbose mode}
 }
@@ -43,5 +43,5 @@ prepareGeno('myGDSFile.gds',mafThresh=0.05, missingnessThresh=0.05,
 }
 }
 \author{
-Solange Gaillard, Oliver Selmoni
+Solange Duruz, Oliver Selmoni
 }

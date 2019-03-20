@@ -18,5 +18,5 @@ downloadSamada('D:/Sambada')
 }
 }
 \author{
-Solange Gaillard
+Solange Duruz
 }

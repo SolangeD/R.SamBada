@@ -34,5 +34,5 @@ plotManhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
 }
 }
 \author{
-Solange Gaillard
+Solange Duruz
 }

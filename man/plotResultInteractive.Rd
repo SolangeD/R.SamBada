@@ -29,9 +29,9 @@ plotResultInteractive(preparedOutput, varEnv, envFile, species = NULL,
 
 \item{gdsFile}{char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv or -env-export.csv) and .gds}
 
-\item{IDCol}{char The name of the column in envFile corresponding to the ID of the individuall. If provided, hover on the output map will give the id of the animal}
+\item{IDCol}{char The name of the column in envFile corresponding to the ID of the individual. If provided, hover on the output map will give the id of the animal}
 
-\item{popStrCol}{char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available reprenting population structure.}
+\item{popStrCol}{char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available representing population structure.}
 }
 \value{
 None
@@ -45,5 +45,5 @@ plotResultInteractive('myFile','chircus',1,'Longitude','Latitude','bio1',c('1','
 }
 }
 \author{
-Solange Gaillard
+Solange Duruz
 }

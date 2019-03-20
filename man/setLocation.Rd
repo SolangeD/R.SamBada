@@ -15,5 +15,5 @@ setLocation()
 }
 }
 \author{
-Oliver Selmoni, Solange Gaillard
+Oliver Selmoni, Solange Duruz
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Preprocessing.R
 \name{createEnv}
 \alias{createEnv}
-\title{Create env file from raster file(s) and/or glabal database present in the raster r package}
+\title{Create env file from raster file(s) and/or global database present in the raster r package}
 \usage{
 createEnv(locationFileName, x = NULL, y = NULL, locationProj = NULL,
   separator = ",", rasterName, rasterProj = NULL, directory = FALSE,
@@ -21,7 +21,7 @@ createEnv(locationFileName, x = NULL, y = NULL, locationProj = NULL,
 
 \item{rasterName}{char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory. Can be set to null if worldclim or srtm are set to TRUE.}
 
-\item{rasterProj}{integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlyer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)}
+\item{rasterProj}{integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlayer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)}
 
 \item{directory}{logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rasterName} will be loaded}
 
@@ -37,7 +37,7 @@ createEnv(locationFileName, x = NULL, y = NULL, locationProj = NULL,
 None
 }
 \description{
-Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or glabal database present in the raster r package
+Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or global database present in the raster r package
 }
 \examples{
 \dontrun{
@@ -51,5 +51,5 @@ createEnv(locationFileName='MyFile.csv',x='Longitude',y='Latitude',locationProj=
 }
 }
 \author{
-Solange Gaillard
+Solange Duruz
 }
