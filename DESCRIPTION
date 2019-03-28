@@ -1,17 +1,24 @@
 Package: R.SamBada
 Type: Package
-Title: Processing pipeline for Sambada from pre to post processing
-Version: 1.0
-Date: 2019-01-16
+Title: Processing Pipeline for 'SamBada' from Pre- to Post-Processing
+Version: 0.1.0
+Date: 2019-03-18
 Author: Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana
 Maintainer: Solange Duruz <solange.duruz@alumni.epfl.ch>
-Description: Processing pipeline for Sambada from pre to post processing.
+Description: Processing pipeline for 'SamBada' from pre- to post-processing. 
+	'SamBada' is a landscape genomic software designed to run univariate or multivariate logistic regression between the presence of a genotype and one or several environmental variables. 
+	The package provides functions that can be classified into four categories: 
+	1) Install 'SamBada' 
+	2) Preprocessing (prepare genomic file into standards compatible with 'SamBada' and apply quality-control; retrieve environmental conditions at sampling location; prepare environmental file including removal of correlated variables and computation of population structure) 
+	3) Processing (run 'SamBada' on multiple cores using 'Supervision')
+	4) Post-processing (calculate p-values and q-values, produce interactive Manhattan plots and query 'Ensembl' database, produce maps).
 License: GPL (>= 2)
 Imports: SNPRelate,
 	gdsfmt
 LinkingTo: 
 RoxygenNote: 6.1.0
-Suggests: utils,
+Suggests: Rcpp,
+	utils,
 	data.table,
 	shiny,
 	plotly,
