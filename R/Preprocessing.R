@@ -2,6 +2,8 @@
 #' @description Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options. The output file has the same name as the input file but with a .csv extension
 #' @author Solange Duruz, Oliver Selmoni
 #' @param fileName char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen
+#' @param outputFile char Name of the output file. Must be a .csv
+#' @param saveGDS logical If true (and if the input file extension is different from GDS) the GDS file will be saved. We recommend to set this parameter to TRUE to save time in subsequent functions that rely on GDS file
 #' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)
 #' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)
 #' @param ldThresh double A number between 0 and 1 specifying the linkage disequilibrium (LD) rate filtering (if null no filtering on LD will be computed)
@@ -13,20 +15,25 @@
 #' @examples
 #' \dontrun{
 #' #With ped input file
-#' prepareGeno('myPlinkFile.ped',mafThresh=0.05, missingnessThresh=0.05,
-#'      mgfThresh=0.8,interactiveChecks=TRUE)
+#' prepareGeno('myPlinkFile.ped','mySambadaFile.csv',TRUE, mafThresh=0.05, 
+#'      missingnessThresh=0.05, mgfThresh=0.8,interactiveChecks=TRUE)
 #'
 #' #With gds input file
-#' prepareGeno('myGDSFile.gds',mafThresh=0.05, missingnessThresh=0.05,
-#'      mgfThresh=0.8,interactiveChecks=FALSE)
+#' prepareGeno('myGDSFile.gds','mySambadaFile.csv',FALSE, mafThresh=0.05, 
+#'      missingnessThresh=0.05,mgfThresh=0.8,interactiveChecks=FALSE)
 #' }
 #' @export
-prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NULL,mgfThresh=NULL, directory=NULL, interactiveChecks=FALSE, verbose=FALSE){
+prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NULL,mgfThresh=NULL, directory=NULL, interactiveChecks=FALSE, verbose=FALSE){
 
   ### Check inputs ###
   
   if(typeof(fileName)!='character') stop("fileName argument supposed to be character")
   if (!file.exists(fileName)) stop("Input file not found.")
+  if(typeof(outputFile)!='character') stop("outputFile argument supposed to be character")
+  extensionO=substr(outputFile,gregexpr("\\.", outputFile)[[1]][length(gregexpr("\\.", outputFile)[[1]])]+1, nchar(outputFile))
+  if(extensionO!='csv') stop("outputFile must have a .csv extension")
+  if(typeof(saveGDS)!='logical') stop('saveGDS argument supposed to be logical')
+  
   if(!is.null(mafThresh)){
     if(typeof(mafThresh)!='double') stop("mafThresh argument supposed to be decimal number")
     if(mafThresh>1 | mafThresh<0) stop("mafThresh argument supposed to be between 0 and 1")    
@@ -71,7 +78,7 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
     close(f)
     
     #recodePlink(numIndiv,numSNP,filename_short,paste(filename_short,'.csv'))
-    system(paste('recode-plink',numIndiv,numSNP,filename_short,paste0(filename_short,'.csv')))
+    system(paste('recode-plink',numIndiv,numSNP,filename_short,outputFile))
     return(NA)
   }
   
@@ -86,20 +93,28 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
   
   ### Creation and opening of GDS file ###
   
+  tmp=tempdir()
+  current=getwd()
+  
   if(verbose==TRUE){
     print('Creating and opening GDS file')
     print('===================================')
   }
   #Creates GDS file
+  if(saveGDS==FALSE){
+    outputDir=tmp
+  } else {
+    outputDir=getwd()
+  }
   if(interactiveChecks==TRUE & extension!='gds' & file.exists(paste0(filename_short,'.gds'))){
     useGDS = readline(prompt="A .gds file has been found with the same name. Would you like to use it (press y) or rewrite a new file (press any other key): ")
     if(useGDS=='y'){
       gds_file=paste0(filename_short,'.gds')
     } else{
-      gds_file=createGDSfile(fileName)
+      gds_file=createGDSfile(fileName,outputDir)
     }
   } else{
-    gds_file=createGDSfile(fileName)
+    gds_file=createGDSfile(fileName,outputDir)
   }
   
   #Open gds file
@@ -284,8 +299,8 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
     list_snp=snp_filtered
   }
   
-  if(interactiveChecks==TRUE & file.exists(paste0(filename_short,'.csv'))){
-    cont=readline(prompt=paste0(filename_short,".csv already exists and will be replaced. Do you want to continue? (press x to exit, any other key to continue): "))
+  if(interactiveChecks==TRUE & file.exists(outputFile)){
+    cont=readline(prompt=paste0(outputFile," already exists and will be replaced. Do you want to continue? (press x to exit, any other key to continue): "))
     if(cont=='x'){
       print('Function ended on user input')
       return(NA)
@@ -293,7 +308,7 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
   } 
   
   #Write ped file 
-  SNPRelate::snpgdsGDS2PED(gds_obj, ped.fn=paste(filename_short,'_filtered',sep=''), snp.id=list_snp, verbose=FALSE)
+  SNPRelate::snpgdsGDS2PED(gds_obj, ped.fn=file.path(tmp,paste(filename_short,'_filtered',sep='')), snp.id=list_snp, verbose=FALSE)
 
   if(verbose==TRUE){
     print(paste0('Filtering finished: ',length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.id")))-length(list_snp),' deleted out of ',length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.id"))),' SNPs'))
@@ -310,7 +325,7 @@ prepareGeno=function(fileName,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NU
   numSNP=length(list_snp)
   numIndiv=length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "sample.id")))
   #test2::recodePlink(numIndiv,numSNP,paste(filename_short,'_filtered',sep=''),paste0(filename_short,'.csv'))
-  system(paste('recode-plink',numIndiv,numSNP,paste(filename_short,'_filtered',sep=''),paste0(filename_short,'.csv')))
+  system(paste('recode-plink',numIndiv,numSNP,file.path(tmp,paste(filename_short,'_filtered',sep='')),outputFile))
 }
 
 #' @title Set the location of samples through a local web-application with interactive map
@@ -330,15 +345,17 @@ setLocation=function(){
 #' @description Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or global database present in the raster r package
 #' @author Solange Duruz
 #' @param locationFileName char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file
+#' @param outputFile char Name of the output file. Must have a .csv extension.
 #' @param x char Name of the x (or longitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
 #' @param y char Name of the y (or latitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv
 #' @param separator char The separator used to separate columns in your \code{locationFileName}
 #' @param locationProj integer Coordinate system EPSG code of the \code{locationFileName}. If \code{locationFileName} is already georeferenced, this argument will be skipped. Required if \code{locationFileName} extension is csv.
+#' @param worldclim logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
+#' @param srtm logical If TRUE the SRTM (altitude) variables will be downloaded at a resolution ... Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
+#' @param saveDownload logical If TRUE (and if wordclim or srtm is TRUE), the tiles downloaded from global databases will be saved in a non-temporary directory. We recommend setting this parameter to true so that rasters can be used later (post-processing). If wordclim and srtm are FALSE, either value (TRUE/FALSE) will have no effect
 #' @param rasterName char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory. Can be set to null if worldclim or srtm are set to TRUE.
 #' @param rasterProj integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlayer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)
 #' @param directory logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rasterName} will be loaded
-#' @param worldclim logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
-#' @param srtm logical If TRUE the SRTM (altitude) variables will be downloaded at a resolution ... Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
 #' @param interactiveChecks logical If TRUE, shows loaded rasters and point locations
 #' @param verbose logical If TRUE, indication on process will be shown
 #' @return None 
@@ -346,14 +363,16 @@ setLocation=function(){
 #' \dontrun{
 #' #Own raster + worldclim download
 #' createEnv(rasterName=c('prec.tif','tmin.sdat'),locationFileName='MyFile.shp',
-#'       rasterProj=c(4326,21781), worldclim=TRUE,interactiveChecks=TRUE)
+#'       outputFile='MyFile-env.csv', rasterProj=c(4326,21781), worldclim=TRUE,
+#'       saveDownload=TRUE,interactiveChecks=TRUE)
 #'
 #' #Worldclim download only
-#' createEnv(locationFileName='MyFile.csv',x='Longitude',y='Latitude',locationProj=4326, 
-#'       worldclim=TRUE,interactiveChecks=FALSE)
+#' createEnv(locationFileName='MyFile.csv',outputFile='MyFile-env.csv',
+#'       x='Longitude',y='Latitude',locationProj=4326, 
+#'       worldclim=TRUE,saveDownload=TRUE,interactiveChecks=FALSE)
 #' }
 #' @export
-createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=',', rasterName, rasterProj=NULL,directory=FALSE, worldclim=TRUE, srtm=FALSE, interactiveChecks, verbose=TRUE){
+createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL, separator=',', worldclim=TRUE, srtm=FALSE, saveDownload, rasterName=NULL, rasterProj=NULL,directory=FALSE, interactiveChecks, verbose=TRUE){
   
   ### Load required library
   
@@ -372,16 +391,6 @@ createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=
       stop("Package \"gdalUtils\" needed for this function to work. Please install it.", call. = FALSE)
     }
   }
-
-  #library(dismo)??
-
-  
-  
-  #locationFileName='ADAPTmap2-env.csv'
-  #x='Longitude'
-  #y='Latitude'
-  #rasterName='prec_1.bil'
-  #locationProj=4326
   
   ### Check inputs ###
   
@@ -408,7 +417,11 @@ createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=
     if(typeof(locationProj)!='double' & locationProj%%1!=0) stop("locationProj is supposed to be an integer")
     if(length(locationProj)>1) stop('rasterProj is not supposed to be a vector')
   }
+  if(typeof(outputFile)!='character') stop("outputFile argument supposed to be character")
+  extensionO=substr(outputFile,gregexpr("\\.", outputFile)[[1]][length(gregexpr("\\.", outputFile)[[1]])]+1, nchar(outputFile))
+  if(extensionO!='csv') stop("outputFile must have a .csv extension")
   
+  if(typeof(saveDownload)!='logical') stop("saveDownload is supposed to be logical")
   if(!is.null(worldclim)){
     if(typeof(worldclim)!='logical') stop("worldclim is supposed to be logical")
   }
@@ -435,7 +448,12 @@ createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=
   }
   
   #Save active directory (will be changed)
-  active_dir=getwd()
+  working_dir=getwd()
+  if(saveDownload==FALSE){
+    active_dir=tempdir()
+  } else {
+    active_dir=getwd()
+  }
   
   
   ### Open location file and set projection ###
@@ -674,13 +692,13 @@ createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=
   }
   
   #Export data
-  setwd(active_dir)
+  setwd(working_dir)
   locationfilename_short=substr(locationFileName,1,gregexpr("\\.", locationFileName)[[1]][length(gregexpr("\\.", locationFileName)[[1]])]-1)
   
-  write.table(data, file=paste0(locationfilename_short,'-env.csv'), append=FALSE,quote=TRUE,sep=" ", dec = ".",row.names=FALSE,col.names=TRUE)
+  write.table(data, file=outputFile, append=FALSE,quote=TRUE,sep=" ", dec = ".",row.names=FALSE,col.names=TRUE)
   
   if(verbose==TRUE){
-    print(paste0(locationfilename_short,'-env.csv',' sucessfully created!'))
+    print(paste0(outputFile,' sucessfully created!'))
   }
   
 }
@@ -690,6 +708,7 @@ createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=
 #' @description Writes a new environmental file that sambada can work with after having removed too correlated variables. Also calculates population structure from a PCA in SNPRelate and add it at the end of the environmental file
 #' @author Solange Duruz, Oliver Selmoni
 #' @param envFile char Name of the input environmental file (must be in active directory). Can be .csv or .shp
+#' @param outputFile char Name of the output file. Must have a .csv extension.
 #' @param maxCorr double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted
 #' @param idName char Name of the id in the environmental file matching the one of \code{genoFile}
 #' @param separator char If envFile is .csv, the separator character. If file created with create_env, separator is ' '
@@ -712,27 +731,31 @@ createEnv=function(locationFileName, x=NULL,y=NULL,locationProj=NULL, separator=
 #' @examples
 #' \dontrun{
 #' #Calculating PCA-based population structure
-#' prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
-#'      mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
+#' prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ','myFile.gds', 
+#'      numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
 #'      x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
 #'
 #' #Calculating structure membership coefficient based on kmeans clustering
-#' prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
-#'      mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
+#' prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ','myFile.gds', 
+#'      numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
 #'      x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
 #'
 #' #Without calculating population structure.
-#' prepareEnv('myFile-env.csv',0.8,'Nom',' ', x='Longitude',y='Latitude', 
-#'      locationProj=4326, interactiveChecks = TRUE)
+#' prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ', 
+#'      x='Longitude',y='Latitude', locationProj=4326, interactiveChecks = TRUE)
 #' }
 #' @export
-prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc=0.5, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
+prepareEnv=function(envFile, outputFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc=0.5, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
 
   ### Check inputs ###
   
   if(is.null(envFile)) stop("envFile argument is required")
   if(typeof(envFile)!='character') stop("envFile argument supposed to be a character string")
   if (!file.exists(envFile)) stop("Input envFile not found.")
+  
+  if(typeof(outputFile)!='character') stop("outputFile argument supposed to be character")
+  extensionO=substr(outputFile,gregexpr("\\.", outputFile)[[1]][length(gregexpr("\\.", outputFile)[[1]])]+1, nchar(outputFile))
+  if(extensionO!='csv') stop("outputFile must have a .csv extension")
   
   if(!is.null(maxCorr)){
     if(typeof(maxCorr)!='double') stop("maxCorr argument supposed to be decimal number")
@@ -900,7 +923,7 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
     }
    
     #Create GDS file
-    gds_file=createGDSfile(genoFile)
+    gds_file=createGDSfile(genoFile, getwd())
     
     #Open GDS file (and close it on exit)
     gds_obj=SNPRelate::snpgdsOpen(gds_file)
@@ -1154,9 +1177,9 @@ prepareEnv=function(envFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc
   }
   envFilename_short=substr(envFile,1,gregexpr("\\.", envFile)[[1]][length(gregexpr("\\.", envFile)[[1]])]-1)
   
-  write.table(total, file=paste0(envFilename_short,'-export.csv'), append=FALSE,quote=FALSE,sep=" ", dec = ".",row.names=FALSE,col.names=TRUE)
+  write.table(total, file=outputFile, append=FALSE,quote=FALSE,sep=" ", dec = ".",row.names=FALSE,col.names=TRUE)
   if(verbose==TRUE){
-    print(paste0('File ',envFilename_short,'-export.csv',' successfully created'))
+    print(paste0('File ',outputFile,' successfully created'))
   }
 }
 
@@ -1261,17 +1284,16 @@ redENV = function(ienv, corcutoff=0.7) {
   
 }
 
-createGDSfile=function(filename){
+createGDSfile=function(filename, outputDir){
   filename_short=substr(filename,1,gregexpr("\\.", filename)[[1]][length(gregexpr("\\.", filename)[[1]])]-1)
   extension=substr(filename,gregexpr("\\.", filename)[[1]][length(gregexpr("\\.", filename)[[1]])]+1, nchar(filename))
-  gds_file=paste0(filename_short,'.gds')
+  gds_file=file.path(outputDir,paste0(filename_short,'.gds'))
   if (extension=='gds') {
     gds_file=filename
     
   } else if (extension=='ped') {
     
     if (!file.exists(paste(filename_short,'.map',sep=''))) stop(".map input file not found. Same name as .ped mandatory")
-    gds_file=paste(filename_short,'.gds',sep='')
     SNPRelate::snpgdsPED2GDS(filename,map.fn=paste(filename_short,'.map',sep=''),gds_file, verbose=FALSE)
     
   } else if (extension=='bed') {

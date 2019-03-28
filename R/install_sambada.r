@@ -11,6 +11,10 @@ downloadSambada = function(directory = NULL){
   if(is.null(directory)){
     directory=paste0(getwd(),'/sambada')
   }
+  continue=readline("This funcion will download Sambada in the specified or the current directory. Press any letter to continue or x to exit the process ")
+  if(continue=='x'){
+    return(NA)
+  }
   
 	#Get OS name
 	env=Sys.info()['sysname']
