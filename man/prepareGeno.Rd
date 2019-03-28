@@ -4,12 +4,16 @@
 \alias{prepareGeno}
 \title{Prepare genomic input}
 \usage{
-prepareGeno(fileName, mafThresh = NULL, missingnessThresh = NULL,
-  ldThresh = NULL, mgfThresh = NULL, directory = NULL,
-  interactiveChecks = FALSE, verbose = FALSE)
+prepareGeno(fileName, outputFile, saveGDS, mafThresh = NULL,
+  missingnessThresh = NULL, ldThresh = NULL, mgfThresh = NULL,
+  directory = NULL, interactiveChecks = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{fileName}{char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen}
+
+\item{outputFile}{char Name of the output file. Must be a .csv}
+
+\item{saveGDS}{logical If true (and if the input file extension is different from GDS) the GDS file will be saved. We recommend to set this parameter to TRUE to save time in subsequent functions that rely on GDS file}
 
 \item{mafThresh}{double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)}
 
@@ -34,12 +38,12 @@ Writes a new genomic file that sambada can work with after having applied the se
 \examples{
 \dontrun{
 #With ped input file
-prepareGeno('myPlinkFile.ped',mafThresh=0.05, missingnessThresh=0.05,
-     mgfThresh=0.8,interactiveChecks=TRUE)
+prepareGeno('myPlinkFile.ped','mySambadaFile.csv',TRUE, mafThresh=0.05, 
+     missingnessThresh=0.05, mgfThresh=0.8,interactiveChecks=TRUE)
 
 #With gds input file
-prepareGeno('myGDSFile.gds',mafThresh=0.05, missingnessThresh=0.05,
-     mgfThresh=0.8,interactiveChecks=FALSE)
+prepareGeno('myGDSFile.gds','mySambadaFile.csv',FALSE, mafThresh=0.05, 
+     missingnessThresh=0.05,mgfThresh=0.8,interactiveChecks=FALSE)
 }
 }
 \author{

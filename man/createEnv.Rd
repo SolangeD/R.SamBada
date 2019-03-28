@@ -4,12 +4,15 @@
 \alias{createEnv}
 \title{Create env file from raster file(s) and/or global database present in the raster r package}
 \usage{
-createEnv(locationFileName, x = NULL, y = NULL, locationProj = NULL,
-  separator = ",", rasterName, rasterProj = NULL, directory = FALSE,
-  worldclim = TRUE, srtm = FALSE, interactiveChecks, verbose = TRUE)
+createEnv(locationFileName, outputFile, x = NULL, y = NULL,
+  locationProj = NULL, separator = ",", worldclim = TRUE,
+  srtm = FALSE, saveDownload, rasterName = NULL, rasterProj = NULL,
+  directory = FALSE, interactiveChecks, verbose = TRUE)
 }
 \arguments{
 \item{locationFileName}{char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file}
+
+\item{outputFile}{char Name of the output file. Must have a .csv extension.}
 
 \item{x}{char Name of the x (or longitude if not projected coordinate system) column in the \code{locationFileName}. Required if \code{locationFileName} extension is .csv}
 
@@ -19,15 +22,17 @@ createEnv(locationFileName, x = NULL, y = NULL, locationProj = NULL,
 
 \item{separator}{char The separator used to separate columns in your \code{locationFileName}}
 
+\item{worldclim}{logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory}
+
+\item{srtm}{logical If TRUE the SRTM (altitude) variables will be downloaded at a resolution ... Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory}
+
+\item{saveDownload}{logical If TRUE (and if wordclim or srtm is TRUE), the tiles downloaded from global databases will be saved in a non-temporary directory. We recommend setting this parameter to true so that rasters can be used later (post-processing). If wordclim and srtm are FALSE, either value (TRUE/FALSE) will have no effect}
+
 \item{rasterName}{char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory. Can be set to null if worldclim or srtm are set to TRUE.}
 
 \item{rasterProj}{integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlayer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)}
 
 \item{directory}{logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rasterName} will be loaded}
-
-\item{worldclim}{logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory}
-
-\item{srtm}{logical If TRUE the SRTM (altitude) variables will be downloaded at a resolution ... Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory}
 
 \item{interactiveChecks}{logical If TRUE, shows loaded rasters and point locations}
 
@@ -43,11 +48,13 @@ Create env file as an input for SamBada (it is recommended to run prepare_env fu
 \dontrun{
 #Own raster + worldclim download
 createEnv(rasterName=c('prec.tif','tmin.sdat'),locationFileName='MyFile.shp',
-      rasterProj=c(4326,21781), worldclim=TRUE,interactiveChecks=TRUE)
+      outputFile='MyFile-env.csv', rasterProj=c(4326,21781), worldclim=TRUE,
+      saveDownload=TRUE,interactiveChecks=TRUE)
 
 #Worldclim download only
-createEnv(locationFileName='MyFile.csv',x='Longitude',y='Latitude',locationProj=4326, 
-      worldclim=TRUE,interactiveChecks=FALSE)
+createEnv(locationFileName='MyFile.csv',outputFile='MyFile-env.csv',
+      x='Longitude',y='Latitude',locationProj=4326, 
+      worldclim=TRUE,saveDownload=TRUE,interactiveChecks=FALSE)
 }
 }
 \author{

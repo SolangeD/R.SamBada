@@ -4,12 +4,12 @@
 \alias{sambadaParallel}
 \title{Run sambada on parallel cores}
 \usage{
-sambadaParallel(genoFile, envFile, idGeno, idEnv, dimMax = 1,
+sambadaParallel(genoFile, envFile, idGeno, idEnv, outputFile, dimMax = 1,
   cores = NULL, wordDelim = " ", saveType = "END BEST 0.05",
   populationVar = NULL, spatial = NULL, autoCorr = NULL,
-  shapeFile = NULL, outputFile = NULL, colSupEnv = NULL,
-  colSupMark = NULL, subsetVarEnv = NULL, subsetVarMark = NULL,
-  headers = TRUE, directory = NULL, keepAllFiles = FALSE)
+  shapeFile = NULL, colSupEnv = NULL, colSupMark = NULL,
+  subsetVarEnv = NULL, subsetVarMark = NULL, headers = TRUE,
+  directory = NULL, keepAllFiles = FALSE)
 }
 \arguments{
 \item{genoFile}{The name of the file in the current directory of genetic information, compliant with samBada's format (use prepareGeno to transform it)}
@@ -19,6 +19,8 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, dimMax = 1,
 \item{idGeno}{Name of the column in the \code{genoFile} corresponding to the id of the animals}
 
 \item{idEnv}{Name of the column in the \code{envFile} corresponding to the id of the animals}
+
+\item{outputFile}{char Base name(s) for the results file(s). Output files will be created from the base name with suffixes (e.g. -Out-)}
 
 \item{dimMax}{Maximum number of environmental variables included in the logistic models. Use 1 for univariate models, 2 for univariate and bivariates models}
 
@@ -35,8 +37,6 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, dimMax = 1,
 \item{autoCorr}{composed of 3 words. 1) one of global, local or both: to indicate the type of spatial autocorrelation to compute. 2) one of env, mark or both: to indicate the variables on which to compute the analysis 3) integer The number of permutation to compute the pseudo p-value. Ex 'global both 999'}
 
 \item{shapeFile}{one of yes or no. With this option, the LISA are saved as a shapefile (in addition to the usual output)}
-
-\item{outputFile}{char Base name(s) for the results file(s). Default: construction from input file with suffixes (e.g. -Out-)}
 
 \item{colSupEnv}{char or vector of char Name(s) of the column(s) in the environmental data to be excluded from the analysis. Default NULL}
 
@@ -58,10 +58,10 @@ Read sambadas input file to retrieve necessary information (num indiv etc...), s
 \examples{
 \dontrun{
 #With all default parameter
-sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID')
+sambadaParallel('File-molecular.csv','File-env.csv','ID_indiv','sampleID','File-molecular')
 
 #With population structure
-sambadaParallel('File-molecular.csv','File-.env.csv','ID_indiv','sampleID',
+sambadaParallel('File-molecular.csv','File-env.csv','ID_indiv','sampleID','File-molecular',
      dimMax=2, saveType='END ALL', populationVar='pop1')
 }
 }

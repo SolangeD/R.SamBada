@@ -4,14 +4,17 @@
 \alias{prepareEnv}
 \title{Prepare environmental input}
 \usage{
-prepareEnv(envFile, maxCorr, idName, separator = " ", genoFile = NULL,
-  numPc = 0.5, mafThresh = NULL, missingnessThresh = NULL,
-  ldThresh = NULL, numPop = -1, clustMethod = "kmeans",
-  includeCol = NULL, excludeCol = NULL, popStrCol = NULL, x, y,
-  locationProj, interactiveChecks = FALSE, verbose = TRUE)
+prepareEnv(envFile, outputFile, maxCorr, idName, separator = " ",
+  genoFile = NULL, numPc = 0.5, mafThresh = NULL,
+  missingnessThresh = NULL, ldThresh = NULL, numPop = -1,
+  clustMethod = "kmeans", includeCol = NULL, excludeCol = NULL,
+  popStrCol = NULL, x, y, locationProj, interactiveChecks = FALSE,
+  verbose = TRUE)
 }
 \arguments{
 \item{envFile}{char Name of the input environmental file (must be in active directory). Can be .csv or .shp}
+
+\item{outputFile}{char Name of the output file. Must have a .csv extension.}
 
 \item{maxCorr}{double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted}
 
@@ -58,18 +61,18 @@ Writes a new environmental file that sambada can work with after having removed 
 \examples{
 \dontrun{
 #Calculating PCA-based population structure
-prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
-     mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
+prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ','myFile.gds', 
+     numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
      x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
 
 #Calculating structure membership coefficient based on kmeans clustering
-prepareEnv('myFile-env.csv',0.8,'Nom',' ','myFile.gds', numPc=0.2, 
-     mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
+prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ','myFile.gds', 
+     numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
      x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
 
 #Without calculating population structure.
-prepareEnv('myFile-env.csv',0.8,'Nom',' ', x='Longitude',y='Latitude', 
-     locationProj=4326, interactiveChecks = TRUE)
+prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ', 
+     x='Longitude',y='Latitude', locationProj=4326, interactiveChecks = TRUE)
 }
 }
 \author{
