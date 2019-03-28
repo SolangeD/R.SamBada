@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 This package is designed to entail the whole processing chain to use SamBada, from pre- to post-processing. In this documentation, we will work through all these steps with an example given in the data available with the package. This is a subset of ten SNPs from 800 Ougandan cattle including the sample location (see SamBada's documentation below for more information)
 
-If you want more documentation, you can read the [documentation of the package](https://github.com/SolangeD/R.SamBada/R.SamBada-manual.pdf) or [SamBada's documentation](https://github.com/Sylvie/sambada/releases/download/v0.8.0/sambadoc.pdf). Also read the article ...
+If you want more documentation, you can read the [documentation of the package](https://github.com/SolangeD/R.SamBada/blob/master/R.SamBada-manual.pdf) or [SamBada's documentation](https://github.com/Sylvie/sambada/releases/download/v0.8.0/sambadoc.pdf). Also read the article ...
 
 ## Download Sambada
 
@@ -37,7 +37,7 @@ Most of the functions described here have an `interactiveChecks` mode. When you 
 
 ### Prepare the genomic file
 
-The first step when you have your genomic matrix is to prepare it into a format that samBada accepts. You can use `prepareGeno` for this, which can process plink ped, plink bed, vcf or gds input file. In the meantime, you can also filter out SNPs based on Minor Allele Frequency (MAF), Missingness, Linkage Disequilibrium (LD) and Major Genotype Frequency (MGF). 
+The first step when you have your genomic matrix is to prepare it into a format that samBada accepts. You can use `prepareGeno` for this, which can process plink ped, plink bed, vcf or gds input file. In the meantime, you can also filter out SNPs based on Minor Allele Frequency (MAF), Missingness, Linkage Disequilibrium (LD) and Major Genotype Frequency (MGF). In order to work with your dataset, a GDS file (from SNPRelate package) is first created. If saveGDS is set to TRUE, then the file will be saved in the active directory. The GDS file is used in other functions, so we recommend that you keep it.
 
 ```{r, eval=FALSE}
 #Loads data
@@ -53,7 +53,7 @@ genoFile #Check the path to the file
 #Run prepareGeno
 #================
 #Warning: the histograms shown due to maf and missingness filtering are really difficult to understand given the small number of SNPs
-prepareGeno(fileName=genoFile,mafThresh=0.05, missingnessThresh=0.1,interactiveChecks=TRUE)
+prepareGeno(fileName=genoFile,outputFile='uganda-subset-mol.csv',saveGDS=TRUE,mafThresh=0.05, missingnessThresh=0.1,interactiveChecks=TRUE)
 ```
 
 ### Assign sample location
@@ -75,11 +75,11 @@ setLocation()
 
 Then from the point locations, you need to create your envionmental dataset from point location. Use `createEnv` for this task.  
 
-You can use rasters of your study site that you already have or use the function to automatically download rasters of your study site from global databases [see worldclim dataset]() for information on the downloaded tiles. For example tminXX represents the minimum temperature in october. Similarly tmax, tavg and prec refers to maximum temperature, average temperature and precipitation. The bio1-bio19 are bioclim variables are computed from these indices and are described [here](www.worldclim.org/current). Temperature are given in 10 degree C and precipitation in mm. The funciton always downloads the best resolution available (30 seconds for worldclim dataset and 90m for SRTM). 
+You can use rasters of your study site that you already have or use the function to automatically download rasters of your study site from global databases. For example tmin10 represents the minimum temperature in october. Similarly tmax, tavg and prec refers to maximum temperature, average temperature and precipitation. The bio1-bio19 are bioclim variables are computed from these indices and are described [here](www.worldclim.org/current). Temperature are given in 10 degree C and precipitation in mm. The funciton always downloads the best resolution available (30 seconds for worldclim dataset and 90m for SRTM). 
 
-The tiles are downloaded in the folders wc0.5 and srtm of the active directory. The downloaded tiles can get really heavy! Once your final file is exported, you could delete the tiles (but you won't be able to use them as background in the post-processing mapping function). If the tiles are already present in the active directory, they won't be downloaded again. 
+The tiles are downloaded in the folders wc0.5 and srtm of the active directory if saveDownload is set to TRUE (or to a temporary folder otherwise). The downloaded tiles can get really heavy! Once your final file is exported, you could delete the tiles (but you won't be able to use them as background in the post-processing mapping function). If the tiles are already present in the active directory, they won't be downloaded again. 
 
-This function requires that you define the EPSG code of your projection system. All systems are referenced [here](http://spatialreference.org/ref/epsg/?search=4326&srtext=Search) If you work with lat/long global projection, then you most probably work with WGS 84 whose EPSG is 4326.
+This function requires that you define the EPSG code of your projection system. All systems are referenced [here](http://spatialreference.org/ref/epsg/?search=4326&srtext=Search). If you work with lat/long global projection, then you most probably work with WGS 84 whose EPSG is 4326.
 ```{r, eval=FALSE}
 #Loads data
 #================
@@ -96,7 +96,7 @@ locationFile #Check the path to the file
 #downloads the raster tiles from global databases and create the environmental file
 #Warning: the download and processing of raster is both heavy in space and time-consuming
 #If you want to skip this step, you can skip this step and continue to the next function
-createEnv(locationFileName=locationFile, x='longitude',y='latitude',locationProj=4326,separator=';', rasterName=NULL,rasterProj=NULL, worldclim=TRUE, interactiveChecks=TRUE)
+createEnv(locationFileName=locationFile, outputFile='uganda-subset-env.csv', x='longitude',y='latitude',locationProj=4326,separator=';', worldclim=TRUE, saveDownload=TRUE, rasterName=NULL,rasterProj=NULL, interactiveChecks=TRUE)
 
 ```
 
@@ -108,7 +108,7 @@ You can now use the `prepareEnv` function. This function has 3 goals
 * Reduce your environmental dataset. Indeed, if you use worlclim variables for examples, some of the variables will be very correlated. We can delete correlated variables that are above a given correlation threshold (argument `maxCorr`)  
 * Check if there is a population structure to include it as an "environmental variable" in your environmental file.
 
-The function creates a new file with the '-export'-suffix at the end of the envFile.
+The function creates a new file with the name specified in outputFile.
 
 The population structure is calculated as a PCA of all the SNPs that pass the filtering (maf, ld, missingness). You can either choose to use the score of the X first components to evaluate the population structure (set `numPop` to NULL) or you can compute a "membership coefficient" to a cluster of individuals based on the scores on the first X components. You can choose between two clustering algorithm (k-means or hierarchical cluster in the `clustMethod` argument).
 
@@ -137,7 +137,7 @@ envFile #Check the path to the file
 #================
 
 #Stores Principal components scores
-prepareEnv(envFile=envFile, maxCorr=0.8, idName='short_name', genoFile=gdsFile, numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL, x='longitude', y='latitude', interactiveChecks=TRUE, locationProj=4326 )
+prepareEnv(envFile=envFile, outputFile='uganda-subset-env-export.csv', maxCorr=0.8, idName='short_name', genoFile=gdsFile, numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL, x='longitude', y='latitude', interactiveChecks=TRUE, locationProj=4326 )
 #Accept the maxCorr threshold, and numPc to 1.
 
 ```
@@ -171,7 +171,7 @@ genoFile #Check the path to the file
 #Run sambada on two cores. 
 #prepareEnv puts the population variables at the end of the file (=> LAST). 
 #Only one pop var was saved, so set dimMax=2 
-sambadaParallel(genoFile=genoFile, envFile=envFile, idGeno='ID_indiv', idEnv='short_name', dimMax=2, cores=2, saveType='END ALL', populationVar='LAST')
+sambadaParallel(genoFile=genoFile, envFile=envFile, idGeno='ID_indiv', idEnv='short_name', dimMax=2, cores=2, saveType='END ALL', populationVar='LAST', outputFile='uganda-subset-mol')
 
 ```
 ## Post-processing

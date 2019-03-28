@@ -9,9 +9,9 @@
 <meta name="generator" content="pandoc" />
 
 
-<meta name="author" content="Solange Gaillard, Sylvie Stucki, Oliver Selmoni, Elia Vajana" />
+<meta name="author" content="Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana" />
 
-<meta name="date" content="2019-03-14" />
+<meta name="date" content="2019-03-28" />
 
 <title>R.SamBada</title>
 
@@ -186,14 +186,14 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">R.SamBada</h1>
-<h4 class="author"><em>Solange Gaillard, Sylvie Stucki, Oliver Selmoni, Elia Vajana</em></h4>
-<h4 class="date"><em>2019-03-14</em></h4>
+<h4 class="author"><em>Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana</em></h4>
+<h4 class="date"><em>2019-03-28</em></h4>
 
 </div>
 
 
 <p>This package is designed to entail the whole processing chain to use SamBada, from pre- to post-processing. In this documentation, we will work through all these steps with an example given in the data available with the package. This is a subset of ten SNPs from 800 Ougandan cattle including the sample location (see SamBada’s documentation below for more information)</p>
-<p>If you want more documentation, you can read the <a href="https://github.com/SolangeD/R.SamBada/R.SamBada-manual.pdf">documentation of the package</a> or <a href="https://github.com/Sylvie/sambada/releases/download/v0.8.0/sambadoc.pdf">SamBada’s documentation</a>. Also read the article …</p>
+<p>If you want more documentation, you can read the <a href="https://github.com/SolangeD/R.SamBada/blob/master/R.SamBada-manual.pdf">documentation of the package</a> or <a href="https://github.com/Sylvie/sambada/releases/download/v0.8.0/sambadoc.pdf">SamBada’s documentation</a>. Also read the article …</p>
 <div id="download-sambada" class="section level2">
 <h2>Download Sambada</h2>
 <p>For running sambada, you need to download sambada’s binaries. This can be done with <code>downloadSambada</code> which downloads Sambada from GitHub and upacks it into the directory of your choice. You might already be a Sambada user and do not have to download it again! Note that if you plan to often use Sambada, it is recommended that you put the binaries folder of Sambada into your path environmental variable (this procedure is OS-dependent, look on the internet how to proceed), otherwise you will have to specify this path every time you start a new R session.</p>
@@ -207,7 +207,7 @@ downloadSambada()</code></pre>
 <p>Most of the functions described here have an <code>interactiveChecks</code> mode. When you run the function for the first time on your dataset, we strongly advise that you set it to TRUE. This prints plots that allows you to detect anomalies.</p>
 <div id="prepare-the-genomic-file" class="section level3">
 <h3>Prepare the genomic file</h3>
-<p>The first step when you have your genomic matrix is to prepare it into a format that samBada accepts. You can use <code>prepareGeno</code> for this, which can process plink ped, plink bed, vcf or gds input file. In the meantime, you can also filter out SNPs based on Minor Allele Frequency (MAF), Missingness, Linkage Disequilibrium (LD) and Major Genotype Frequency (MGF).</p>
+<p>The first step when you have your genomic matrix is to prepare it into a format that samBada accepts. You can use <code>prepareGeno</code> for this, which can process plink ped, plink bed, vcf or gds input file. In the meantime, you can also filter out SNPs based on Minor Allele Frequency (MAF), Missingness, Linkage Disequilibrium (LD) and Major Genotype Frequency (MGF). In order to work with your dataset, a GDS file (from SNPRelate package) is first created. If saveGDS is set to TRUE, then the file will be saved in the active directory. The GDS file is used in other functions, so we recommend that you keep it.</p>
 <pre class="r"><code>#Loads data
 #================
 #These files are distributed within your package. The system.file will return the full path to them. With your data, you can just use the name of the file, provided the file is in the active directory
@@ -221,7 +221,7 @@ genoFile #Check the path to the file
 #Run prepareGeno
 #================
 #Warning: the histograms shown due to maf and missingness filtering are really difficult to understand given the small number of SNPs
-prepareGeno(fileName=genoFile,mafThresh=0.05, missingnessThresh=0.1,interactiveChecks=TRUE)</code></pre>
+prepareGeno(fileName=genoFile,outputFile='uganda-subset-mol.csv',saveGDS=TRUE,mafThresh=0.05, missingnessThresh=0.1,interactiveChecks=TRUE)</code></pre>
 </div>
 <div id="assign-sample-location" class="section level3">
 <h3>Assign sample location</h3>
@@ -238,9 +238,9 @@ setLocation()
 <div id="create-the-environmental-dataset" class="section level3">
 <h3>Create the environmental dataset</h3>
 <p>Then from the point locations, you need to create your envionmental dataset from point location. Use <code>createEnv</code> for this task.</p>
-<p>You can use rasters of your study site that you already have or use the function to automatically download rasters of your study site from global databases <a href>see worldclim dataset</a> for information on the downloaded tiles. For example tminXX represents the minimum temperature in october. Similarly tmax, tavg and prec refers to maximum temperature, average temperature and precipitation. The bio1-bio19 are bioclim variables are computed from these indices and are described <a href="www.worldclim.org/current">here</a>. Temperature are given in 10 degree C and precipitation in mm. The funciton always downloads the best resolution available (30 seconds for worldclim dataset and 90m for SRTM).</p>
-<p>The tiles are downloaded in the folders wc0.5 and srtm of the active directory. The downloaded tiles can get really heavy! Once your final file is exported, you could delete the tiles (but you won’t be able to use them as background in the post-processing mapping function). If the tiles are already present in the active directory, they won’t be downloaded again.</p>
-<p>This function requires that you define the EPSG code of your projection system. All systems are referenced <a href="http://spatialreference.org/ref/epsg/?search=4326&amp;srtext=Search">here</a> If you work with lat/long global projection, then you most probably work with WGS 84 whose EPSG is 4326.</p>
+<p>You can use rasters of your study site that you already have or use the function to automatically download rasters of your study site from global databases. For example tmin10 represents the minimum temperature in october. Similarly tmax, tavg and prec refers to maximum temperature, average temperature and precipitation. The bio1-bio19 are bioclim variables are computed from these indices and are described <a href="www.worldclim.org/current">here</a>. Temperature are given in 10 degree C and precipitation in mm. The funciton always downloads the best resolution available (30 seconds for worldclim dataset and 90m for SRTM).</p>
+<p>The tiles are downloaded in the folders wc0.5 and srtm of the active directory if saveDownload is set to TRUE (or to a temporary folder otherwise). The downloaded tiles can get really heavy! Once your final file is exported, you could delete the tiles (but you won’t be able to use them as background in the post-processing mapping function). If the tiles are already present in the active directory, they won’t be downloaded again.</p>
+<p>This function requires that you define the EPSG code of your projection system. All systems are referenced <a href="http://spatialreference.org/ref/epsg/?search=4326&amp;srtext=Search">here</a>. If you work with lat/long global projection, then you most probably work with WGS 84 whose EPSG is 4326.</p>
 <pre class="r"><code>#Loads data
 #================
 #These files are distributed within your package. The system.file will return the full path to them. With your data, you can just use the name of the file, provided the file is in the active directory
@@ -256,7 +256,7 @@ locationFile #Check the path to the file
 #downloads the raster tiles from global databases and create the environmental file
 #Warning: the download and processing of raster is both heavy in space and time-consuming
 #If you want to skip this step, you can skip this step and continue to the next function
-createEnv(locationFileName=locationFile, x='longitude',y='latitude',locationProj=4326,separator=';', rasterName=NULL,rasterProj=NULL, worldclim=TRUE, interactiveChecks=TRUE)
+createEnv(locationFileName=locationFile, outputFile='uganda-subset-env.csv', x='longitude',y='latitude',locationProj=4326,separator=';', worldclim=TRUE, saveDownload=TRUE, rasterName=NULL,rasterProj=NULL, interactiveChecks=TRUE)
 </code></pre>
 </div>
 <div id="prepare-the-final-environmental-dataset" class="section level3">
@@ -269,7 +269,7 @@ createEnv(locationFileName=locationFile, x='longitude',y='latitude',locationProj
 </li>
 <li>Check if there is a population structure to include it as an “environmental variable” in your environmental file.</li>
 </ul>
-<p>The function creates a new file with the ‘-export’-suffix at the end of the envFile.</p>
+<p>The function creates a new file with the name specified in outputFile.</p>
 <p>The population structure is calculated as a PCA of all the SNPs that pass the filtering (maf, ld, missingness). You can either choose to use the score of the X first components to evaluate the population structure (set <code>numPop</code> to NULL) or you can compute a “membership coefficient” to a cluster of individuals based on the scores on the first X components. You can choose between two clustering algorithm (k-means or hierarchical cluster in the <code>clustMethod</code> argument).</p>
 <p>One of the option to decide the number of PCs that you should keep is to detect a bump in the proportion of variance explained and keep all the PC before the bump.</p>
 <pre class="r"><code>#Loads data
@@ -294,7 +294,7 @@ envFile #Check the path to the file
 #================
 
 #Stores Principal components scores
-prepareEnv(envFile=envFile, maxCorr=0.8, idName='short_name', genoFile=gdsFile, numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL, x='longitude', y='latitude', interactiveChecks=TRUE, locationProj=4326 )
+prepareEnv(envFile=envFile, outputFile='uganda-subset-env-export.csv', maxCorr=0.8, idName='short_name', genoFile=gdsFile, numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL, x='longitude', y='latitude', interactiveChecks=TRUE, locationProj=4326 )
 #Accept the maxCorr threshold, and numPc to 1.
 </code></pre>
 </div>
@@ -325,7 +325,7 @@ genoFile #Check the path to the file
 #Run sambada on two cores. 
 #prepareEnv puts the population variables at the end of the file (=&gt; LAST). 
 #Only one pop var was saved, so set dimMax=2 
-sambadaParallel(genoFile=genoFile, envFile=envFile, idGeno='ID_indiv', idEnv='short_name', dimMax=2, cores=2, saveType='END ALL', populationVar='LAST')
+sambadaParallel(genoFile=genoFile, envFile=envFile, idGeno='ID_indiv', idEnv='short_name', dimMax=2, cores=2, saveType='END ALL', populationVar='LAST', outputFile='uganda-subset-mol')
 </code></pre>
 </div>
 <div id="post-processing" class="section level2">
