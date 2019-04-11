@@ -46,15 +46,15 @@ Create env file as an input for SamBada (it is recommended to run prepare_env fu
 }
 \examples{
 \dontrun{
-#Own raster + worldclim download
+# Worldclim download only with sample data from R.SamBada
+createEnv(locationFileName=system.file("extdata", "uganda-subset.csv", package = "R.SamBada"),
+      outputFile=file.path(tempdir(),'uganda-subset-env.csv'), x='longitude',y='latitude',
+      locationProj=4326, worldclim=TRUE,saveDownload=FALSE,interactiveChecks=TRUE)
+      
+# Own raster (fictitious examples) + worldclim download
 createEnv(rasterName=c('prec.tif','tmin.sdat'),locationFileName='MyFile.shp',
       outputFile='MyFile-env.csv', rasterProj=c(4326,21781), worldclim=TRUE,
       saveDownload=TRUE,interactiveChecks=TRUE)
-
-#Worldclim download only
-createEnv(locationFileName='MyFile.csv',outputFile='MyFile-env.csv',
-      x='Longitude',y='Latitude',locationProj=4326, 
-      worldclim=TRUE,saveDownload=TRUE,interactiveChecks=FALSE)
 }
 }
 \author{

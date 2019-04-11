@@ -11,7 +11,7 @@ plotResultInteractive(preparedOutput, varEnv, envFile, species = NULL,
 \arguments{
 \item{preparedOutput}{char The prepared output list from prepare_output function}
 
-\item{varEnv}{char The name of the environmental variable one wish to study (as in the header of \code{envFIle})}
+\item{varEnv}{char The name of the environmental variable one wish to study (as in the header of \code{envFile})}
 
 \item{envFile}{char The file containing the input environmental variable of sambada.}
 
@@ -25,13 +25,13 @@ plotResultInteractive(preparedOutput, varEnv, envFile, species = NULL,
 
 \item{valueName}{char Name of the p- or q-value one wish to plot the manhattan on. This can be either pvalueG, pvalueW, qvalueG, qvalueW for G- or Waldscore respectively.}
 
-\item{chromo}{char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)}
+\item{chromo}{char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. \code{chromo}=1)}
 
 \item{gdsFile}{char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv or -env-export.csv) and .gds}
 
-\item{IDCol}{char The name of the column in envFile corresponding to the ID of the individual. If provided, hover on the output map will give the id of the animal}
+\item{IDCol}{char The name of the column in \code{envFile} corresponding to the ID of the individual. If provided, hover on the output map will give the id of the animal}
 
-\item{popStrCol}{char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available representing population structure.}
+\item{popStrCol}{char The name or vector of name of column(s) in \code{envFile} describing population structure. If provided, additional layers on the map will be available representing population structure.}
 }
 \value{
 None
@@ -41,7 +41,29 @@ Plots the manhattan plot for a given environmental variable. The plot is interac
 }
 \examples{
 \dontrun{
-plotResultInteractive('myFile','chircus',1,'Longitude','Latitude','bio1',c('1','2'))
+# Example with data from the package
+# First copy needed files into the temporary directory
+file.copy(system.file("extdata", "uganda-subset-mol-Out-2.csv", package = "R.SamBada"), 
+     file.path(tempdir(),'uganda-subset-mol-Out-2.csv'), overwrite=TRUE)
+file.copy(system.file("extdata", "uganda-subset-mol-storey.csv", package = "R.SamBada"), 
+     file.path(tempdir(),'uganda-subset-mol-storey.csv'), overwrite=TRUE)
+file.copy(system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
+     file.path(tempdir(),'uganda-subset-env-export.csv'), overwrite=TRUE)
+if(Sys.info()['sysname']=='Windows'){
+  file.copy(system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada"),
+      file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE) #If you run Windows
+} else {
+  file.copy(system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada"),
+      file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE)
+}
+# Run prepareOutput
+prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
+###################
+# Run plotResultInteractive
+###################
+plotResultInteractive(prep,'bio1','uganda-subset-env-export.csv',species='btaurus',
+     pass=25000,x='longitude',y='latitude', gdsFile='uganda-subset-mol.gds',
+     IDCol='short_name',popStrCol='pop1')
 }
 }
 \author{

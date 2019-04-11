@@ -50,19 +50,25 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, outputFile, dimMax = 1,
 
 \item{directory}{char The directory where binaries of sambada are saved. This parameter is not necessary if directory path is permanently stored in the PATH environmental variable or if a function invoking sambada executable (prepareGeno or sambadaParallel) has been already run in the R active session.}
 
-\item{keepAllFiles}{logical If TRUE, all parameter files and split genofile and log-files are not removed. Default FALSE}
+\item{keepAllFiles}{logical If TRUE, all parameter files and split \code{genoFile} and log-files are not removed. Default FALSE}
 }
 \description{
-Read sambadas input file to retrieve necessary information (num indiv etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
+Read samBada's input file to retrieve necessary information (number of individuals etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. This function produces the following output files: \code{outputFile}-Out-0.csv to \code{outputFile}-Out-\code{dimMax}.csv as well as outputFile-storey.csv (\code{outputFile} and \code{dimMax} are parameters of the function). See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
 }
 \examples{
-\dontrun{
-#With all default parameter
-sambadaParallel('File-molecular.csv','File-env.csv','ID_indiv','sampleID','File-molecular')
-
-#With population structure
-sambadaParallel('File-molecular.csv','File-env.csv','ID_indiv','sampleID','File-molecular',
-     dimMax=2, saveType='END ALL', populationVar='pop1')
+# Example with data from the package
+# You first need to download sambada with downloadSambada(tempdir())
+# Example without population structure, using only one core
+sambadaParallel(genoFile=system.file("extdata", "uganda-subset-mol.csv", package = "R.SamBada"), 
+     envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
+     idGeno='ID_indiv', idEnv='short_name', dimMax=1, cores=1, saveType='END ALL', 
+     outputFile=file.path(tempdir(),'uganda-subset-mol')) 
+\donttest{
+# Example with population structure, using multiple core
+sambadaParallel(genoFile=system.file("extdata", "uganda-subset-mol.csv", package = "R.SamBada"), 
+     envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
+     idGeno='ID_indiv', idEnv='short_name', dimMax=2, cores=2, saveType='END ALL', 
+     populationVar='LAST', outputFile=file.path(tempdir(),'uganda-subset-mol'))
 }
 }
 \author{

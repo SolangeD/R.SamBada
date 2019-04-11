@@ -20,11 +20,11 @@ prepareEnv(envFile, outputFile, maxCorr, idName, separator = " ",
 
 \item{idName}{char Name of the id in the environmental file matching the one of \code{genoFile}}
 
-\item{separator}{char If envFile is .csv, the separator character. If file created with create_env, separator is ' '}
+\item{separator}{char If \code{envFile} is .csv, the separator character. If file created with create_env, separator is ' '}
 
 \item{genoFile}{char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created}
 
-\item{numPc}{double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC (the program will find the first leap in the proportion of variance where the ratio (difference in variance between PC x and x+1)/(variance of PC x) is greater than NumPc. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genoFile} is null}
+\item{numPc}{double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC (the program will find the first leap in the proportion of variance where the ratio (difference in variance between PC x and x+1)/(variance of PC x) is greater than \code{numPc}. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the \code{envFile} match the one of the \code{genoFile} (necessary for sambada's computation). Set it to 0 if \code{genoFile} is null}
 
 \item{mafThresh}{double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)}
 
@@ -38,7 +38,7 @@ prepareEnv(envFile, outputFile, maxCorr, idName, separator = " ",
 
 \item{includeCol}{character vector Columns in the environmental file to be considered as variables. If none specified, all numeric variables will be considered as env var except for the id}
 
-\item{excludeCol}{character vector Columns in the environmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as env var except for the id}
+\item{excludeCol}{character vector Columns in the environmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as environmental variables except for the id}
 
 \item{popStrCol}{character vector Columns in the environmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files}
 
@@ -59,20 +59,39 @@ None
 Writes a new environmental file that sambada can work with after having removed too correlated variables. Also calculates population structure from a PCA in SNPRelate and add it at the end of the environmental file
 }
 \examples{
-\dontrun{
+################
+# Run prepareEnv
+################
+#Without calculating population structure.
+prepareEnv(envFile=system.file("extdata", "uganda-subset-env.csv", package = "R.SamBada"), 
+     outputFile=file.path(tempdir(),'uganda-subset-env-export.csv'), maxCorr=0.8, 
+     numPc=0, idName='short_name', x='longitude',y='latitude', locationProj=4326, 
+     interactiveChecks = FALSE)
+\donttest{
+# While it is not mandatory to provide gdsFile, it is recommended to define it so that IDs 
+# in envrionmental and genomic file are in the same order (gdsFile also needed to compute
+# population structure)
+
+# determine gdsFile according to OS
+if(Sys.info()['sysname']=='Windows'){
+  gdsFile="uganda-subset-mol_windows.gds"
+} else {
+  gdsFile="uganda-subset-mol_unix.gds"
+}
+
 #Calculating PCA-based population structure
-prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ','myFile.gds', 
+prepareEnv(envFile=system.file("extdata", "uganda-subset-env.csv", package = "R.SamBada"), 
+     outputFile=file.path(tempdir(),'uganda-subset-env-export.csv'), maxCorr=0.8, 
+     idName='short_name', genoFile=system.file("extdata", gdsFile, package = "R.SamBada"),
      numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
-     x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
+     x='longitude', y='latitude', locationProj=4326, interactiveChecks = TRUE)
 
 #Calculating structure membership coefficient based on kmeans clustering
-prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ','myFile.gds', 
+prepareEnv(envFile=system.file("extdata", "uganda-subset-env.csv", package = "R.SamBada"), 
+     outputFile=file.path(tempdir(),'uganda-subset-env-export.csv'), maxCorr=0.8, 
+     idName='short_name', genoFile=system.file("extdata", gdsFile, package = "R.SamBada"),
      numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
-     x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
-
-#Without calculating population structure.
-prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ', 
-     x='Longitude',y='Latitude', locationProj=4326, interactiveChecks = TRUE)
+     x='longitude', y='latitude', locationProj=4326, interactiveChecks = TRUE)
 }
 }
 \author{

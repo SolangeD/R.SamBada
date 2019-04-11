@@ -10,11 +10,11 @@ plotManhattan(preparedOutput, varEnv, valueName, chromo = "all",
 \arguments{
 \item{preparedOutput}{char The prepared output list from prepare_output function}
 
-\item{varEnv}{char The name of the environmental variable one wish to study. Can be a vector of char if you want to plot several varEnv at a row. If \code{saveType} is NULL, the program prompts to continue. If \code{saveType} is png or pdf, several files are saved}
+\item{varEnv}{char The name of the environmental variable one wish to study. Can be a vector of char if you want to plot several \code{varEnv} at a row. If \code{saveType} is NULL, the program prompts to continue. If \code{saveType} is png or pdf, several files are saved}
 
 \item{valueName}{char Name of the p- or q-value one wish to plot the manhattan on. This can be either pvalueG, pvalueW, qvalueG, qvalueW for G- or Waldscore respectively.}
 
-\item{chromo}{char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)}
+\item{chromo}{char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. \code{chromo}=1)}
 
 \item{saveType}{char One of NULL, 'png' or 'pdf'. If NULL is set, the plot will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory with the name 'manhattan-' followed by varEnv.}
 
@@ -29,8 +29,28 @@ The last plot object (if several \code{varEnv} are specified, only the last one 
 Plot the manhattan plot for a given environmental data
 }
 \examples{
-\dontrun{
-plotManhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
+# Example with data from the package
+# First copy needed files into the temporary directory
+file.copy(system.file("extdata", "uganda-subset-mol-Out-2.csv", package = "R.SamBada"), 
+    file.path(tempdir(),'uganda-subset-mol-Out-2.csv'), overwrite=TRUE)
+file.copy(system.file("extdata", "uganda-subset-mol-storey.csv", package = "R.SamBada"), 
+    file.path(tempdir(),'uganda-subset-mol-storey.csv'), overwrite=TRUE)
+if(Sys.info()['sysname']=='Windows'){
+  file.copy(system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada"),
+      file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE) #If you run Windows
+} else {
+  file.copy(system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada"),
+      file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE) #If you run Unix
+}
+# Run prepareOutput
+prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
+###################
+# Run plotManhattan
+###################
+plotManhattan(prep, c('bio1'),chromo='all',valueName='pvalueG')
+\donttest{
+# Example with several environmental variables
+plotManhattan(prep,c('bio1','bio2'),'pvalueG')
 }
 }
 \author{

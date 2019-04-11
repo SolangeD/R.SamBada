@@ -11,15 +11,15 @@ plotMap(envFile, x, y, locationProj, popStrCol, gdsFile, markerName,
 \arguments{
 \item{envFile}{char The file containing the input environmental variable of sambada.}
 
-\item{x}{char The name of the column corresponding to the x-coordinate in the envFile. Can be set to null if unknown, in this case the maps will not be available}
+\item{x}{char The name of the column corresponding to the x-coordinate in the \code{envFile}. Can be set to null if unknown, in this case the maps will not be available}
 
 \item{y}{char The name of the column corresponding to the y-coordinate in the env file. Can be set to null if x is null.}
 
-\item{locationProj}{integer EPSG code of the geographical projection in the envFile}
+\item{locationProj}{integer EPSG code of the geographical projection in the \code{envFile}}
 
-\item{popStrCol}{char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available representing population structure.}
+\item{popStrCol}{char The name or vector of name of column(s) in \code{envFile} describing population structure. If provided, additional layers on the map will be available representing population structure.}
 
-\item{gdsFile}{char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv) and .gds}
+\item{gdsFile}{char The GDS file created in the preprocessing of sambada. If null, will try with \code{envFile}(without -env.csv) and .gds}
 
 \item{markerName}{name of the marker to be plotter if \code{mapType} is 'marker' or 'AS'. \code{markerName} can be found in preparedOutput$sambadaOutput[,''] where preparedOutput would be the result of the function \code{prepareOutput}}
 
@@ -41,18 +41,26 @@ plotMap(envFile, x, y, locationProj, popStrCol, gdsFile, markerName,
 None
 }
 \description{
-Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
+Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate output files.
 }
 \examples{
-\dontrun{
-# Map of marker
-plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
-     gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
-     mapType=c('marker'), varEnvName='bio1')
-
+# Define right GDS file according to your OS
+if(Sys.info()['sysname']=='Windows'){
+  gdsFile=system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada")
+} else {
+  gdsFile=system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada")
+}
+#############
+# Run plotMap
+#############
+plotMap(envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
+     x='longitude', y='latitude', locationProj=4326,  popStrCol='pop1', gdsFile=gdsFile, 
+     markerName='Hapmap28985-BTA-73836_GG', mapType='marker', varEnvName='bio1', simultaneous=FALSE)
+\donttest{
 # Maps of marker and population structure (two subplot)
-plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
-     gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
+plotMap(envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"),
+     'longitude','latitude', locationProj=4326,  popStrCol='pop1', 
+     gdsFile=gdsFile, markerName='Hapmap28985-BTA-73836_GG', 
      mapType=c('marker', 'popStr'), varEnvName='bio1', simultaneous=TRUE)
 }
 }

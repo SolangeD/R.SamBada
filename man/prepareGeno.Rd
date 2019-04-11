@@ -36,14 +36,31 @@ None
 Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options. The output file has the same name as the input file but with a .csv extension
 }
 \examples{
-\dontrun{
-#With ped input file
-prepareGeno('myPlinkFile.ped','mySambadaFile.csv',TRUE, mafThresh=0.05, 
-     missingnessThresh=0.05, mgfThresh=0.8,interactiveChecks=TRUE)
+# Example with data from the package
+# You first need to download sambada and add the directory input parameter to specify where
+# you saved it, unless you add it to your PATH environmental varialbe
+#################
+# Run prepareGeno
+#################
+# Example with ped input file, no filtering
+prepareGeno(system.file("extdata", "uganda-subset-mol.ped", package = "R.SamBada"),
+     outputFile=file.path(tempdir(),'/uganda-subset-mol.csv'),FALSE, interactiveChecks=FALSE)
 
-#With gds input file
-prepareGeno('myGDSFile.gds','mySambadaFile.csv',FALSE, mafThresh=0.05, 
-     missingnessThresh=0.05,mgfThresh=0.8,interactiveChecks=FALSE)
+\donttest{
+# Example with gds file and filtering
+# Define right GDS file according to your OS
+if(Sys.info()['sysname']=='Windows'){
+  gdsFile=system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada")
+} else {
+  gdsFile=system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada")
+}
+prepareGeno(gdsFile, outputFile=file.path(tempdir(),'/uganda-subset-mol.csv'),
+     saveGDS=FALSE,mafThresh=0.05, missingnessThresh=0.1,interactiveChecks=FALSE)
+     
+# Run prepareGeno with interactiveChecks=TRUE
+prepareGeno(fileName=system.file("extdata", "uganda-subset-mol.ped", package = "R.SamBada"),
+     outputFile=file.path(tempdir(),'/uganda-subset-mol.csv'),TRUE, mafThresh=0.05, 
+     missingnessThresh=0.05, mgfThresh=0.8,interactiveChecks=TRUE)
 }
 }
 \author{

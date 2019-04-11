@@ -13,9 +13,8 @@ downloadSambada(directory = NULL)
 Downloads from GitHub the version of samBada that corresponds to your OS. Unzips the folder and adds the path to the binary folder to the environmental path variable. This operation is only valid for the current R session. You must run change_path for every new R session. Alternatively, you can manually edit your "PATH" environmental variable permanently on your OS so that it entails the path to the binaries folder of sambada (this procedure different for every OS).
 }
 \examples{
-\dontrun{
-downloadSamada('D:/Sambada')
-}
+# Downloads SamBada to temporary folder (tempdir)
+downloadSambada(tempdir())
 }
 \author{
 Solange Duruz

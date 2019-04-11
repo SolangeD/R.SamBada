@@ -16,20 +16,34 @@ prepareOutput(sambadaname, dimMax, gdsFile = NULL, popStr = FALSE,
 
 \item{popStr}{logical Indicates whether sambada was run using the POPSTRVAR parameter (i.e. population structure was taken into account). Default false}
 
-\item{nrows}{integer Specifies the number of line to read from the input file. Useful if saveType END ALL was used in sambada and that the number of models run is large so that the reading and processing is too slow. The saveType END parameter ensures that most significant models are located at the top of the file.}
+\item{nrows}{integer Specifies the number of line to read from the input file. Useful if \code{saveType} 'END ALL' was used in \code{sambadaParallel} and that the number of models run is large so that the reading and processing is too slow. The \code{saveType} 'END' parameter ensures that most significant models are located at the top of the file.}
 
 \item{interactiveChecks}{logical}
 }
 \value{
-a list containing a) $sambadaOutput a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) $chrSNPNum The total number of SNPs in each chromosome c) $chrMaxPos The highest position found in each chromosome
+a list containing a) \code{$sambadaOutput} a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) \code{$chrSNPNum} The total number of SNPs in each chromosome c) \code{$chrMaxPos} The highest position found in each chromosome
 }
 \description{
 Read sambada's output and prepare it by retrieving the snp position and chromosome (useful for plotting manhattan)
 }
 \examples{
-\dontrun{
-prepare_output('myFile',1)
+# Example with data from the package
+# First copy needed files into the temporary directory
+file.copy(system.file("extdata", "uganda-subset-mol-Out-2.csv", package = "R.SamBada"), 
+     file.path(tempdir(),'uganda-subset-mol-Out-2.csv'), overwrite=TRUE)
+file.copy(system.file("extdata", "uganda-subset-mol-storey.csv", package = "R.SamBada"), 
+     file.path(tempdir(),'uganda-subset-mol-storey.csv'), overwrite=TRUE)
+if(Sys.info()['sysname']=='Windows'){
+  file.copy(system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada"),
+      file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE) #If you run Windows
+} else {
+  file.copy(system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada"),
+      file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE)
 }
+###################
+# Run prepareOutput
+###################
+prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
 }
 \author{
 Solange Duruz, Sylvie Stucki
