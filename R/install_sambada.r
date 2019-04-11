@@ -3,9 +3,8 @@
 #' @author Solange Duruz
 #' @param directory character The directory where sambada should be downloaded. If null, downloads in a (new) folder named sambada in the active directory.
 #' @examples
-#' \dontrun{
-#' downloadSamada('D:/Sambada')
-#' }
+#' # Downloads SamBada to temporary folder (tempdir)
+#' downloadSambada(tempdir())
 #' @export
 downloadSambada = function(directory = NULL){
   if(is.null(directory)){
@@ -51,10 +50,6 @@ downloadSambada = function(directory = NULL){
 	
 }
 
-#' @title Adds folder to the PATH environmental variable
-#' @description Adds the \code{directory} path to the environmental PATH variable. This operation is only valid for the current R session. You must run change_path for every new R session. Alternatively, you can permantently edit your "PATH" environmental variable on your OS so that it entails the path to the binaries folder of sambada.
-#' @author Solange Duruz
-#' @param directory character The path to samBada binaries folder 
 changePath=function(directory){
   #check if directory already in path
   if(grepl(gsub('\\','/',directory, fixed=TRUE),gsub('\\','/',Sys.getenv('PATH'), fixed=TRUE))==FALSE){

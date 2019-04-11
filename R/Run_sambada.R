@@ -1,5 +1,5 @@
 #' @title Run sambada on parallel cores
-#' @description Read sambadas input file to retrieve necessary information (num indiv etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
+#' @description Read samBada's input file to retrieve necessary information (number of individuals etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. This function produces the following output files: \code{outputFile}-Out-0.csv to \code{outputFile}-Out-\code{dimMax}.csv as well as outputFile-storey.csv (\code{outputFile} and \code{dimMax} are parameters of the function). See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
 #' @author Solange Duruz, Sylvie Stucki
 #' @param genoFile The name of the file in the current directory of genetic information, compliant with samBada's format (use prepareGeno to transform it)
 #' @param envFile  The name of the file in the current directory of environmental information (use \code{link{createEnv}} to create it and \code{link{prepareEnv}} to reduce the correlated dataset and check order)
@@ -20,15 +20,21 @@
 #' @param subsetVarMark char or vector of char Name(s) of the column(s) in the molecular data to be included in the analysis while the other columns are set as inactive. Default NULL 
 #' @param headers logical Presence or absence of variable names in input files Default TRUE
 #' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directory path is permanently stored in the PATH environmental variable or if a function invoking sambada executable (prepareGeno or sambadaParallel) has been already run in the R active session.
-#' @param keepAllFiles logical If TRUE, all parameter files and split genofile and log-files are not removed. Default FALSE
+#' @param keepAllFiles logical If TRUE, all parameter files and split \code{genoFile} and log-files are not removed. Default FALSE
 #' @examples
-#' \dontrun{
-#' #With all default parameter
-#' sambadaParallel('File-molecular.csv','File-env.csv','ID_indiv','sampleID','File-molecular')
-#' 
-#' #With population structure
-#' sambadaParallel('File-molecular.csv','File-env.csv','ID_indiv','sampleID','File-molecular',
-#'      dimMax=2, saveType='END ALL', populationVar='pop1')
+#' # Example with data from the package
+#' # You first need to download sambada with downloadSambada(tempdir())
+#' # Example without population structure, using only one core
+#' sambadaParallel(genoFile=system.file("extdata", "uganda-subset-mol.csv", package = "R.SamBada"), 
+#'      envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
+#'      idGeno='ID_indiv', idEnv='short_name', dimMax=1, cores=1, saveType='END ALL', 
+#'      outputFile=file.path(tempdir(),'uganda-subset-mol')) 
+#' \donttest{
+#' # Example with population structure, using multiple core
+#' sambadaParallel(genoFile=system.file("extdata", "uganda-subset-mol.csv", package = "R.SamBada"), 
+#'      envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
+#'      idGeno='ID_indiv', idEnv='short_name', dimMax=2, cores=2, saveType='END ALL', 
+#'      populationVar='LAST', outputFile=file.path(tempdir(),'uganda-subset-mol'))
 #' }
 #' @export
 sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=1, cores=NULL, wordDelim=' ', saveType='END BEST 0.05', populationVar=NULL, spatial=NULL, autoCorr=NULL, shapeFile=NULL, colSupEnv=NULL, colSupMark=NULL, subsetVarEnv=NULL, subsetVarMark=NULL, headers=TRUE, directory=NULL, keepAllFiles=FALSE){
@@ -136,7 +142,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     if(sum(subsetVarMark %in% first_line)!=length(subsetVarMark)) stop('not all subsetVarMark in header line of genoFile')
   }
   #Count num mark
-  nummark=lengths(gregexpr(wordDelim,first_line))-1 
+  nummark=lengths(gregexpr(wordDelim,first_line))-1
   rm(first_line)
   close(con)
   
@@ -242,10 +248,10 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     params["WORDDELIM"]=wordDelim
   }
   params["NUMVARENV"]=numVarEnv
-  params["NUMMARK"]=nummark
+  params["NUMMARK"]=nummark+1
   params["NUMINDIV"]=numIndiv
   params["IDINDIV"]=paste(idEnv, idGeno)
-  params["STOREY"]=""
+  params["STOREY"]="YES"
   
   add_opt=c('dimMax', 'saveType', 'populationVar', 'spatial', 'autoCorr', 'shapeFile', 'colSupEnv', 'colSupMark', 'subsetVarEnv', 'subsetVarMark')
   for(i in 1:length(add_opt)){
@@ -263,16 +269,28 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   }
   
   setwd(active_dir)
-  file.copy(file.path(working_dir, genoFile), file.path(active_dir, genoFile), overwrite = TRUE)
+  if(basename(genoFile)==genoFile){
+    file.copy(file.path(working_dir, genoFile), file.path(active_dir, genoFile), overwrite = TRUE)
+  } else {
+    file.copy(genoFile, file.path(active_dir, basename(genoFile)), overwrite = TRUE)
+  }
   on.exit(setwd(working_dir))
   
   # If cores=1 run directly sambada
   if(cores==1 | !is.null(autoCorr)){
     #write sambada parameterfile
     print("Number of cores used: 1, running sambada without splitting marker file")
-    paramFile=paste0(genoFileShort,'-param.txt') #name of paramFile: genoFile (without -recode and without .csv) + -param.txt
+    paramFile=paste0(basename(genoFileShort),'-param.txt') #name of paramFile: genoFile (without -recode and without .csv) + -param.txt
     write_sambada_parameter(paramFile, params, 'sambada')
-    system(paste('sambada',paramFile, paste0('"',file.path(working_dir,envFile),'"'), paste0('"',file.path(working_dir,genoFile),'"')))
+    if(basename(genoFile)==genoFile & basename(envFile)==envFile){
+      system(paste('sambada',paramFile, paste0('"',file.path(working_dir,envFile),'"'), paste0('"',file.path(working_dir,genoFile),'"')))
+    } else if (basename(envFile)==envFile){
+      system(paste('sambada',paramFile, paste0('"',file.path(working_dir,envFile),'"'), paste0('"',genoFile,'"')))
+    } else if (basename(genoFile)==genoFile) {
+      system(paste('sambada',paramFile, paste0('"',envFile,'"'), paste0('"',file.path(working_dir,genoFile),'"')))
+    } else{
+      system(paste('sambada',paramFile, paste0('"',envFile,'"'), paste0('"',genoFile,'"')))
+    }
     #sambada(paramFile, envFile, genoFile)
     return(NA)
   }
@@ -280,9 +298,9 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   ### Split datafile with supervision
   
   #Write parameter file for supervision
-  fileSupervision=paste0(genoFileShort,'_paramSupervision.txt')
+  fileSupervision=paste0(basename(genoFileShort),'_paramSupervision.txt')
   paramsSuper=c()
-  paramsSuper["genofile"]=genoFile
+  paramsSuper["genofile"]=basename(genoFile)
   paramsSuper["paramFile"]="null"
   paramsSuper["numEnv"]=1
   paramsSuper["numMark"]=nummark
@@ -307,7 +325,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   params["COLSUPENV"]=paste(c(colSupEnv,idEnv), collapse=" ")
   
   for(i in 0:(cores-1)){
-    fileParam=paste0(genoFileShort,'_param',i,'.txt')
+    fileParam=paste0(basename(genoFileShort),'_param',i,'.txt')
     if(i==(cores-1)){
       SizeLastBlock=nummark-((cores-1)*sizeBlock) #Last bock, number of markers might differ
       params["NUMMARK"]=paste(SizeLastBlock, nummark,sep=" ")
@@ -326,7 +344,13 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   ### Run sambada on parallel 
   # use foreach function
   ##finalMatrix = foreach(i=0:(cores-1), .combine=cbind, .packages='R.SamBada') %dopar% {tempMatrix = sambada(paste0(genoFileShort,'_param',i,'.txt'),envFile,paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
-  finalMatrix = foreach::foreach(i=0:(cores-1), .combine=cbind, .packages='base') %dopar% {tempMatrix = system(paste0('sambada ',genoFileShort,'_param',i,'.txt "',file.path(working_dir,envFile),'" ',genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
+  
+  if(basename(envFile)==envFile) {
+    envFile2=file.path(working_dir,envFile)
+  } else {
+    envFile2=envFile
+  }
+  finalMatrix = foreach::foreach(i=0:(cores-1), .combine=cbind, .packages='base') %dopar% {tempMatrix = system(paste0('sambada ',basename(genoFileShort),'_param',i,'.txt "',envFile2,'" ',basename(genoFileShort),'-mark-',i,'-',i*sizeBlock,'.csv'))}
   
   #Close cluser
   parallel::stopCluster(cl)
@@ -334,13 +358,14 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   #Supervision merge
   print("Running supervision to merge the files")
   #supervision( base-name.txt, numBlock, blockSize, maxDimension, selScore, scoreThreshold, sortScore, wordDelim)
-  system(paste('supervision',genoFile, cores, sizeBlock, dimMax,"Both", 0.001, "Wald", ' '))
+  #system(paste('supervision',basename(genoFile), cores, sizeBlock, dimMax,"Both", 0.001, "Wald", ' '))
+  system(paste('supervision',basename(genoFile), cores, sizeBlock, dimMax))
   
   
 
   for(i in 0:(cores-1)){
     #add up histograms
-    fileStorey=paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'-storey.csv')
+    fileStorey=paste0(basename(genoFileShort),'-mark-',i,'-',i*sizeBlock,'-storey.csv')
     storey=read.table(fileStorey)
     if(i==0){
       storeyTot=storey
@@ -364,13 +389,13 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   #   file.remove(paste0(genoFileShort,'_paramSupervision.txt'))
   # }
   setwd(working_dir)
-  write.table(storeyTot, paste0(genoFileShort,'-storey.csv'), row.names=FALSE, col.names=FALSE)
+  write.table(storeyTot, paste0(outputFile,'-storey.csv'), row.names=FALSE, col.names=FALSE)
   
   for(dim in 0:dimMax){
     if(keepAllFiles==FALSE){
-      file.copy(file.path(active_dir,(paste0(genoFileShort,'-res-',dim,'.csv'))), paste0(outputFile,'-Out-',dim,'.csv'), overwrite = TRUE)
+      file.copy(file.path(active_dir,(paste0(basename(genoFileShort),'-res-',dim,'.csv'))), paste0(outputFile,'-Out-',dim,'.csv'), overwrite = TRUE)
     } else {
-      file.rename(paste0(genoFileShort,'-res-',dim,'.csv'), paste0(outputFile,'-Out-',dim,'.csv'))
+      file.rename(paste0(basename(genoFileShort),'-res-',dim,'.csv'), paste0(outputFile,'-Out-',dim,'.csv'))
     }
 
   }

@@ -5,13 +5,27 @@
 #' @param dimMax integer The maximum number of dimension given in sambada
 #' @param gdsFile char Name of the gds file associated with sambada's input file. If null, will try with \code{sambadaname}.gds
 #' @param popStr logical Indicates whether sambada was run using the POPSTRVAR parameter (i.e. population structure was taken into account). Default false
-#' @param nrows integer Specifies the number of line to read from the input file. Useful if saveType END ALL was used in sambada and that the number of models run is large so that the reading and processing is too slow. The saveType END parameter ensures that most significant models are located at the top of the file.
+#' @param nrows integer Specifies the number of line to read from the input file. Useful if \code{saveType} 'END ALL' was used in \code{sambadaParallel} and that the number of models run is large so that the reading and processing is too slow. The \code{saveType} 'END' parameter ensures that most significant models are located at the top of the file.
 #' @param interactiveChecks logical
-#' @return a list containing a) $sambadaOutput a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) $chrSNPNum The total number of SNPs in each chromosome c) $chrMaxPos The highest position found in each chromosome
+#' @return a list containing a) \code{$sambadaOutput} a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) \code{$chrSNPNum} The total number of SNPs in each chromosome c) \code{$chrMaxPos} The highest position found in each chromosome
 #' @examples
-#' \dontrun{
-#' prepare_output('myFile',1)
+#' # Example with data from the package
+#' # First copy needed files into the temporary directory
+#' file.copy(system.file("extdata", "uganda-subset-mol-Out-2.csv", package = "R.SamBada"), 
+#'      file.path(tempdir(),'uganda-subset-mol-Out-2.csv'), overwrite=TRUE)
+#' file.copy(system.file("extdata", "uganda-subset-mol-storey.csv", package = "R.SamBada"), 
+#'      file.path(tempdir(),'uganda-subset-mol-storey.csv'), overwrite=TRUE)
+#' if(Sys.info()['sysname']=='Windows'){
+#'   file.copy(system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada"),
+#'       file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE) #If you run Windows
+#' } else {
+#'   file.copy(system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada"),
+#'       file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE)
 #' }
+#' ###################
+#' # Run prepareOutput
+#' ###################
+#' prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
 #' @export
 prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=NULL, interactiveChecks=TRUE){
   
@@ -28,9 +42,9 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   if(typeof(interactiveChecks)!='logical') stop("interactiveChecks argument supposed to be logical")
   
   # All output file exists
-  for(i in 1:dimMax){
-    if (!file.exists(paste0(sambadaname,'-Out-',i,'.csv'))) stop(paste0('File ',sambadaname,'-Out-',i,'.csv not found. Check input sambadaname and dimMax'))
-  }
+  # for(i in 1:dimMax){
+  if (!file.exists(paste0(sambadaname,'-Out-',dimMax,'.csv'))) stop(paste0('File ',sambadaname,'-Out-',dimMax,'.csv not found. Check input sambadaname and dimMax'))
+  #}
   # Histogram output file exists
   if (!file.exists(paste0(sambadaname,'-storey.csv'))) stop(paste0('File ',sambadaname,'-storey.csv does not exists. This is required to calculate the qvalues'))
   # provided gdsFile exists
@@ -66,15 +80,15 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 
   #p-value and start of qvalue
   if(popStr==TRUE){
-    pvalueG=pchisq(output$GscorePop, 1, lower.tail=F)
-    pvalueW=pchisq(output$WaldScorePop, 1, lower.tail=F)
+    pvalueG=pchisq(getElement(output,'GscorePop'), 1, lower.tail=F)
+    pvalueW=pchisq(getElement(output,'WaldScorePop'), 1, lower.tail=F)
     m=sum(storeyTot[nrow(storeyTot),2:ncol(storeyTot)]) #Number of models
     #calculate lambda for G and Wald score
     pi_lambdaG=cumsum(t(as.vector(storeyTot[(nrow(storeyTot)-1),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
     pi_lambdaW=cumsum(t(as.vector(storeyTot[nrow(storeyTot),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
   } else {
-    pvalueG=pchisq(output$Gscore, 1, lower.tail=F)
-    pvalueW=pchisq(output$WaldScore, 1, lower.tail=F)  
+    pvalueG=pchisq(getElement(output,'Gscore'), 1, lower.tail=F)
+    pvalueW=pchisq(getElement(output,'WaldScore'), 1, lower.tail=F)  
     m=sum(storeyTot[(3+(dimMax-1)*4),2:ncol(storeyTot)]) #Number of models
     #calculate lambda for G and Wald score
     pi_lambdaG=cumsum(t(as.vector(storeyTot[(3+(dimMax-1)*4),2:ncol(storeyTot)])))/(m*(1-t(as.vector(storeyTot[1,2:ncol(storeyTot)]))))
@@ -91,7 +105,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   #pi0G=splineG(1)
   splineG <- stats::smooth.spline(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaG, df = 3)
   #Estimate pi0 for Gscore
-  pi0G <- stats::predict(splineG, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
+  pi0G <- getElement(stats::predict(splineG, x = t(storeyTot[1,2:ncol(storeyTot)])),'y')
   pi0G <- min(pi0G[1], 1)
   if(interactiveChecks==TRUE){
     #plot histo
@@ -108,7 +122,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   #pi0W=splineW(1)
   splineW <- stats::smooth.spline(t(storeyTot[1,2:ncol(storeyTot)]), pi_lambdaW, df = 3)
   #Estimate pi0 for Waldscore
-  pi0W <- stats::predict(splineW, x = t(storeyTot[1,2:ncol(storeyTot)]))$y
+  pi0W <- getElement(stats::predict(splineW, x = t(storeyTot[1,2:ncol(storeyTot)])),'y')
   pi0W <- min(pi0W[1], 1)
   if(interactiveChecks==TRUE){
     ####plot histo + estimated pi0
@@ -151,7 +165,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   ### Merge both information (p/qvalue and snp position)
 
   #Merge acts like join in SQL
-  output2=merge(cbind.data.frame('snp'=substr(output[, 1]$Marker, start = 1, stop = nchar(c(output[,1])$Marker) - 3), output), map2[,c('chr','snp','pos')], by='snp', sort=FALSE, all.x=TRUE)
+  output2=merge(cbind.data.frame('snp'=substr(getElement(output,'Marker'), start = 1, stop = nchar(getElement(output,'Marker')) - 3), output), map2[,c('chr','snp','pos')], by='snp', sort=FALSE, all.x=TRUE)
   
   # Number of SNP by chromosome
   numSNP=table(all_chr)
@@ -161,7 +175,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   
   # Max position by chromosome
   maxPos=aggregate(all_pos, by=list(all_chr), FUN='max')
-  maxPos=suppressWarnings(maxPos[match(c(sort(as.numeric(maxPos$Group.1)), maxPos$Group.1[is.na(as.numeric(maxPos$Group.1))]), maxPos$Group.1),])
+  maxPos=suppressWarnings(maxPos[match(c(sort(as.numeric(getElement(maxPos,'Group.1'))), getElement(maxPos,'Group.1')[is.na(as.numeric(getElement(maxPos,'Group.1')))]), getElement(maxPos,'Group.1')),])
   
   #Final output
   finalOutput=list("sambadaOutput"=output2, "chrSNPNum"=numSNP, "chrMaxPos"=maxPos)
@@ -175,21 +189,43 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 #' @description Plots the manhattan plot for a given environmental variable. The plot is interactive and a map of the distribution of the marker can be retrieved as well as nearby genes listed in Ensembl.
 #' @author Solange Duruz
 #' @param preparedOutput char The prepared output list from prepare_output function
-#' @param varEnv char The name of the environmental variable one wish to study (as in the header of \code{envFIle})
+#' @param varEnv char The name of the environmental variable one wish to study (as in the header of \code{envFile})
 #' @param envFile char The file containing the input environmental variable of sambada. 
 #' @param species char The abbreviated latin name of the species without capitals nor punctuation (e.g. btaurus, chircus,...). Can be set to null if species not present in ensembl database
 #' @param pass integer Number of BP around a SNP in which to look for an annotation in Ensembl. Set to null if species is null
 #' @param x char The name of the column corresponding to the x-coordinate in the envFile. Can be set to null if unknown, in this case the maps will not be available
 #' @param y char The name of the column corresponding to the y-coordinate in the env file. Can be set to null if x is null.
 #' @param valueName char Name of the p- or q-value one wish to plot the manhattan on. This can be either pvalueG, pvalueW, qvalueG, qvalueW for G- or Waldscore respectively.
-#' @param chromo char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)
+#' @param chromo char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. \code{chromo}=1)
 #' @param gdsFile char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv or -env-export.csv) and .gds
-#' @param IDCol char The name of the column in envFile corresponding to the ID of the individual. If provided, hover on the output map will give the id of the animal
-#' @param popStrCol char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available representing population structure.
+#' @param IDCol char The name of the column in \code{envFile} corresponding to the ID of the individual. If provided, hover on the output map will give the id of the animal
+#' @param popStrCol char The name or vector of name of column(s) in \code{envFile} describing population structure. If provided, additional layers on the map will be available representing population structure.
 #' @return None 
 #' @examples
 #' \dontrun{
-#' plotResultInteractive('myFile','chircus',1,'Longitude','Latitude','bio1',c('1','2'))
+#' # Example with data from the package
+#' # First copy needed files into the temporary directory
+#' file.copy(system.file("extdata", "uganda-subset-mol-Out-2.csv", package = "R.SamBada"), 
+#'      file.path(tempdir(),'uganda-subset-mol-Out-2.csv'), overwrite=TRUE)
+#' file.copy(system.file("extdata", "uganda-subset-mol-storey.csv", package = "R.SamBada"), 
+#'      file.path(tempdir(),'uganda-subset-mol-storey.csv'), overwrite=TRUE)
+#' file.copy(system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
+#'      file.path(tempdir(),'uganda-subset-env-export.csv'), overwrite=TRUE)
+#' if(Sys.info()['sysname']=='Windows'){
+#'   file.copy(system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada"),
+#'       file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE) #If you run Windows
+#' } else {
+#'   file.copy(system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada"),
+#'       file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE)
+#' }
+#' # Run prepareOutput
+#' prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
+#' ###################
+#' # Run plotResultInteractive
+#' ###################
+#' plotResultInteractive(prep,'bio1','uganda-subset-env-export.csv',species='btaurus',
+#'      pass=25000,x='longitude',y='latitude', gdsFile='uganda-subset-mol.gds',
+#'      IDCol='short_name',popStrCol='pop1')
 #' }
 #' @export
 plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, pass=NULL,x=NULL,y=NULL,  valueName='pvalueG',chromo='all',gdsFile=NULL, IDCol=NULL, popStrCol=NULL){
@@ -263,7 +299,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
     subset=subset[with(subset, which(chr %in% chromo)),]
   }
   if(nrow(subset)==0) stop('No record found in sambada output corresponding to the chosen chromosome (chromo argument)')
-  subset$pval=-log10(subset[,get(valueName)])
+  #..valueName=NULL #so that R check doesn't complain
+  subset$pval=-log10(getElement(subset,valueName))
   #Calculate final position (if several chromosome, shift the position, otherwise take initial position)
   prevPos=data.frame("chr"=chrMaxPos$Group.1, "maxPos"=cumsum(as.numeric(chrMaxPos$x))-chrMaxPos$x)
   prevPos=data.frame(prevPos, "chrPos"=rownames(prevPos))
@@ -281,7 +318,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
     if(!file.exists(gdsFile)){
       gdsFile = paste0(gsub('-env.csv','',envFile),'.gds')
       if(!file.exists(gdsFile)){
-        stop("A gds file is needed for this function to work. Specify the name in the input of the function if it is already created, or create it with the package SNPRelate or prepare_geno from this package")
+        stop("A gds file is needed for this function to work. Specify the name in the input of the function if it is already created, or create it with the package SNPRelate or prepareGeno from this package")
       }
     }
   }
@@ -535,16 +572,36 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 #' @description Plot the manhattan plot for a given environmental data
 #' @author Solange Duruz
 #' @param preparedOutput char The prepared output list from prepare_output function
-#' @param varEnv char The name of the environmental variable one wish to study. Can be a vector of char if you want to plot several varEnv at a row. If \code{saveType} is NULL, the program prompts to continue. If \code{saveType} is png or pdf, several files are saved
+#' @param varEnv char The name of the environmental variable one wish to study. Can be a vector of char if you want to plot several \code{varEnv} at a row. If \code{saveType} is NULL, the program prompts to continue. If \code{saveType} is png or pdf, several files are saved
 #' @param valueName char Name of the p- or q-value one wish to plot the manhattan on. This can be either pvalueG, pvalueW, qvalueG, qvalueW for G- or Waldscore respectively.
-#' @param chromo char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. chr=1)
+#' @param chromo char/integer Name or vector of name of the chromosome to investigate. If all is chosen (default), all numerical chromosome will be mapped. If your sambada output is large (typically if you are working with more than 50K genomic file), you should probably map a subset of your dataset (e.g. \code{chromo}=1)
 #' @param saveType char One of NULL, 'png' or 'pdf'. If NULL is set, the plot will be shown in the R plotting window. Otherwise, it will be saved in the specified format in your working directory with the name 'manhattan-' followed by varEnv.
 #' @param threshold double A digit number indicating a value to draw a threshold line
 #' @param highlight char Name of the genotype to highlight in red on plot (should be SNPName_Genotype e.g. 'ARS-BFGL-NGS-106879_AA')
 #' @return The last plot object (if several \code{varEnv} are specified, only the last one is returned)
 #' @examples
-#' \dontrun{
-#' plotManhattan(preparedOutput,c('bio1','bio2'),'pvalueG')
+#' # Example with data from the package
+#' # First copy needed files into the temporary directory
+#' file.copy(system.file("extdata", "uganda-subset-mol-Out-2.csv", package = "R.SamBada"), 
+#'     file.path(tempdir(),'uganda-subset-mol-Out-2.csv'), overwrite=TRUE)
+#' file.copy(system.file("extdata", "uganda-subset-mol-storey.csv", package = "R.SamBada"), 
+#'     file.path(tempdir(),'uganda-subset-mol-storey.csv'), overwrite=TRUE)
+#' if(Sys.info()['sysname']=='Windows'){
+#'   file.copy(system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada"),
+#'       file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE) #If you run Windows
+#' } else {
+#'   file.copy(system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada"),
+#'       file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE) #If you run Unix
+#' }
+#' # Run prepareOutput
+#' prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
+#' ###################
+#' # Run plotManhattan
+#' ###################
+#' plotManhattan(prep, c('bio1'),chromo='all',valueName='pvalueG')
+#' \donttest{
+#' # Example with several environmental variables
+#' plotManhattan(prep,c('bio1','bio2'),'pvalueG')
 #' }
 #' @export
 plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=NULL, threshold=NULL, highlight=NULL){
@@ -577,7 +634,8 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
       subset=subset[with(subset, which(chr %in% chromo)),]
     }
     if(nrow(subset)==0) stop('No record found in sambada output corresponding to the chosen chromosome (chromo argument)')
-    subset$pval=-log10(subset[,get(valueName)])
+    #..valueName=NULL
+    subset$pval=-log10(getElement(subset,valueName))
 
     #Calculate final position (if several chromosome, shift the position, otherwise take initial position)
     prevPos=data.frame("chr"=chrMaxPos$Group.1, "maxPos"=cumsum(as.numeric(chrMaxPos$x))-chrMaxPos$x)
@@ -653,14 +711,14 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
 
 
 #' @title Plotting of maps 
-#' @description Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate outputfiles.
+#' @description Plots several kinds of maps (environmental variable distribution, population structure, marker absence or presence, autocorrelation of marker). Unlike \code{\link{plotResultInteractive}}, the resulting maps are non-interactive. The function can handle several marker/variables at once and create separate output files.
 #' @author Solange Duruz
 #' @param envFile char The file containing the input environmental variable of sambada. 
-#' @param x char The name of the column corresponding to the x-coordinate in the envFile. Can be set to null if unknown, in this case the maps will not be available
+#' @param x char The name of the column corresponding to the x-coordinate in the \code{envFile}. Can be set to null if unknown, in this case the maps will not be available
 #' @param y char The name of the column corresponding to the y-coordinate in the env file. Can be set to null if x is null.
-#' @param gdsFile char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv) and .gds
-#' @param popStrCol char The name or vector of name of column(s) in envFile describing population structure. If provided, additional layers on the map will be available representing population structure.
-#' @param locationProj integer EPSG code of the geographical projection in the envFile
+#' @param gdsFile char The GDS file created in the preprocessing of sambada. If null, will try with \code{envFile}(without -env.csv) and .gds
+#' @param popStrCol char The name or vector of name of column(s) in \code{envFile} describing population structure. If provided, additional layers on the map will be available representing population structure.
+#' @param locationProj integer EPSG code of the geographical projection in the \code{envFile}
 #' @param markerName name of the marker to be plotter if \code{mapType} is 'marker' or 'AS'. \code{markerName} can be found in preparedOutput$sambadaOutput[,''] where preparedOutput would be the result of the function \code{prepareOutput}
 #' @param mapType char A string or vector of string containing one or several of 'marker' (presence/absence of marker), 'env' (environmental variable distribution), 'popStr' (population variable on continuous scale), 'popPieChart' (belonging to a population in pie charts), 'AS' (autocorrelation of the marker). Note that the background of all maps, if found, will be the raster of the environmental variable. Thus the 'env' \code{mapType} is preferred when no raster is provided. For the 'AS' type, it is calculated on the fly for the markers provided and not the one possibly calculated by sambada.
 #' @param varEnvName char Name of the environmental variable. If a raster of the variable is located in your working directory, you can provide \code{varEnvName} even for \code{mapType} such as 'marker' or 'AS'. The function will scan the folder of your working directory for raster with the same name as \code{varEnvName} (and commonly used extension for raster) and put it as background.
@@ -671,15 +729,23 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
 #' @param simultaneous boolean If TRUE and \code{mapType} contains several kinds of maps, all maps corresponding to the same marker will be plotted on the same window. The resulting maps can be very small.
 #' @return None 
 #' @examples
-#' \dontrun{
-#' # Map of marker
-#' plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
-#'      gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
-#'      mapType=c('marker'), varEnvName='bio1')
-#'
+#' # Define right GDS file according to your OS
+#' if(Sys.info()['sysname']=='Windows'){
+#'   gdsFile=system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada")
+#' } else {
+#'   gdsFile=system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada")
+#' }
+#' #############
+#' # Run plotMap
+#' #############
+#' plotMap(envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
+#'      x='longitude', y='latitude', locationProj=4326,  popStrCol='pop1', gdsFile=gdsFile, 
+#'      markerName='Hapmap28985-BTA-73836_GG', mapType='marker', varEnvName='bio1', simultaneous=FALSE)
+#' \donttest{
 #' # Maps of marker and population structure (two subplot)
-#' plotMap('EnvFile.csv','longitude','latitude', locationProj=4326,  popStrCol='pop1', 
-#'      gdsFile='GDSFile.gds', markerName='ARS-BFGL-NGS-106879_AA', 
+#' plotMap(envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"),
+#'      'longitude','latitude', locationProj=4326,  popStrCol='pop1', 
+#'      gdsFile=gdsFile, markerName='Hapmap28985-BTA-73836_GG', 
 #'      mapType=c('marker', 'popStr'), varEnvName='bio1', simultaneous=TRUE)
 #' }
 #' @export
@@ -724,7 +790,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
     gdsFile = paste0(gsub('-env.csv','',envFile),'.gds')
   }
   if(!file.exists(gdsFile) & ('AS' %in% mapType | 'marker' %in% mapType)){
-    stop("A gds file is needed for this function to work if mapType contains 'marker' or 'AS'. Specify the name in the input of the function if it is already created, or create it with the package SNPRelate or prepare_geno from this package")
+    stop("A gds file is needed for this function to work if mapType contains 'marker' or 'AS'. Specify the name in the input of the function if it is already created, or create it with the package SNPRelate or prepareGeno from this package")
   }
   if(typeof(varEnvName)!='character') stop('markerName argument should be a character')
   #Test if all SNPs in GDS

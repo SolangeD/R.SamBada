@@ -13,14 +13,31 @@
 #' @param verbose logical Turn on verbose mode
 #' @return None
 #' @examples
-#' \dontrun{
-#' #With ped input file
-#' prepareGeno('myPlinkFile.ped','mySambadaFile.csv',TRUE, mafThresh=0.05, 
+#' # Example with data from the package
+#' # You first need to download sambada and add the directory input parameter to specify where
+#' # you saved it, unless you add it to your PATH environmental varialbe
+#' #################
+#' # Run prepareGeno
+#' #################
+#' # Example with ped input file, no filtering
+#' prepareGeno(system.file("extdata", "uganda-subset-mol.ped", package = "R.SamBada"),
+#'      outputFile=file.path(tempdir(),'/uganda-subset-mol.csv'),FALSE, interactiveChecks=FALSE)
+#' 
+#' \donttest{
+#' # Example with gds file and filtering
+#' # Define right GDS file according to your OS
+#' if(Sys.info()['sysname']=='Windows'){
+#'   gdsFile=system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada")
+#' } else {
+#'   gdsFile=system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada")
+#' }
+#' prepareGeno(gdsFile, outputFile=file.path(tempdir(),'/uganda-subset-mol.csv'),
+#'      saveGDS=FALSE,mafThresh=0.05, missingnessThresh=0.1,interactiveChecks=FALSE)
+#'      
+#' # Run prepareGeno with interactiveChecks=TRUE
+#' prepareGeno(fileName=system.file("extdata", "uganda-subset-mol.ped", package = "R.SamBada"),
+#'      outputFile=file.path(tempdir(),'/uganda-subset-mol.csv'),TRUE, mafThresh=0.05, 
 #'      missingnessThresh=0.05, mgfThresh=0.8,interactiveChecks=TRUE)
-#'
-#' #With gds input file
-#' prepareGeno('myGDSFile.gds','mySambadaFile.csv',FALSE, mafThresh=0.05, 
-#'      missingnessThresh=0.05,mgfThresh=0.8,interactiveChecks=FALSE)
 #' }
 #' @export
 prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NULL,mgfThresh=NULL, directory=NULL, interactiveChecks=FALSE, verbose=FALSE){
@@ -55,7 +72,9 @@ prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThre
   if(typeof(verbose)!='logical') stop('verbose argument supposed to be logical')
   
   # Get file extension
+  fileName_base=basename(fileName)
   filename_short=substr(fileName,1,gregexpr("\\.", fileName)[[1]][length(gregexpr("\\.", fileName)[[1]])]-1)
+  filename_short2=substr(fileName_base,1,gregexpr("\\.", fileName_base)[[1]][length(gregexpr("\\.", fileName_base)[[1]])]-1)
   extension=substr(fileName,gregexpr("\\.", fileName)[[1]][length(gregexpr("\\.", fileName)[[1]])]+1, nchar(fileName))
   
   if(!is.null(directory)){
@@ -308,7 +327,7 @@ prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThre
   } 
   
   #Write ped file 
-  SNPRelate::snpgdsGDS2PED(gds_obj, ped.fn=file.path(tmp,paste(filename_short,'_filtered',sep='')), snp.id=list_snp, verbose=FALSE)
+  SNPRelate::snpgdsGDS2PED(gds_obj, ped.fn=file.path(tmp,paste(filename_short2,'_filtered',sep='')), snp.id=list_snp, verbose=FALSE)
 
   if(verbose==TRUE){
     print(paste0('Filtering finished: ',length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.id")))-length(list_snp),' deleted out of ',length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.id"))),' SNPs'))
@@ -325,7 +344,7 @@ prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThre
   numSNP=length(list_snp)
   numIndiv=length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "sample.id")))
   #test2::recodePlink(numIndiv,numSNP,paste(filename_short,'_filtered',sep=''),paste0(filename_short,'.csv'))
-  system(paste('recode-plink',numIndiv,numSNP,file.path(tmp,paste(filename_short,'_filtered',sep='')),outputFile))
+  system(paste('recode-plink',numIndiv,numSNP,file.path(tmp,paste(filename_short2,'_filtered',sep='')),outputFile))
 }
 
 #' @title Set the location of samples through a local web-application with interactive map
@@ -361,15 +380,15 @@ setLocation=function(){
 #' @return None 
 #' @examples
 #' \dontrun{
-#' #Own raster + worldclim download
+#' # Worldclim download only with sample data from R.SamBada
+#' createEnv(locationFileName=system.file("extdata", "uganda-subset.csv", package = "R.SamBada"),
+#'       outputFile=file.path(tempdir(),'uganda-subset-env.csv'), x='longitude',y='latitude',
+#'       locationProj=4326, worldclim=TRUE,saveDownload=FALSE,interactiveChecks=TRUE)
+#'       
+#' # Own raster (fictitious examples) + worldclim download
 #' createEnv(rasterName=c('prec.tif','tmin.sdat'),locationFileName='MyFile.shp',
 #'       outputFile='MyFile-env.csv', rasterProj=c(4326,21781), worldclim=TRUE,
 #'       saveDownload=TRUE,interactiveChecks=TRUE)
-#'
-#' #Worldclim download only
-#' createEnv(locationFileName='MyFile.csv',outputFile='MyFile-env.csv',
-#'       x='Longitude',y='Latitude',locationProj=4326, 
-#'       worldclim=TRUE,saveDownload=TRUE,interactiveChecks=FALSE)
 #' }
 #' @export
 createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL, separator=',', worldclim=TRUE, srtm=FALSE, saveDownload, rasterName=NULL, rasterProj=NULL,directory=FALSE, interactiveChecks, verbose=TRUE){
@@ -711,9 +730,9 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
 #' @param outputFile char Name of the output file. Must have a .csv extension.
 #' @param maxCorr double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted
 #' @param idName char Name of the id in the environmental file matching the one of \code{genoFile}
-#' @param separator char If envFile is .csv, the separator character. If file created with create_env, separator is ' '
+#' @param separator char If \code{envFile} is .csv, the separator character. If file created with create_env, separator is ' '
 #' @param genoFile char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created
-#' @param numPc double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC (the program will find the first leap in the proportion of variance where the ratio (difference in variance between PC x and x+1)/(variance of PC x) is greater than NumPc. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the envFile match the one of the \code{envFile} (necessary for sambada's computation). Set it to null if \code{genoFile} is null 
+#' @param numPc double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC (the program will find the first leap in the proportion of variance where the ratio (difference in variance between PC x and x+1)/(variance of PC x) is greater than \code{numPc}. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the \code{envFile} match the one of the \code{genoFile} (necessary for sambada's computation). Set it to 0 if \code{genoFile} is null 
 #' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)
 #' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering when computing PCS(if null no filtering on missing rate will be computed)
 #' @param ldThresh double A number between 0 and 1 specifying the linkage disequilibrium (LD) rate filtering before computing the PCA (if null no filtering on LD will be computed)
@@ -721,7 +740,7 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
 #' @param clustMethod char One of 'kmeans' or 'hclust' for K-means and hierarchical clustering respectively. Default 'kmeans'
 #' @param interactiveChecks logical If TRUE, plots will show up showing number of populations chosen, and correlation between variables and the user can interactively change the chosen threshold for \code{maxCorr} and \code{numPop} (optional, default value=FALSE)
 #' @param includeCol character vector Columns in the environmental file to be considered as variables. If none specified, all numeric variables will be considered as env var except for the id
-#' @param excludeCol character vector Columns in the environmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as env var except for the id
+#' @param excludeCol character vector Columns in the environmental file to exclude in the output (non-variable column). If none specified, all numeric variables will be considered as environmental variables except for the id
 #' @param popStrCol character vector Columns in the environmental file describing population structure (ran elsewhere). Those columns won't be excluded when correlated with environmental files
 #' @param x character Name of the column corresponding to the x coordinate (or longitude if spherical coordinate). If not null, x column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.
 #' @param y character Name of the column corresponding to the y coordinate (or latitude if spherical coordinate). If not null, y column won't be removed even if correlated with other variable. This parameter is also used to display the map of the population structure.
@@ -729,20 +748,39 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
 #' @param verbose boolean If true show information about progress of the process
 #' @return None
 #' @examples
-#' \dontrun{
+#' ################
+#' # Run prepareEnv
+#' ################
+#' #Without calculating population structure.
+#' prepareEnv(envFile=system.file("extdata", "uganda-subset-env.csv", package = "R.SamBada"), 
+#'      outputFile=file.path(tempdir(),'uganda-subset-env-export.csv'), maxCorr=0.8, 
+#'      numPc=0, idName='short_name', x='longitude',y='latitude', locationProj=4326, 
+#'      interactiveChecks = FALSE)
+#' \donttest{
+#' # While it is not mandatory to provide gdsFile, it is recommended to define it so that IDs 
+#' # in envrionmental and genomic file are in the same order (gdsFile also needed to compute
+#' # population structure)
+#' 
+#' # determine gdsFile according to OS
+#' if(Sys.info()['sysname']=='Windows'){
+#'   gdsFile="uganda-subset-mol_windows.gds"
+#' } else {
+#'   gdsFile="uganda-subset-mol_unix.gds"
+#' }
+#' 
 #' #Calculating PCA-based population structure
-#' prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ','myFile.gds', 
+#' prepareEnv(envFile=system.file("extdata", "uganda-subset-env.csv", package = "R.SamBada"), 
+#'      outputFile=file.path(tempdir(),'uganda-subset-env-export.csv'), maxCorr=0.8, 
+#'      idName='short_name', genoFile=system.file("extdata", gdsFile, package = "R.SamBada"),
 #'      numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
-#'      x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
+#'      x='longitude', y='latitude', locationProj=4326, interactiveChecks = TRUE)
 #'
 #' #Calculating structure membership coefficient based on kmeans clustering
-#' prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ','myFile.gds', 
+#' prepareEnv(envFile=system.file("extdata", "uganda-subset-env.csv", package = "R.SamBada"), 
+#'      outputFile=file.path(tempdir(),'uganda-subset-env-export.csv'), maxCorr=0.8, 
+#'      idName='short_name', genoFile=system.file("extdata", gdsFile, package = "R.SamBada"),
 #'      numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL,
-#'      x='Longitude', y='Latitude', locationProj=4326, interactiveChecks = TRUE)
-#'
-#' #Without calculating population structure.
-#' prepareEnv('myFile-env.csv','myFile-env-export.csv',0.8,'Nom',' ', 
-#'      x='Longitude',y='Latitude', locationProj=4326, interactiveChecks = TRUE)
+#'      x='longitude', y='latitude', locationProj=4326, interactiveChecks = TRUE)
 #' }
 #' @export
 prepareEnv=function(envFile, outputFile, maxCorr, idName, separator=' ',genoFile=NULL, numPc=0.5, mafThresh=NULL, missingnessThresh=NULL, ldThresh=NULL, numPop=-1, clustMethod='kmeans', includeCol=NULL, excludeCol=NULL, popStrCol=NULL, x,y,locationProj,interactiveChecks=FALSE, verbose=TRUE){
@@ -775,7 +813,7 @@ prepareEnv=function(envFile, outputFile, maxCorr, idName, separator=' ',genoFile
   if(!is.null(numPc)){ 
     if(typeof(numPc)!='double')stop("numPc must be a number")
     if(numPc>1 & numPc%%1!=0) stop("If numPc>1, numPc must be an integer")
-    if(is.null(genoFile))stop("genoFile must be specified if numPc is not null")
+    if(numPc!=0 & is.null(genoFile))stop("genoFile must be specified if numPc is not 0")
   }
   
   if(!is.null(numPop)){ 
@@ -1286,8 +1324,9 @@ redENV = function(ienv, corcutoff=0.7) {
 
 createGDSfile=function(filename, outputDir){
   filename_short=substr(filename,1,gregexpr("\\.", filename)[[1]][length(gregexpr("\\.", filename)[[1]])]-1)
+  filename_short2=basename(substr(filename,1,gregexpr("\\.", filename)[[1]][length(gregexpr("\\.", filename)[[1]])]-1))
   extension=substr(filename,gregexpr("\\.", filename)[[1]][length(gregexpr("\\.", filename)[[1]])]+1, nchar(filename))
-  gds_file=file.path(outputDir,paste0(filename_short,'.gds'))
+  gds_file=file.path(outputDir,paste0(filename_short2,'.gds'))
   if (extension=='gds') {
     gds_file=filename
     
