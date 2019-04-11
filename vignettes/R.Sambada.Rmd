@@ -20,6 +20,10 @@ This package is designed to entail the whole processing chain to use SamBada, fr
 
 If you want more documentation, you can read the [documentation of the package](https://github.com/SolangeD/R.SamBada/blob/master/R.SamBada-manual.pdf) or [SamBada's documentation](https://github.com/Sylvie/sambada/releases/download/v0.8.0/sambadoc.pdf). Also read the article ...
 
+NB: As a general rule, please avoid spaces in input files (and paths leading to them), that might make some commands crash
+
+NB2: By default, all examples write to a temporary folder (use tempdir() to see where it is actually saved). You can remove the tempdir() statements and files will be saved in your current directory. 
+
 ## Download Sambada
 
 For running sambada, you need to download sambada's binaries. This can be done with `downloadSambada` which downloads Sambada from GitHub and upacks it into the directory of your choice. You might already be a Sambada user and do not have to download it again! Note that if you plan to often use Sambada, it is recommended that you put the binaries folder of Sambada into your path environmental variable (this procedure is OS-dependent, look on the internet how to proceed), otherwise you will have to specify this path every time you start a new R session.
@@ -27,8 +31,8 @@ For running sambada, you need to download sambada's binaries. This can be done w
 ```{r, eval=FALSE}
 #Load help 
 ?downloadSambada()
-#Downloads Sambada into the current active directory
-downloadSambada()
+#Downloads Sambada into the temporary directory
+downloadSambada(tempdir()) #remove tempdir() to downlaod it in the current directory.
 ```
 
 ## Preprocessing
@@ -53,7 +57,8 @@ genoFile #Check the path to the file
 #Run prepareGeno
 #================
 #Warning: the histograms shown due to maf and missingness filtering are really difficult to understand given the small number of SNPs
-prepareGeno(fileName=genoFile,outputFile='uganda-subset-mol.csv',saveGDS=TRUE,mafThresh=0.05, missingnessThresh=0.1,interactiveChecks=TRUE)
+prepareGeno(fileName=genoFile,outputFile=file.path(tempdir(),'uganda-subset-mol.csv'),saveGDS=TRUE,mafThresh=0.05, missingnessThresh=0.1,interactiveChecks=TRUE)
+#remove tempdir(), to save the file to your current directory
 ```
 
 ### Assign sample location
@@ -137,9 +142,9 @@ envFile #Check the path to the file
 #================
 
 #Stores Principal components scores
-prepareEnv(envFile=envFile, outputFile='uganda-subset-env-export.csv', maxCorr=0.8, idName='short_name', genoFile=gdsFile, numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL, x='longitude', y='latitude', interactiveChecks=TRUE, locationProj=4326 )
+prepareEnv(envFile=envFile, outputFile=file.path(tempdir(),'uganda-subset-env-export.csv'), maxCorr=0.8, idName='short_name', genoFile=gdsFile, numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL, x='longitude', y='latitude', interactiveChecks=TRUE, locationProj=4326 )
 #Accept the maxCorr threshold, and numPc to 1.
-
+#remove "tempdir()," to save to the current directory
 ```
 
 ## Run SamBada
@@ -171,7 +176,7 @@ genoFile #Check the path to the file
 #Run sambada on two cores. 
 #prepareEnv puts the population variables at the end of the file (=> LAST). 
 #Only one pop var was saved, so set dimMax=2 
-sambadaParallel(genoFile=genoFile, envFile=envFile, idGeno='ID_indiv', idEnv='short_name', dimMax=2, cores=2, saveType='END ALL', populationVar='LAST', outputFile='uganda-subset-mol')
+sambadaParallel(genoFile=genoFile, envFile=envFile, idGeno='ID_indiv', idEnv='short_name', dimMax=2, cores=2, saveType='END ALL', populationVar='LAST', outputFile=file.path(tempdir(),'uganda-subset-mol'))
 
 ```
 ## Post-processing
@@ -189,7 +194,7 @@ The function `prepareOutput` does the following things on sambada's output
 #Loads data
 #================
 #If you haven't run sambadaParallel, you need to copy the output file into the active directory with the following command
-file.copy(system.file("extdata", "uganda-subset-Out-2.csv", package = "R.SamBada"), 'uganda-subset-Out-2.csv')
+file.copy(system.file("extdata", "uganda-subset-mol-Out-2.csv", package = "R.SamBada"), 'uganda-subset-mol-Out-2.csv')
 #Furthermore, if you haven't run prepareGeno, you need to copy the GDS file with the following command
 file.copy(system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada"),'uganda-subset-mol.gds') #If you run Windows
 file.copy(system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada"),'uganda-subset-mol.gds') #If you run MacOS or Linux
@@ -304,32 +309,3 @@ plotMap(envFile=envFile, x='longitude', y='latitude', locationProj=4326,  popStr
 
 Good luck with the analysis of your own dataset!
 
-<!-- ## Figures -->
-
-<!-- The figure sizes have been customised so that you can easily put two images side-by-side.  -->
-
-<!-- ```{r, fig.show='hold'} -->
-<!-- plot(1:10) -->
-<!-- plot(10:1) -->
-<!-- ``` -->
-
-<!-- You can enable figure captions by `fig_caption: yes` in YAML: -->
-
-<!--     output: -->
-<!--       rmarkdown::html_vignette: -->
-<!--         fig_caption: yes -->
-
-<!-- Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**. -->
-
-<!-- ## More Examples -->
-
-<!-- You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`. -->
-
-<!-- ```{r, echo=FALSE, results='asis'} -->
-<!-- knitr::kable(head(mtcars, 10)) -->
-<!-- ``` -->
-
-<!-- Also a quote using `>`: -->
-
-<!-- > "He who gives up [code] safety for [code] speed deserves neither." -->
-<!-- ([via](https://twitter.com/hadleywickham/status/504368538874703872)) -->
