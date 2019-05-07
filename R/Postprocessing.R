@@ -445,11 +445,10 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
         "Select a point!" 
       }else {
         selectSNP=subset[which(subset$xcoord==f$x),c("chr", "pos", "snp")]
-        selectSNP[1]
-        #selectSNP=selectSNP[1]
+        selectSNP=selectSNP[1,]
         #selectSNP
-        #infoOutput=data.frame('snp'=selectSNP$snp, 'chr'=selectSNP$chr, 'BP'=selectSNP$pos)
-        #infoOutput
+        infoOutput=data.frame('snp'=selectSNP$snp, 'chr'=selectSNP$chr, 'BP'=selectSNP$pos)
+        infoOutput
       }
     })
     
