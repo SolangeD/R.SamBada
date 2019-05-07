@@ -1,0 +1,310 @@
+---
+title: "R.SamBada"
+author: "Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_document
+vignette: >
+  %\VignetteIndexEntry{R.SamBada}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This package is designed to entail the whole processing chain to use SamBada, from pre- to post-processing. In this documentation, we will work through all these steps with an example given in the data available with the package. This is a subset of ten SNPs from 800 Ougandan cattle including the sample location (see SamBada's documentation below for more information)
+
+If you want more documentation, you can read the [documentation of the package](https://cran.r-project.org/web/packages/R.SamBada/R.SamBada.pdf) or [SamBada's documentation](https://github.com/Sylvie/sambada/releases/download/v0.8.0/sambadoc.pdf). Also read the article ...
+
+NB: By default, all examples write to a temporary folder (use tempdir() to see where it is actually saved). You can remove the tempdir() statements and files will be saved in your current directory. 
+
+NB2: All steps presented in this vignette follow one another, in which output files of one step are often used in a subsequent step. However, to facilitate the use of this vignette, input files will always refer to test files of the package. If you want to can use the ones you generated in previous steps (look in the tempdir() folder if you did not specify other output locations). Some steps are necessary to be able to complete the subsequent steps. It is the case of downloadSambada() and prepareOutput()
+
+NB3: As a general rule, please avoid spaces in input files (and paths leading to them), that might make some commands crash
+
+
+## Download Sambada
+
+For running sambada, you need to download sambada's binaries. This can be done with `downloadSambada` which downloads Sambada from GitHub and unpacks it into the directory of your choice. You might already be a Sambada user and do not have to download it again! Note that if you plan to often use Sambada, it is recommended that you put the binaries folder of Sambada into your path environmental variable (this procedure is OS-dependent, look on the internet how to proceed), otherwise you will have to specify this path every time you start a new R session.
+
+```{r, eval=FALSE}
+#Load help 
+?downloadSambada()
+#Downloads Sambada into the temporary directory
+downloadSambada(tempdir()) 
+```
+
+## Preprocessing
+
+Most of the functions described here have an `interactiveChecks` mode. When you run the function for the first time on your dataset, we strongly advise that you set it to TRUE. This prints plots that allows you to detect anomalies.However, to facilitate the use of this vignette, this mode has been disabled.We advise you to try with interactiveChecks==TRUE.
+
+### Prepare the genomic file
+
+The first step when you have your genomic matrix is to prepare it into a format that samBada accepts. You can use `prepareGeno` for this, which can process plink ped, plink bed, vcf or gds input file. In the meantime, you can also filter out SNPs based on Minor Allele Frequency (MAF), Missingness, Linkage Disequilibrium (LD) and Major Genotype Frequency (MGF). In order to work with your dataset, a GDS file (from SNPRelate package) is first created. If saveGDS is set to TRUE, then the file will be saved in the active directory. The GDS file is used in other functions, so we recommend that you keep it.
+
+```{r, eval=FALSE}
+#Loads data
+#================
+#These files are distributed within your package. The system.file will return the full path to them. With your data, you can just use the name of the file, provided the file is in the active directory
+genoFile=system.file("extdata", "uganda-subset-mol.ped", package = "R.SamBada")
+genoFile #Check the path to the file
+
+#Load help
+#================
+?prepareGeno
+
+#Run prepareGeno
+#================
+#Make sure you ran downloadSambada() before running this command.
+prepareGeno(fileName=genoFile,outputFile=file.path(tempdir(),'uganda-subset-mol.csv'),saveGDS=TRUE,mafThresh=0.05, missingnessThresh=0.1,interactiveChecks=FALSE) #Also try with interactiveChecks=TRUE
+```
+
+### Assign sample location
+
+If coordinates are unknown, you can use `setLocation` to help you defining sample coordinates. The procedure is self-explained: it opens a local web page in which you need to upload a file with a list of IDs. Then specify the name of the column containing IDs (and longitude and latitude if present). Once processed, select one or several samples, and click "Select coordinate" at the end of the list. Then select a point on the map (first zoom to a satisfying level): you should see the coordinates being updated in the list. When finished, click "Export Coordinates" to export the new csv file. In the data presented in this vignette, samples are already georeferenced. However, if you want to try this function : 
+
+```{r, eval=FALSE}
+#Locate file containing only IDs of individuals
+#================
+idFile=system.file("extdata", "uganda-subset-id.csv", package = "R.SamBada")
+idFile #Check the path to the file
+
+#Load help
+#================
+?setLocation
+
+#Run setLocation
+#================
+setLocation()
+#Once the browser opens, you can load the file uganda-subset-id.csv mentioned above
+```
+
+### Create the environmental dataset
+
+Then from the point locations, you need to create your envionmental dataset from point location. Use `createEnv` for this task.  
+
+You can use rasters of your study site that you already have or use the function to automatically download rasters of your study site from global databases. 
+```{r, eval=FALSE}
+#Loads data
+#================
+#These files are distributed within your package. The system.file will return the full path to them. With your data, you can just use the name of the file, provided the file is in the active directory
+locationFile=system.file("extdata", "uganda-subset.csv", package = "R.SamBada")
+readLines(locationFile, n=20) #View the first 20 lines of the input file
+
+#Load help
+#================
+?createEnv
+
+#Create environmental dataset
+#================
+#downloads the raster tiles from global databases and create the environmental file
+#Warning: the download and processing of raster is both heavy in space and time-consuming
+#If you want to save time, you can skip this step continue to the next function
+createEnv(locationFileName=locationFile, outputFile=file.path(tempdir(),'uganda-subset-env.csv'), x='longitude',y='latitude',locationProj=4326,separator=';', worldclim=TRUE, saveDownload=TRUE, rasterName=NULL,rasterProj=NULL, interactiveChecks=FALSE) #Also try with interactiveChecks=TRUE
+
+```
+
+### Prepare the final environmental dataset
+
+You can now use the `prepareEnv` function. This function has 3 goals
+
+* Put the sample ID of the genomic file and the environmental file in the same order (required to run sambada)  
+* Reduce your environmental dataset. Indeed, if you use worlclim variables for examples, some of the variables will be very correlated. We can delete correlated variables that are above a given correlation threshold (argument `maxCorr`)  
+* Check if there is a population structure to include it as an "environmental variable" in your environmental file.
+
+The function creates a new file with the name specified in outputFile.
+
+```{r, eval=FALSE}
+#Loads data
+#================
+#Locate gds file. Note: this file has also been generated from prepareGeno
+#GDS files are binary files that are system dependent
+if(Sys.info()['sysname']=='Windows'){
+  gdsFile=system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada") #If you run Windows
+}else{
+  gdsFile=system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada") #If you run MacOS or Linux
+}
+gdsFile #Check the path to the file
+
+#Locate the envFile (generated from createEnv)
+envFile=system.file("extdata", "uganda-subset-env.csv", package = "R.SamBada")
+readLines(envFile, n=20) #View the first 20 lines of the file
+
+#Load help
+#================
+?prepareEnv
+
+#prepareEnv
+#================
+
+#Stores Principal components scores
+prepareEnv(envFile=envFile, outputFile=file.path(tempdir(),'uganda-subset-env-export.csv'), maxCorr=0.8, idName='short_name', genoFile=gdsFile, numPc=0.2, mafThresh=0.05, missingnessThresh=0.1, ldThresh=0.2, numPop=NULL, x='longitude', y='latitude', interactiveChecks=FALSE, locationProj=4326 )
+#Also try with interactiveChecks=TRUE
+```
+
+## Run SamBada
+
+If you run samBada from the command line, you will have to create a parameter file. All parameters that can be calculated automatically from your file are calculated for you in `sambadaParallel`. Furthermore, samBada includes a module called supervision to split the molecular file into several subfiles to allow parallel computing. 
+
+```{r, eval=FALSE}
+#Loads data
+#================
+#Locate envFile (created with preapreEnv)
+envFile2=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada")
+readLines(envFile2, n=20) #View the first 20 line of the environmental file
+
+#Otherwise, take the one provided in the package
+genoFile2=system.file("extdata", "uganda-subset-mol.csv", package = "R.SamBada")
+readLines(genoFile2, n=20) #View the first 20 line of the genetic file
+
+#Load help
+#================
+?sambadaParallel
+
+#sambadaParallel
+#================
+#Run sambada on two cores. 
+#Make sure you ran downloadSambada() before running this command.
+#Only one pop var was saved, so set dimMax=2. prepareEnv puts the population variables at the end of the file (=> LAST). 
+sambadaParallel(genoFile=genoFile2, envFile=envFile2, idGeno='ID_indiv', idEnv='short_name', dimMax=2, cores=2, saveType='END ALL', populationVar='LAST', outputFile=file.path(tempdir(),'uganda-subset-mol'))
+
+```
+## Post-processing
+
+### Prepare the output
+
+The function `prepareOutput` does the following things on sambada's output
+
+* Calculate p and q-value
+* Retrieves the chromosome and position of each SNP in the output from the GDS file
+* Filter out models that are not interesting (if you ran a multivariate model with population structure)
+* It also computes the maximum position in each chromosome to ease the plotting of manhattan plot.
+
+```{r, eval=FALSE}
+#Loads data
+#================
+#You first need to copy the output file of sambadaParallel and prepareGeno into the active directory with the following command
+file.copy(system.file("extdata", "uganda-subset-mol-Out-2.csv", package = "R.SamBada"), 'uganda-subset-mol-Out-2.csv')
+file.copy(system.file("extdata", "uganda-subset-mol-storey.csv", package = "R.SamBada"), 'uganda-subset-mol-storey.csv')
+
+#Copy GDS file (generated from prepareGeno)
+if(Sys.info()['sysname']=='Windows'){
+  file.copy(system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada"),'uganda-subset-mol.gds') #If you run Windows
+} else {
+  file.copy(system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada"),'uganda-subset-mol.gds') #If you run MacOS or Linux
+}
+
+
+#Load help
+#================
+?prepareOutput
+
+#prepareOutput
+#================
+prep = prepareOutput(sambadaname='uganda-subset-mol', dimMax=2, popStr=TRUE, interactiveChecks=FALSE)
+#Also try with interactiveChecks=TRUE
+
+```
+### Manhattan plots
+
+To explore your results, the first thing you could do is draw a manhattan plot of each environmental variable to detect one or several intersting peaks in particular variables
+
+```{r, eval=FALSE}
+#Loads data
+#================
+#You need to run prepareOutput to run this function
+
+#Load help
+#================
+?plotManhattan
+
+#plotManhattan
+#================
+#Plot manhattan of all kept variables
+plotManhattan(prep, c('bio1','bio2','bio3'),chromo='all',valueName='pvalueG')
+#Warning: the manhattan plot is different from what we are used to see, given the small number of SNPs
+
+```
+
+
+### Plot the results interactively
+
+The function `plotResultInteractive` can now be invoked. This will open a local page on your web-browser with a manhattan plot (you have to choose the environmental variable you want to study and can choose the chromosomes to draw). 
+
+The plot is interactive so that you can select a point on the manhattan which will query the [Ensembl database](http://www.ensembl.org/index.html) to indicate nearby SNPs and the consequence of the variant (intergenic, synonymous, non-synonymous, stop gained, stop lost,...) with [VEP](www.ensembl.org/info/docs/tools/vep/index.html). 
+
+The map of the marker, population variables and environmental variable is available. 
+
+A boxplot showing the environmental range of both present and absent individuals is drawn as well.
+
+```{r, eval=FALSE}
+#Loads data
+#================
+#You need to run prepareOutput to run this function
+#Locate environmantal file (generated with prepareEnv)
+envFile2=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada")
+
+#Locate GDS file (generated from prepareGeno)
+if(Sys.info()['sysname']=='Windows'){
+  gdsFile=system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada") #If you run Windows
+}else {
+  gdsFile=system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada") #If you run MacOS or Linux
+}
+
+#Load help
+#================
+?plotResultInteractive
+
+#plotResultInteractive
+#================
+
+plotResultInteractive(preparedOutput=prep, varEnv='bio1', envFile=envFile2,species='btaurus', pass=50000,x='longitude',y='latitude',gdsFile=gdsFile, IDCol='short_name', popStrCol='pop1')
+#Accepts the Dataset and SNP Data found
+#Once the interactive window opens, click on any point of the manhattan plot
+```
+
+### Plot maps
+
+You might be interested in plotting a map (though it is already done in the `plotResultInteractive`). The advantages of the `plotMap` are
+
+* Use of raster as background if available
+* Closely located points are scattered so that all points are visible (or should be!)
+
+You can draw a map of
+
+* marker distribution (presence/absence)
+* population structure (either as pie charts if membership coefficient or as a continuous variable)
+* envrionmental variable (if no raster available)
+* Auto-correlation of marker
+
+```{r, eval=FALSE}
+#Loads data
+#================
+#You need to run prepareOutput to run this function
+#Locate environmental file (generated with prepareEnv)
+envFile2=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada")
+
+#Locate GDS file (generated from prepareGeno)
+if(Sys.info()['sysname']=='Windows'){
+  gdsFile=system.file("extdata", "uganda-subset-mol_windows.gds", package = "R.SamBada") #If you run Windows
+}else {
+  gdsFile=system.file("extdata", "uganda-subset-mol_unix.gds", package = "R.SamBada") #If you run MacOS or Linux
+}
+
+#Load help
+#================
+?plotMap
+
+#plotMap
+#================
+
+plotMap(envFile=envFile2, x='longitude', y='latitude', locationProj=4326,  popStrCol='pop1', gdsFile=gdsFile, markerName='Hapmap28985-BTA-73836_GG', mapType='marker', varEnvName='bio1', simultaneous=FALSE)
+
+```
+
+Good luck with the analysis of your own dataset!
+
