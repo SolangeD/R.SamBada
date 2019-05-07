@@ -32,7 +32,7 @@ downloadSambada = function(directory = NULL){
 	  utils::untar(temp, exdir = directory)
 	  changePath(paste0(directory,'/sambada-0.8.0-ubuntu/binaries'))
 	}
-	else if(env=='MacOS'){
+	else if(env=='MacOS' | env=='Darwin' | env=='OSX'){
 		utils::download.file("https://github.com/Sylvie/sambada/releases/download/v0.8.0/sambada-0.8.0-osx.tar.gz",temp)
 	  #Untar the file
 	  utils::untar(temp, exdir = directory)	

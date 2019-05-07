@@ -108,6 +108,9 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     if(!(shapeFile %in% c('YES','NO'))) stop("shapeFile should be either YES or NO")    
   }
 
+  #Check if sambada is installed
+  tryCatch(suppressWarnings(system('sambada', intern=TRUE, show.output.on.console=FALSE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
+  
   
   ### Load required libraries if cores=NULL or cores>1
   if(is.null(cores)){
@@ -125,6 +128,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
       stop("Package \"foreach\" needed for this function to work. Please install it.", call. = FALSE)
     }
   }
+  
   requireNamespace('doParallel')
   
   ### Open genofile to count number of mark and indiv
@@ -282,16 +286,32 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     print("Number of cores used: 1, running sambada without splitting marker file")
     paramFile=paste0(basename(genoFileShort),'-param.txt') #name of paramFile: genoFile (without -recode and without .csv) + -param.txt
     write_sambada_parameter(paramFile, params, 'sambada')
-    if(basename(genoFile)==genoFile & basename(envFile)==envFile){
-      system(paste('sambada',paramFile, paste0('"',file.path(working_dir,envFile),'"'), paste0('"',file.path(working_dir,genoFile),'"')))
-    } else if (basename(envFile)==envFile){
-      system(paste('sambada',paramFile, paste0('"',file.path(working_dir,envFile),'"'), paste0('"',genoFile,'"')))
-    } else if (basename(genoFile)==genoFile) {
-      system(paste('sambada',paramFile, paste0('"',envFile,'"'), paste0('"',file.path(working_dir,genoFile),'"')))
-    } else{
+    if(keepAllFiles==TRUE){
       system(paste('sambada',paramFile, paste0('"',envFile,'"'), paste0('"',genoFile,'"')))
+    } else {
+      if (basename(envFile)==envFile){
+        system(paste('sambada',paramFile, paste0('"',file.path(working_dir,envFile),'"'), paste0('"',basename(genoFile),'"')))
+      } else {
+        system(paste('sambada',paramFile, paste0('"',envFile,'"'), paste0('"',basename(genoFile),'"')))
+      }
     }
-    #sambada(paramFile, envFile, genoFile)
+    #Copy files to right location
+    if(keepAllFiles==FALSE & dirname(outputFile)!=file.path(dirname(tempdir()),basename(tempdir()))){
+      if(basename(outputFile)==outputFile){
+        file.copy(paste0(basename(genoFile),'-storey.csv'), paste0(file.path(working_dir,outputFile),'-storey.csv'), overwrite=TRUE)
+        for(dim in 0:dimMax){
+          file.copy(file.path(active_dir,(paste0(basename(genoFileShort),'-Out-',dim,'.csv'))), paste0(file.path(working_dir,outputFile),'-Out-',dim,'.csv'), overwrite = TRUE)
+        }
+      } else{
+        file.copy(paste0(basename(genoFile),'-storey.csv'), paste0(outputFile,'-storey.csv'), overwrite=TRUE)
+        for(dim in 0:dimMax){
+          file.copy(file.path(active_dir,(paste0(basename(genoFileShort),'-Out-',dim,'.csv'))), paste0(outputFile,'-Out-',dim,'.csv'), overwrite = TRUE)
+        }
+      }
+    }
+    
+    print(paste("Output in ",paste0(outputFile,'-Out-',0:dimMax,'.csv', collapse=' and ')))
+    
     return(NA)
   }
   
@@ -388,7 +408,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   # if(keepAllFiles==FALSE){
   #   file.remove(paste0(genoFileShort,'_paramSupervision.txt'))
   # }
-  setwd(working_dir)
+    
   write.table(storeyTot, paste0(outputFile,'-storey.csv'), row.names=FALSE, col.names=FALSE)
   
   for(dim in 0:dimMax){
@@ -400,6 +420,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
 
   }
   print(paste("Output in ",paste0(outputFile,'-Out-',0:dimMax,'.csv', collapse=' and ')))
+  setwd(working_dir)
   
 }
 

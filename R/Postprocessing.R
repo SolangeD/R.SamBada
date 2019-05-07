@@ -6,7 +6,7 @@
 #' @param gdsFile char Name of the gds file associated with sambada's input file. If null, will try with \code{sambadaname}.gds
 #' @param popStr logical Indicates whether sambada was run using the POPSTRVAR parameter (i.e. population structure was taken into account). Default false
 #' @param nrows integer Specifies the number of line to read from the input file. Useful if \code{saveType} 'END ALL' was used in \code{sambadaParallel} and that the number of models run is large so that the reading and processing is too slow. The \code{saveType} 'END' parameter ensures that most significant models are located at the top of the file.
-#' @param interactiveChecks logical
+#' @param interactiveChecks logical If TRUE, plots showing the distribution of p-values and estimates of pi0 (to adjust q-values) will be drawn
 #' @return a list containing a) \code{$sambadaOutput} a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) \code{$chrSNPNum} The total number of SNPs in each chromosome c) \code{$chrMaxPos} The highest position found in each chromosome
 #' @examples
 #' # Example with data from the package
@@ -25,7 +25,8 @@
 #' ###################
 #' # Run prepareOutput
 #' ###################
-#' prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
+#' prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,popStr=TRUE,
+#'      interactiveChecks=FALSE)
 #' @export
 prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=NULL, interactiveChecks=TRUE){
   
@@ -219,7 +220,8 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 #'       file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE)
 #' }
 #' # Run prepareOutput
-#' prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
+#' prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,popStr=TRUE,
+#'      interactiveChecks=FALSE)
 #' ###################
 #' # Run plotResultInteractive
 #' ###################
@@ -594,7 +596,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 #'       file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE) #If you run Unix
 #' }
 #' # Run prepareOutput
-#' prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
+#' prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,popStr=TRUE,
+#'      interactiveChecks=FALSE)
 #' ###################
 #' # Run plotManhattan
 #' ###################
@@ -740,7 +743,8 @@ plotManhattan=function(preparedOutput, varEnv, valueName, chromo='all',saveType=
 #' #############
 #' plotMap(envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
 #'      x='longitude', y='latitude', locationProj=4326,  popStrCol='pop1', gdsFile=gdsFile, 
-#'      markerName='Hapmap28985-BTA-73836_GG', mapType='marker', varEnvName='bio1', simultaneous=FALSE)
+#'      markerName='Hapmap28985-BTA-73836_GG', mapType='marker', varEnvName='bio1', 
+#'      simultaneous=FALSE)
 #' \donttest{
 #' # Maps of marker and population structure (two subplot)
 #' plotMap(envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"),
