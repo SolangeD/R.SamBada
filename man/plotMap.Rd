@@ -55,7 +55,8 @@ if(Sys.info()['sysname']=='Windows'){
 #############
 plotMap(envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"), 
      x='longitude', y='latitude', locationProj=4326,  popStrCol='pop1', gdsFile=gdsFile, 
-     markerName='Hapmap28985-BTA-73836_GG', mapType='marker', varEnvName='bio1', simultaneous=FALSE)
+     markerName='Hapmap28985-BTA-73836_GG', mapType='marker', varEnvName='bio1', 
+     simultaneous=FALSE)
 \donttest{
 # Maps of marker and population structure (two subplot)
 plotMap(envFile=system.file("extdata", "uganda-subset-env-export.csv", package = "R.SamBada"),

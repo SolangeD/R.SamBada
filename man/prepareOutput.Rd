@@ -18,7 +18,7 @@ prepareOutput(sambadaname, dimMax, gdsFile = NULL, popStr = FALSE,
 
 \item{nrows}{integer Specifies the number of line to read from the input file. Useful if \code{saveType} 'END ALL' was used in \code{sambadaParallel} and that the number of models run is large so that the reading and processing is too slow. The \code{saveType} 'END' parameter ensures that most significant models are located at the top of the file.}
 
-\item{interactiveChecks}{logical}
+\item{interactiveChecks}{logical If TRUE, plots showing the distribution of p-values and estimates of pi0 (to adjust q-values) will be drawn}
 }
 \value{
 a list containing a) \code{$sambadaOutput} a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) \code{$chrSNPNum} The total number of SNPs in each chromosome c) \code{$chrMaxPos} The highest position found in each chromosome
@@ -43,7 +43,8 @@ if(Sys.info()['sysname']=='Windows'){
 ###################
 # Run prepareOutput
 ###################
-prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
+prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,popStr=TRUE,
+     interactiveChecks=FALSE)
 }
 \author{
 Solange Duruz, Sylvie Stucki

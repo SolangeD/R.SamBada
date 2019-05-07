@@ -57,7 +57,8 @@ if(Sys.info()['sysname']=='Windows'){
       file.path(tempdir(),'uganda-subset-mol.gds'), overwrite=TRUE)
 }
 # Run prepareOutput
-prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,interactiveChecks=FALSE)
+prep=prepareOutput(file.path(tempdir(),'uganda-subset-mol'),2,popStr=TRUE,
+     interactiveChecks=FALSE)
 ###################
 # Run plotResultInteractive
 ###################

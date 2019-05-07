@@ -32,7 +32,7 @@ prepareEnv(envFile, outputFile, maxCorr, idName, separator = " ",
 
 \item{ldThresh}{double A number between 0 and 1 specifying the linkage disequilibrium (LD) rate filtering before computing the PCA (if null no filtering on LD will be computed)}
 
-\item{numPop}{integer If not null, clustering based on \code{numPc} first PC will be computed to divide into \code{numPop} populations. If -1 automatic detection of number of cluster (elbow method if \code{clustMethod}='kmeans', maximise branch length if \code{clustMethod}='hclust'). If null, no clustering will be computed: if \code{genoFile} is set, principal component scores will be included as population information in the final file.}
+\item{numPop}{integer If not null, clustering based on \code{numPc} first PC will be computed to divide into \code{numPop} populations. If -1 automatic detection of number of cluster (elbow method if \code{clustMethod} = 'kmeans', maximise branch length if \code{clustMethod} = 'hclust'). If null, no clustering will be computed: if \code{genoFile} is set, principal component scores will be included as population information in the final file.}
 
 \item{clustMethod}{char One of 'kmeans' or 'hclust' for K-means and hierarchical clustering respectively. Default 'kmeans'}
 
@@ -57,6 +57,9 @@ None
 }
 \description{
 Writes a new environmental file that sambada can work with after having removed too correlated variables. Also calculates population structure from a PCA in SNPRelate and add it at the end of the environmental file
+}
+\details{
+The population structure is calculated as a PCA of all the SNPs that pass the filtering (maf, ld, missingness). You can either choose to use the score of the X first components to evaluate the population structure (set `numPop` to NULL) or you can compute a "membership coefficient" to a cluster of individuals based on the scores on the first X components. You can choose between two clustering algorithm (k-means or hierarchical cluster in the `clustMethod` argument). One of the option to decide the number of PCs that you should keep is to detect a bump in the proportion of variance explained and keep all the PC before the bump.
 }
 \examples{
 ################
