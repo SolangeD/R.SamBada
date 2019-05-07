@@ -471,8 +471,9 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           selectSNP=subset[which(subset$pos==f$x),'snp']
         }
         selectSNP=selectSNP[1]
+        selectSNP
         otherVar=sambadaOutput[sambadaOutput$snp==selectSNP$snp,]
-        otherVar=data.frame('Marker'=otherVar$Marker, 'Var'=otherVar$Env_1)#, 'p/q-value'=otherVar[[valueName]])
+        otherVar=data.frame('Marker'=otherVar$Marker, 'Var'=otherVar$Env_1, 'p/q-value'=otherVar[[valueName]])
         otherVar
       }
     })
