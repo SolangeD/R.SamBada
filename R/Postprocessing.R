@@ -379,13 +379,13 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 
     # Manhattan
     output$manhattan <- plotly::renderPlotly({
-      plotly::ggplotly(p = p,tooltip = c("y", "label","x","text"))
+      plotly::ggplotly(p = p,tooltip = c("y", "label","x","text"), source='man')
     })
     
     #When clicked: query Ensembl
     if(!is.null(species)){
       output$event <- shiny::renderPrint({
-        f <- plotly::event_data("plotly_click")
+        f <- plotly::event_data("plotly_click",source='man')
         if (is.null(f)) {
           "Select a point!" 
         }else {
@@ -415,7 +415,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
       #When clicked: query Ensembl VCE to get the variant consequence
       if(!is.null(species)){
         output$event4 <- shiny::renderPrint({
-          f <- plotly::event_data("plotly_click")
+          f <- plotly::event_data("plotly_click", source='man')
           if (is.null(f)) {
             "Select a point!" 
           }else {
@@ -444,7 +444,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
     
     #When clicked: give position of SNP
     output$event2<- shiny::renderPrint({
-      f <- plotly::event_data("plotly_click")
+      f <- plotly::event_data("plotly_click", source='man')
       if (is.null(f)) {
         "Select a point!" 
       }else {
@@ -461,7 +461,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
     
     #When clicked: get all marker in output of same SNP
     output$event3<- shiny::renderPrint({
-      f <- plotly::event_data("plotly_click")
+      f <- plotly::event_data("plotly_click", source='man')
       if (is.null(f)) {
         "Select a point!" 
       }else {
@@ -480,7 +480,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
     #Map
     if(!is.null(x)){
       output$map <- plotly::renderPlotly({
-        g <- plotly::event_data("plotly_click")
+        g <- plotly::event_data("plotly_click", source='man')
         if(is.null(g)) {
           plotly::plot_ly(type='scatter', mode='markers')
         } else{ 
@@ -538,7 +538,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
     
     #When clicked shows boxplot
     output$boxplot <- shiny::renderPlot({
-      g <- plotly::event_data("plotly_click")
+      g <- plotly::event_data("plotly_click", source='man')
       if(is.null(g)) {
         #plotly::plot_ly(type='scatter', mode='markers')
       } else{
