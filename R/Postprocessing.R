@@ -449,14 +449,15 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
         "Select a point!" 
       }else {
         if(length(chromo)>1 | chromo=='all'){
-          selectSNP=subset[which(subset$pos+subset$maxPos==f$x),c('chr','pos','snp')]
+          selectSNP=subset[which((subset$pos+subset$maxPos)==f$x),c('chr','pos','snp')]
         } else {
           selectSNP=subset[which(subset$pos==f$x),c('chr','pos','snp')]
         }
-        selectSNP=selectSNP[1]
-        selectSNP
-        infoOutput=data.frame('snp'=selectSNP$snp, 'chr'=selectSNP$chr, 'BP'=selectSNP$pos)
-        infoOutput
+        f$x
+        #selectSNP=selectSNP[1]
+        #selectSNP
+        #infoOutput=data.frame('snp'=selectSNP$snp, 'chr'=selectSNP$chr, 'BP'=selectSNP$pos)
+        #infoOutput
       }
     })
     
