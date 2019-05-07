@@ -389,11 +389,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
         if (is.null(f)) {
           "Select a point!" 
         }else {
-          if(length(chromo)>1 | chromo=='all'){
-            selectSNP=subset[which(subset$pos+subset$maxPos==f$x),c('pos','chr')]
-          } else {
-            selectSNP=subset[which(subset$pos==f$x),c('pos','chr')]
-          }
+          selectSNP=subset[which(subset$xcoord==f$x),c('pos','chr')]
           selectBP=selectSNP[1]$pos
           selectCHR=selectSNP[1]$chr
           #Query ensembl database to get nearby genes
@@ -448,11 +444,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
       if (is.null(f)) {
         "Select a point!" 
       }else {
-        if(length(chromo)>1 | chromo=='all'){
-          selectSNP=subset[which((subset$pos+subset$maxPos)==f$x),c('chr','pos','snp')]
-        } else {
-          selectSNP=subset[which(subset$pos==f$x),c('chr','pos','snp')]
-        }
+        selectSNP=subset[which(subset$xcoord==f$x),c("chr", "pos", "snp")]
         f$x
         #selectSNP=selectSNP[1]
         #selectSNP
