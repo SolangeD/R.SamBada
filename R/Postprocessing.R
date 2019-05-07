@@ -390,8 +390,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           "Select a point!" 
         }else {
           selectSNP=subset[which(subset$xcoord==f$x),c('pos','chr')]
-          selectBP=selectSNP[1]$pos
-          selectCHR=selectSNP[1]$chr
+          selectBP=selectSNP[1,]$pos
+          selectCHR=selectSNP[1,]$chr
           #Query ensembl database to get nearby genes
           #c=tryCatch({biomaRt::getBM(attributes=c('chromosome_name','ensembl_gene_id','wikigene_name','start_position','end_position','description'), filters=c("chromosome_name","start","end"), values=list(selectCHR,selectBP-pass,selectBP+pass), mart=ensembl)}, error=function(e){"no gene found!"})
           #c
@@ -415,12 +415,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           if (is.null(f)) {
             "Select a point!" 
           }else {
-            if(length(chromo)>1 | chromo=='all'){
-              selectSNP=subset[which(subset$pos+subset$maxPos==f$x),c('pos','chr')]
-            } else {
-              selectSNP=subset[which(subset$pos==f$x),c('pos','chr')]
-            }
-            selectSNP=selectSNP[1]
+            selectSNP=subset[which(subset$xcoord==f$x),c('pos','chr')]
+            selectSNP=selectSNP[1,]
             server <- "https://rest.ensembl.org"
             #Get reference allele from gds
             snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
@@ -446,7 +442,6 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
       }else {
         selectSNP=subset[which(subset$xcoord==f$x),c("chr", "pos", "snp")]
         selectSNP=selectSNP[1,]
-        #selectSNP
         infoOutput=data.frame('snp'=selectSNP$snp, 'chr'=selectSNP$chr, 'BP'=selectSNP$pos)
         infoOutput
       }
@@ -458,12 +453,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
       if (is.null(f)) {
         "Select a point!" 
       }else {
-        if(length(chromo)>1 | chromo=='all'){
-          selectSNP=subset[which(subset$pos+subset$maxPos==f$x),'snp']
-        } else {
-          selectSNP=subset[which(subset$pos==f$x),'snp']
-        }
-        selectSNP=selectSNP[1]
+        selectSNP=subset[which(subset$xcoord==f$x),'snp']
+        selectSNP=selectSNP[1,]
         otherVar=sambadaOutput[sambadaOutput$snp==selectSNP$snp,]
         otherVar=data.frame('Marker'=otherVar$Marker, 'Var'=otherVar$Env_1, 'p/q-value'=otherVar[[valueName]])
         otherVar
@@ -483,12 +474,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           popCol=envData[,popStrCol]
           ID=envData[,IDCol]
           # Get marker and snp
-          if(length(chromo)>1 | chromo=='all'){
-            selectSNP=subset[which(subset$pos+subset$maxPos==g$x),c('chr','pos','Marker')]
-          } else {
-            selectSNP=subset[which(subset$pos==g$x),c('chr','pos','Marker')]
-          }
-          selectSNP=selectSNP[1]
+          selectSNP=subset[which(subset$xcoord==g$x),c('chr','pos','Marker')]
+          selectSNP=selectSNP[1,]
           #Retrieve genotype
           snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
           
@@ -538,12 +525,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
         varenv=envData[,varEnv]
         popCol=envData[,popStrCol]
         # Get marker and snp
-        if(length(chromo)>1 | chromo=='all'){
-          selectSNP=subset[which(subset$pos+subset$maxPos==g$x),c('chr','pos','Marker')]
-        } else {
-          selectSNP=subset[which(subset$pos==g$x),c('chr','pos','Marker')]
-        }
-        selectSNP=selectSNP[1]
+        selectSNP=subset[which(subset$xcoord==g$x),c('chr','pos','Marker')]
+        selectSNP=selectSNP[1,]
         #Retrieve genotype
         snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
         pres=genoToMarker(gds_obj, selectSNP$Marker)
