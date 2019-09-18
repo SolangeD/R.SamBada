@@ -11,7 +11,7 @@
 #' @param wordDelim char Word delimiter of input file(s). Default ' ', 
 #' @param saveType composed of three words 1) one of 'end' or 'real' to save the result during the analysis or at the end (allows sorting of result) 2) one of 'all' or 'best' to save all models or only significant models 3) If 'best' specify the threshold of significance (before applying Bonferroni's correction). Default 'END BEST 0.05', 
 #' @param populationVar one of 'first' or 'last'. This option indicates whether any explanatory variables represent the population structure. If present, the said population variables must be gathered in the input file, either on the left or on the right side of the group of environmental variables. Default null.
-#' @param spatial composed of 5 words 1) Column name (or number) for longitude 2) Column name (or number) for latitude 3) one of 'spherical' or 'cartesian': to indicate the type of coordinate 4) one of 'distance', 'gaussian', bisquare' or 'nearest': type of weighting scheme (see sambadoc) 4) Number bandwidth of weighting function Input type is (double). Units are in [m] for spherical coordinates; for cartesian coordinates, units match those of the samples' positions. Case nearest: Input type is (int)
+#' @param spatial composed of 5 words 1) Column name (or number) for longitude 2) Column name (or number) for latitude 3) one of 'spherical' or 'cartesian': to indicate the type of coordinate 4) one of 'distance', 'gaussian', bisquare' or 'nearest': type of weighting scheme (see sambadoc) 5) Number bandwidth of weighting function: Units are in [m] for spherical coordinates; for cartesian coordinates, units match those of the samples' positions (see sambadoc)
 #' @param autoCorr composed of 3 words. 1) one of global, local or both: to indicate the type of spatial autocorrelation to compute. 2) one of env, mark or both: to indicate the variables on which to compute the analysis 3) integer The number of permutation to compute the pseudo p-value. Ex 'global both 999'
 #' @param shapeFile one of yes or no. With this option, the LISA are saved as a shapefile (in addition to the usual output)
 #' @param colSupEnv char or vector of char Name(s) of the column(s) in the environmental data to be excluded from the analysis. Default NULL 
@@ -95,6 +95,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   
   #Check autoCorr
   if(!is.null(autoCorr)){
+    if(is.null(spatial)) stop("Parameter spatial should be not null when autoCorr is not null")
     if(length(autoCorr)!=3) stop("autoCorr should be composed of 3 words (either in vector or delimited by a space)")
     if(!(autoCorr[1] %in% c('GLOBAL','LOCAL','BOTH'))) stop("The first word of autoCorr should be either GLOBAL, LOCAL or BOTH")
     if(!(autoCorr[2] %in% c('ENV','MARK','BOTH'))) stop("The second word of autoCorr should be either ENV, MARK or BOTH")
@@ -146,7 +147,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     if(sum(subsetVarMark %in% first_line)!=length(subsetVarMark)) stop('not all subsetVarMark in header line of genoFile')
   }
   #Count num mark
-  nummark=lengths(gregexpr(wordDelim,first_line))-1
+  nummark=lengths(gregexpr(wordDelim,trimws(first_line)))
   rm(first_line)
   close(con)
   
@@ -273,10 +274,12 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   }
   
   setwd(active_dir)
-  if(basename(genoFile)==genoFile){
-    file.copy(file.path(working_dir, genoFile), file.path(active_dir, genoFile), overwrite = TRUE)
-  } else {
-    file.copy(genoFile, file.path(active_dir, basename(genoFile)), overwrite = TRUE)
+  if(keepAllFiles==FALSE){
+    if(basename(genoFile)==genoFile){
+      file.copy(file.path(working_dir, genoFile), file.path(active_dir, genoFile), overwrite = TRUE)
+    } else {
+      file.copy(genoFile, file.path(active_dir, basename(genoFile)), overwrite = TRUE)
+    }
   }
   on.exit(setwd(working_dir))
   
