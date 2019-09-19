@@ -128,9 +128,10 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     if (!requireNamespace("foreach", quietly = TRUE)) {
       stop("Package \"foreach\" needed for this function to work. Please install it.", call. = FALSE)
     }
+    requireNamespace('doParallel')
   }
   
-  requireNamespace('doParallel')
+  
   
   ### Open genofile to count number of mark and indiv
   print("Setting up parameter file for Supervision") 
@@ -301,12 +302,12 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     #Copy files to right location
     if(keepAllFiles==FALSE & dirname(outputFile)!=file.path(dirname(tempdir()),basename(tempdir()))){
       if(basename(outputFile)==outputFile){
-        file.copy(paste0(basename(genoFile),'-storey.csv'), paste0(file.path(working_dir,outputFile),'-storey.csv'), overwrite=TRUE)
+        file.copy(paste0(basename(genoFileShort),'-storey.csv'), paste0(file.path(working_dir,outputFile),'-storey.csv'), overwrite=TRUE)
         for(dim in 0:dimMax){
           file.copy(file.path(active_dir,(paste0(basename(genoFileShort),'-Out-',dim,'.csv'))), paste0(file.path(working_dir,outputFile),'-Out-',dim,'.csv'), overwrite = TRUE)
         }
       } else{
-        file.copy(paste0(basename(genoFile),'-storey.csv'), paste0(outputFile,'-storey.csv'), overwrite=TRUE)
+        file.copy(paste0(basename(genoFileShort),'-storey.csv'), paste0(outputFile,'-storey.csv'), overwrite=TRUE)
         for(dim in 0:dimMax){
           file.copy(file.path(active_dir,(paste0(basename(genoFileShort),'-Out-',dim,'.csv'))), paste0(outputFile,'-Out-',dim,'.csv'), overwrite = TRUE)
         }
@@ -383,7 +384,6 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   #supervision( base-name.txt, numBlock, blockSize, maxDimension, selScore, scoreThreshold, sortScore, wordDelim)
   #system(paste('supervision',basename(genoFile), cores, sizeBlock, dimMax,"Both", 0.001, "Wald", ' '))
   system(paste('supervision',basename(genoFile), cores, sizeBlock, dimMax))
-  
   
 
   for(i in 0:(cores-1)){
