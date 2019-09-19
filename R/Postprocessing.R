@@ -85,7 +85,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   
   ### calculate p- and q-value: 
   #Read histogram
-  storeyTot=read.table(paste0(sambadaname,'-storey.csv'))
+  storeyTot=data.table::fread(paste0(sambadaname,'-storey.csv'))
 
   #p-value and start of qvalue
   if(popStr==TRUE){
@@ -158,7 +158,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
     gdsFile=paste0(sambadaname,'.gds')
   }
   if(!file.exists(gdsFile)){
-    stop("A .gds file from package SNPRelate must exist for this function to work. Please provide it in the argument gdsFile if different from sambadaname. Use function prepare_geno from this package or one of the function of SNPRelate")
+    stop("A .gds file from package SNPRelate must exist for this function to work. Please provide it in the argument gdsFile if different from sambadaname. Use function prepareGeno from this package or one of the function of SNPRelate")
   }
   gds_obj=SNPRelate::snpgdsOpen(gdsFile)
   on.exit(SNPRelate::snpgdsClose(gds_obj))
