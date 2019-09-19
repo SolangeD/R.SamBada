@@ -69,11 +69,19 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
   if(is.null(nrows)){
     nrows=Inf
   }
-  output = tryCatch({data.table::fread(paste0(sambadaname,"-Out-",dimMax,".csv"), nrows=nrows, h=T, colClass=c('character', rep('character',dimMax), rep('double', 3), 'integer', rep('double', (9+(dimMax-1)*3))))}, error=function(e){stop(paste0('Cannot open ',sambadaname,'-Out-',dimMax,'.csv. Maybe the format does not correspond to sambadas strandard and you have an unexpected number of columns'))}) 
-  # Check that required columns are present
+  if(popStr==TRUE){
+    output = tryCatch({data.table::fread(paste0(sambadaname,"-Out-",dimMax,".csv"), nrows=nrows, h=T, colClass=c('character', rep('character',dimMax), rep('double', 3), 'integer', rep('double', (10+dimMax))))}, error=function(e){stop(paste0('Cannot open ',sambadaname,'-Out-',dimMax,'.csv. Maybe the format does not correspond to sambadas strandard and you have an unexpected number of columns'))}) 
+  } else {
+    output = tryCatch({data.table::fread(paste0(sambadaname,"-Out-",dimMax,".csv"), nrows=nrows, h=T, colClass=c('character', rep('character',dimMax), rep('double', 3), 'integer', rep('double', (8+dimMax))))}, error=function(e){stop(paste0('Cannot open ',sambadaname,'-Out-',dimMax,'.csv. Maybe the format does not correspond to sambadas strandard and you have an unexpected number of columns'))}) 
+  }
+    # Check that required columns are present
   if(!('WaldScore' %in% colnames(output))) stop("Column WaldScore not present in your outputfile!")
   if(!('Gscore' %in% colnames(output))) stop("Column Gscore not present in your outputfile!")
   if(!('Marker' %in% colnames(output))) stop("Column Marker not present in your outputfile!")
+  if(popStr==TRUE){
+    if(!('GscorePop' %in% colnames(output))) stop("Column GscorePop not present in your outputfile!")
+    if(!('WaldScorePop' %in% colnames(output))) stop("Column WaldScorePop not present in your outputfile!")
+  }
   
   ### calculate p- and q-value: 
   #Read histogram
@@ -192,7 +200,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 #' @param preparedOutput char The prepared output list from prepare_output function
 #' @param varEnv char The name of the environmental variable one wish to study (as in the header of \code{envFile})
 #' @param envFile char The file containing the input environmental variable of sambada. 
-#' @param species char The abbreviated latin name of the species without capitals nor punctuation (e.g. btaurus, chircus,...). Can be set to null if species not present in ensembl database
+#' @param species char The abbreviated latin name of the species without capitals nor punctuation (e.g. btaurus, chircus,...). Can be set to null if species not present in ensembl database. !!! Warning !!! This function only works for species for which a SNP dataset is available in ensembl. You can check the list using the following R command: snp_dataset = biomaRt::useMart('ENSEMBL_MART_SNP'); biomaRt::listDatasets(snp_dataset)
 #' @param pass integer Number of BP around a SNP in which to look for an annotation in Ensembl. Set to null if species is null
 #' @param x char The name of the column corresponding to the x-coordinate in the envFile. Can be set to null if unknown, in this case the maps will not be available
 #' @param y char The name of the column corresponding to the y-coordinate in the env file. Can be set to null if x is null.
