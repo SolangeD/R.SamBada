@@ -1,5 +1,5 @@
 #' @title Run sambada on parallel cores
-#' @description Read samBada's input file to retrieve necessary information (number of individuals etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. This function produces the following output files: \code{outputFile}-Out-0.csv to \code{outputFile}-Out-\code{dimMax}.csv as well as outputFile-storey.csv (\code{outputFile} and \code{dimMax} are parameters of the function). See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
+#' @description Read samBada's input file to retrieve necessary information (number of individuals etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. For this function you need SamBada to be installed on your computer; if this is not already the case, you can do this with downloadSambada() - for Mac users, please read the details in downloadSambada's documentation. This function produces the following output files: \code{outputFile}-Out-0.csv to \code{outputFile}-Out-\code{dimMax}.csv as well as outputFile-storey.csv (\code{outputFile} and \code{dimMax} are parameters of the function). See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
 #' @author Solange Duruz, Sylvie Stucki
 #' @param genoFile The name of the file in the current directory of genetic information, compliant with samBada's format (use prepareGeno to transform it)
 #' @param envFile  The name of the file in the current directory of environmental information (use \code{link{createEnv}} to create it and \code{link{prepareEnv}} to reduce the correlated dataset and check order)
@@ -110,8 +110,12 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   }
 
   #Check if sambada is installed
-  tryCatch(suppressWarnings(system('sambada', intern=TRUE, show.output.on.console=FALSE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
-  
+  if(Sys.info()['sysname']=='Windows'){
+    tryCatch(suppressWarnings(system('sambada', intern=TRUE, show.output.on.console=FALSE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
+  } else {
+    tryCatch(suppressWarnings(system('sambada', intern=TRUE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
+  }
+  file.remove(list=list.files(pattern ='Sambada-error-log*'))
   
   ### Load required libraries if cores=NULL or cores>1
   if(is.null(cores)){
@@ -276,7 +280,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   
   setwd(active_dir)
   if(keepAllFiles==FALSE){
-    if(basename(genoFile)==genoFile){
+    if(basename(genoFile)==genoFile | regexpr('.',genoFile, fixed=TRUE)[1]==1){ #If relative path
       file.copy(file.path(working_dir, genoFile), file.path(active_dir, genoFile), overwrite = TRUE)
     } else {
       file.copy(genoFile, file.path(active_dir, basename(genoFile)), overwrite = TRUE)
@@ -293,7 +297,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     if(keepAllFiles==TRUE){
       system(paste('sambada',paramFile, paste0('"',envFile,'"'), paste0('"',genoFile,'"')))
     } else {
-      if (basename(envFile)==envFile){
+      if (basename(envFile)==envFile | regexpr('.',envFile, fixed=TRUE)[1]==1){
         system(paste('sambada',paramFile, paste0('"',file.path(working_dir,envFile),'"'), paste0('"',basename(genoFile),'"')))
       } else {
         system(paste('sambada',paramFile, paste0('"',envFile,'"'), paste0('"',basename(genoFile),'"')))
@@ -301,7 +305,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     }
     #Copy files to right location
     if(keepAllFiles==FALSE & dirname(outputFile)!=file.path(dirname(tempdir()),basename(tempdir()))){
-      if(basename(outputFile)==outputFile){
+      if(basename(outputFile)==outputFile | regexpr('.',outputFile, fixed=TRUE)[1]==1){
         file.copy(paste0(basename(genoFileShort),'-storey.csv'), paste0(file.path(working_dir,outputFile),'-storey.csv'), overwrite=TRUE)
         for(dim in 0:dimMax){
           file.copy(file.path(active_dir,(paste0(basename(genoFileShort),'-Out-',dim,'.csv'))), paste0(file.path(working_dir,outputFile),'-Out-',dim,'.csv'), overwrite = TRUE)
@@ -369,7 +373,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   # use foreach function
   ##finalMatrix = foreach(i=0:(cores-1), .combine=cbind, .packages='R.SamBada') %dopar% {tempMatrix = sambada(paste0(genoFileShort,'_param',i,'.txt'),envFile,paste0(genoFileShort,'-mark-',i,'-',i*sizeBlock,'.csv'))}
   
-  if(basename(envFile)==envFile) {
+  if(basename(envFile)==envFile | regexpr('.',envFile, fixed=TRUE)[1]==1) {
     envFile2=file.path(working_dir,envFile)
   } else {
     envFile2=envFile

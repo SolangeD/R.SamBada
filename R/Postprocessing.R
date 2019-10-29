@@ -6,7 +6,7 @@
 #' @param gdsFile char Name of the gds file associated with sambada's input file. If null, will try with \code{sambadaname}.gds
 #' @param popStr logical Indicates whether sambada was run using the POPSTRVAR parameter (i.e. population structure was taken into account). Default false
 #' @param nrows integer Specifies the number of line to read from the input file. Useful if \code{saveType} 'END ALL' was used in \code{sambadaParallel} and that the number of models run is large so that the reading and processing is too slow. The \code{saveType} 'END' parameter ensures that most significant models are located at the top of the file.
-#' @param interactiveChecks logical If TRUE, plots showing the distribution of p-values and estimates of pi0 (to adjust q-values) will be drawn
+#' @param interactiveChecks logical If TRUE, plots showing the distribution of p-values and estimates of pi0 (to adjust q-values) will be drawn. According to Storey's method to calculate q-values (Storey, J. D. (2003). The positive false discovery rate: a Bayesian interpretation and the q-value. The Annals of Statistics, 31(6), 2013-2035), you need to estimate a pi0 parameter which can be derived from an histogram of p-values. Pi0 correponds to the limit when p-value -> 1. The histogram should reach a plateau with increasing p-value. It this is not the case, q-values might not be the best option to correct for multiple testing.
 #' @return a list containing a) \code{$sambadaOutput} a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) \code{$chrSNPNum} The total number of SNPs in each chromosome c) \code{$chrMaxPos} The highest position found in each chromosome
 #' @examples
 #' # Example with data from the package
@@ -209,6 +209,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 #' @param gdsFile char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv or -env-export.csv) and .gds
 #' @param IDCol char The name of the column in \code{envFile} corresponding to the ID of the individual. If provided, hover on the output map will give the id of the animal
 #' @param popStrCol char The name or vector of name of column(s) in \code{envFile} describing population structure. If provided, additional layers on the map will be available representing population structure.
+#' @details This function opens a local web-page first showing a manhattan plot. By clicking on a marker, a list of information is shown (chromosome and exact position, ensembl gene wihtin the determined window, variant consequence on the protein and if the SNP is correlated with other variables). A map also shows the geographical distribution of the marker (presence/absance), the environmental variable and if present the population variable. On the right of the plot, the variable to be plotted can be checked in the list by clicking on it. Also two boxplots shows the distribution of the environmental variables for individuals with and without the marker. The scale of the y-axis is the unit of the environmental variable.
 #' @return None 
 #' @examples
 #' \dontrun{
@@ -539,7 +540,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
         snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
         pres=genoToMarker(gds_obj, selectSNP$Marker)
         xy=data.frame(varenv, pres, popCol)
-        boxplot(varenv~pres, data=xy)
+        boxplot(varenv~pres, data=xy, xlab="pres/abs", ylab=varEnv)
       }
     })
     

@@ -1,5 +1,5 @@
 #' @title Prepare genomic input
-#' @description Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options. The output file has the same name as the input file but with a .csv extension
+#' @description Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options.  For this function you need SamBada to be installed on your computer; if this is not already the case, you can do this with downloadSambada() - for Mac users, please read the details in downloadSambada's documentation. The output file has the same name as the input file but with a .csv extension
 #' @author Solange Duruz, Oliver Selmoni
 #' @param fileName char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen
 #' @param outputFile char Name of the output file. Must be a .csv
@@ -82,8 +82,11 @@ prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThre
   }
   
   #Check if recode-plink is available
-  tryCatch(suppressWarnings(system('recode-plink', intern=TRUE, show.output.on.console=FALSE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada's recode-plink is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
-
+  if(Sys.info()['sysname']=='Windows'){
+    tryCatch(suppressWarnings(system('recode-plink', intern=TRUE, show.output.on.console=FALSE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada's recode-plink is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
+  } else {
+    tryCatch(suppressWarnings(system('recode-plink', intern=TRUE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada's recode-plink is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
+  }
   ### If ped file with no filters => no need to code to GDS ###
   
   if(extension=='ped' & is.null(mafThresh) & is.null(missingnessThresh) & is.null(mgfThresh) & is.null(ldThresh)){
@@ -382,6 +385,7 @@ setLocation=function(){
 #' @param directory logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rasterName} will be loaded
 #' @param interactiveChecks logical If TRUE, shows loaded rasters and point locations
 #' @param verbose logical If TRUE, indication on process will be shown
+#' @details In order to work, this function needs GDAL to be installed on your machine (requirements of the package rgdal)
 #' @return None 
 #' @examples
 #' \dontrun{
@@ -468,6 +472,7 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
   if(locationextension=='csv'){
     if(is.null(x))stop("x must be provided if locationFileName is a .CSV")
     if(is.null(y))stop("y must be provided if locationFileName is a .CSV")
+    
     if(is.null(locationProj))stop("locationProj must be provided if locationFileName is a .CSV")
   }
   
@@ -492,6 +497,9 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
   data=locations
   #Transform locations into a spatial object.! If shapefile
   if(locationextension=='csv'){
+    if(!x%in%names(locations)) stop ('Column specified in x-argurment not present in file')
+    if(!y%in%names(locations)) stop ('Column specified in y-argurment not present in file')
+    if(length(names(locations[,which(!names(locations)%in%c(x,y))]))==0) stop('Besides the x and y column, you must necessarily have a thrid column in your envFile - typically an ID')
     sp::coordinates(locations) = c(x,y)
   }
   
@@ -734,7 +742,7 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
 #' @author Solange Duruz, Oliver Selmoni
 #' @param envFile char Name of the input environmental file (must be in active directory). Can be .csv or .shp
 #' @param outputFile char Name of the output file. Must have a .csv extension.
-#' @param maxCorr double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted
+#' @param maxCorr double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above (in absolute value), one of the variables will be deleted (the kept variable among the two will always be the one that appears first in the envrionmental file)
 #' @param idName char Name of the id in the environmental file matching the one of \code{genoFile}
 #' @param separator char If \code{envFile} is .csv, the separator character. If file created with create_env, separator is ' '
 #' @param genoFile char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created
@@ -981,7 +989,7 @@ prepareEnv=function(envFile, outputFile, maxCorr, idName, separator=' ',genoFile
       pca=SNPRelate::snpgdsPCA(gds_obj, snp.id=unlist(ld_filtered),maf=mafThresh, missing.rate=missingnessThresh, eigen.cnt = numvect)
     } else {
       numvect=min(length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.id"))),100)
-      pca=SNPRelate::snpgdsPCA(gds_obj,maf=mafThresh, missing.rate=missingnessThresh, eigen.cnt = numvect)
+      pca=SNPRelate::snpgdsPCA(gds_obj,maf=mafThresh, missing.rate=missingnessThresh, eigen.cnt = numvect, autosome.only = FALSE)
     }
     # Choose best number of PC if numPc<1
     varprop=pca$varprop[1:numvect]
@@ -1315,7 +1323,7 @@ redENV = function(ienv, corcutoff=0.7) {
   while(length(listvar)>0) {
     
     C = cor(ienv)[listvar[co],listvar[-co]]  
-    group=names(C[C>corcutoff]) 
+    group=names(C[abs(C)>corcutoff]) 
     
     olist[listvar[co]]=paste(group, collapse = ', ')
     
