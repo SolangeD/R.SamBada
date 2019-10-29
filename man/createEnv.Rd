@@ -47,6 +47,8 @@ Create env file as an input for SamBada (it is recommended to run prepare_env fu
 \details{
 If you set worldclim=TRUE, then tmin10 represents the minimum temperature in october. Similarly tmax, tavg and prec refers to maximum temperature, average temperature and precipitation. The bio1-bio19 are bioclim variables are computed from these indices and are described here. Temperature are given in 10 degree C and precipitation in mm. The funciton always downloads the best resolution available (30 seconds for worldclim dataset and 90m for SRTM).
 This function requires that you define the EPSG code of your projection system. If you work with lat/long global projection, then you most probably work with WGS 84 whose EPSG is 4326.
+
+In order to work, this function needs GDAL to be installed on your machine (requirements of the package rgdal)
 }
 \examples{
 \dontrun{

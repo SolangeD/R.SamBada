@@ -33,7 +33,7 @@ prepareGeno(fileName, outputFile, saveGDS, mafThresh = NULL,
 None
 }
 \description{
-Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options. The output file has the same name as the input file but with a .csv extension
+Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options.  For this function you need SamBada to be installed on your computer; if this is not already the case, you can do this with downloadSambada() - for Mac users, please read the details in downloadSambada's documentation. The output file has the same name as the input file but with a .csv extension
 }
 \examples{
 # Example with data from the package

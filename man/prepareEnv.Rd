@@ -16,7 +16,7 @@ prepareEnv(envFile, outputFile, maxCorr, idName, separator = " ",
 
 \item{outputFile}{char Name of the output file. Must have a .csv extension.}
 
-\item{maxCorr}{double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above, one of the variables will be deleted}
+\item{maxCorr}{double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above (in absolute value), one of the variables will be deleted (the kept variable among the two will always be the one that appears first in the envrionmental file)}
 
 \item{idName}{char Name of the id in the environmental file matching the one of \code{genoFile}}
 

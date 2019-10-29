@@ -18,7 +18,7 @@ prepareOutput(sambadaname, dimMax, gdsFile = NULL, popStr = FALSE,
 
 \item{nrows}{integer Specifies the number of line to read from the input file. Useful if \code{saveType} 'END ALL' was used in \code{sambadaParallel} and that the number of models run is large so that the reading and processing is too slow. The \code{saveType} 'END' parameter ensures that most significant models are located at the top of the file.}
 
-\item{interactiveChecks}{logical If TRUE, plots showing the distribution of p-values and estimates of pi0 (to adjust q-values) will be drawn}
+\item{interactiveChecks}{logical If TRUE, plots showing the distribution of p-values and estimates of pi0 (to adjust q-values) will be drawn. According to Storey's method to calculate q-values (Storey, J. D. (2003). The positive false discovery rate: a Bayesian interpretation and the q-value. The Annals of Statistics, 31(6), 2013-2035), you need to estimate a pi0 parameter which can be derived from an histogram of p-values. Pi0 correponds to the limit when p-value -> 1. The histogram should reach a plateau with increasing p-value. It this is not the case, q-values might not be the best option to correct for multiple testing.}
 }
 \value{
 a list containing a) \code{$sambadaOutput} a matrix containing the output from sambada with 3 additional column: corresponding snp, chromosome and position of the marker b) \code{$chrSNPNum} The total number of SNPs in each chromosome c) \code{$chrMaxPos} The highest position found in each chromosome

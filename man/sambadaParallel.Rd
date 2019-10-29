@@ -32,7 +32,7 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, outputFile, dimMax = 1,
 
 \item{populationVar}{one of 'first' or 'last'. This option indicates whether any explanatory variables represent the population structure. If present, the said population variables must be gathered in the input file, either on the left or on the right side of the group of environmental variables. Default null.}
 
-\item{spatial}{composed of 5 words 1) Column name (or number) for longitude 2) Column name (or number) for latitude 3) one of 'spherical' or 'cartesian': to indicate the type of coordinate 4) one of 'distance', 'gaussian', bisquare' or 'nearest': type of weighting scheme (see sambadoc) 4) Number bandwidth of weighting function Input type is (double). Units are in [m] for spherical coordinates; for cartesian coordinates, units match those of the samples' positions. Case nearest: Input type is (int)}
+\item{spatial}{composed of 5 words 1) Column name (or number) for longitude 2) Column name (or number) for latitude 3) one of 'spherical' or 'cartesian': to indicate the type of coordinate 4) one of 'distance', 'gaussian', bisquare' or 'nearest': type of weighting scheme (see sambadoc) 5) Number bandwidth of weighting function: Units are in [m] for spherical coordinates; for cartesian coordinates, units match those of the samples' positions (see sambadoc)}
 
 \item{autoCorr}{composed of 3 words. 1) one of global, local or both: to indicate the type of spatial autocorrelation to compute. 2) one of env, mark or both: to indicate the variables on which to compute the analysis 3) integer The number of permutation to compute the pseudo p-value. Ex 'global both 999'}
 
@@ -53,7 +53,7 @@ sambadaParallel(genoFile, envFile, idGeno, idEnv, outputFile, dimMax = 1,
 \item{keepAllFiles}{logical If TRUE, all parameter files and split \code{genoFile} and log-files are not removed. Default FALSE}
 }
 \description{
-Read samBada's input file to retrieve necessary information (number of individuals etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. This function produces the following output files: \code{outputFile}-Out-0.csv to \code{outputFile}-Out-\code{dimMax}.csv as well as outputFile-storey.csv (\code{outputFile} and \code{dimMax} are parameters of the function). See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
+Read samBada's input file to retrieve necessary information (number of individuals etc...), split the dataset using SamBada's Supervision tool, run sambada on the splitted dataset and merge all using Supervision. For this function you need SamBada to be installed on your computer; if this is not already the case, you can do this with downloadSambada() - for Mac users, please read the details in downloadSambada's documentation. This function produces the following output files: \code{outputFile}-Out-0.csv to \code{outputFile}-Out-\code{dimMax}.csv as well as outputFile-storey.csv (\code{outputFile} and \code{dimMax} are parameters of the function). See sambada's documentation for more information. In case you have to specify several words in one parameter, you can either specify them in one string and separate them with a space or add a vector string
 }
 \examples{
 # Example with data from the package

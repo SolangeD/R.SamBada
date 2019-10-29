@@ -15,7 +15,7 @@ plotResultInteractive(preparedOutput, varEnv, envFile, species = NULL,
 
 \item{envFile}{char The file containing the input environmental variable of sambada.}
 
-\item{species}{char The abbreviated latin name of the species without capitals nor punctuation (e.g. btaurus, chircus,...). Can be set to null if species not present in ensembl database}
+\item{species}{char The abbreviated latin name of the species without capitals nor punctuation (e.g. btaurus, chircus,...). Can be set to null if species not present in ensembl database. !!! Warning !!! This function only works for species for which a SNP dataset is available in ensembl. You can check the list using the following R command: snp_dataset = biomaRt::useMart('ENSEMBL_MART_SNP'); biomaRt::listDatasets(snp_dataset)}
 
 \item{pass}{integer Number of BP around a SNP in which to look for an annotation in Ensembl. Set to null if species is null}
 
@@ -38,6 +38,9 @@ None
 }
 \description{
 Plots the manhattan plot for a given environmental variable. The plot is interactive and a map of the distribution of the marker can be retrieved as well as nearby genes listed in Ensembl.
+}
+\details{
+This function opens a local web-page first showing a manhattan plot. By clicking on a marker, a list of information is shown (chromosome and exact position, ensembl gene wihtin the determined window, variant consequence on the protein and if the SNP is correlated with other variables). A map also shows the geographical distribution of the marker (presence/absance), the environmental variable and if present the population variable. On the right of the plot, the variable to be plotted can be checked in the list by clicking on it. Also two boxplots shows the distribution of the environmental variables for individuals with and without the marker. The scale of the y-axis is the unit of the environmental variable.
 }
 \examples{
 \dontrun{
