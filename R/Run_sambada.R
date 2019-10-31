@@ -415,12 +415,20 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   # if(keepAllFiles==FALSE){
   #   file.remove(paste0(genoFileShort,'_paramSupervision.txt'))
   # }
-    
-  write.table(storeyTot, paste0(outputFile,'-storey.csv'), row.names=FALSE, col.names=FALSE)
+  if(basename(outputFile)==outputFile | regexpr('.',outputFile, fixed=TRUE)[1]==1){  
+    write.table(storeyTot, file.path(working_dir,paste0(outputFile,'-storey.csv')), row.names=FALSE, col.names=FALSE)
+  } else {
+    write.table(storeyTot, paste0(outputFile,'-storey.csv'), row.names=FALSE, col.names=FALSE)
+  }
   
   for(dim in 0:dimMax){
     if(keepAllFiles==FALSE){
-      file.copy(file.path(active_dir,(paste0(basename(genoFileShort),'-res-',dim,'.csv'))), paste0(outputFile,'-Out-',dim,'.csv'), overwrite = TRUE)
+      # }
+      if(basename(outputFile)==outputFile | regexpr('.',outputFile, fixed=TRUE)[1]==1){  
+        file.copy(file.path(active_dir,(paste0(basename(genoFileShort),'-res-',dim,'.csv'))), file.path(working_dir,paste0(outputFile,'-Out-',dim,'.csv')), overwrite = TRUE)
+      } else {
+        file.copy(file.path(active_dir,(paste0(basename(genoFileShort),'-res-',dim,'.csv'))), paste0(outputFile,'-Out-',dim,'.csv'), overwrite = TRUE)
+      }
     } else {
       file.rename(paste0(basename(genoFileShort),'-res-',dim,'.csv'), paste0(outputFile,'-Out-',dim,'.csv'))
     }
