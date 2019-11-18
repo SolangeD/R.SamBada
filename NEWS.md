@@ -2,7 +2,9 @@
 
 ## Bug fixes
 - prepareGeno: suppressed warnings "arguments 'show.output.on.console', 'minimized' and 'invisible' are for Windows only"
-- sambadaParallel: - bug fix when keepAllFiles=TRUE 
+- createEnv: checks that the csv file has x and y column inside + a third column
+- prepareEnv: suppress variables correlated above a threshold IN ABSOLUTE VALUE
+- sambadaParallel: - bug fix when keepAllFiles=TRUE (files previously saved in temporary directory)
 	- bug fix when wordDelim=,
 	- bug fix when cores=1 to save storey file
 	- removes SamBada error log that is created when SamBada's installation is tested
@@ -10,10 +12,15 @@
 	- suppressed warnings "arguments 'show.output.on.console', 'minimized' and 'invisible' are for Windows only"
 - prepareOutput: bug fix when reading the file when popStr=FALSE
 	- bug fix when opening storey file when wordDelim was different from space in sambadaParallel
+- plotResultInteractive: added axis-label to the boxplot
+- plotMap: - bug fix when rasterName was not null 
+	- bug fix when environmental variable was not a bioclimatic variable
 
 ## Update in the documentation
-- better indication on which species can be handled in plotResultInteractive
+- better explanation on plots shown with interactiveChecks=TRUE  or if file given in relative path in prepareOutput 
+- better indication on which species can be handled and of the details of plots shown in plotResultInteractive
 - indication on how to install sambada in sambadaParallel and prepareGeno
+- indication of which variable is deleted when two variables are too highly correlated
 
 # R.SamBada 0.1.1
 
