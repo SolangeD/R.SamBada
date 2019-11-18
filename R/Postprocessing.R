@@ -862,7 +862,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
     } 
     numEnv=max(numEnv, numMark)
     
-    if(simultaneous==TRUE & !is.null(saveType)){ #####!!!!!!!!!!!!!!!!!!!!!!!!!############
+    if(simultaneous==TRUE & !is.null(saveType)){ #!#
       if('marker' %in% mapType2 | 'AS' %in% mapType2){
         mapName=paste0(markerName[numMark],'_map.',saveType)
       } else if ('env' %in% mapType2){
@@ -889,41 +889,45 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
         pres=genoToMarker(gds_obj, markerName[numMark])
       }
       #Try to find corresponding raster
-      allowedExtension=c('bil','tif')
-      if(exists('rasterName')) {
-        rm(rasterName)
-      }
+
       if(length(varEnvName)>1){
         varEnvName2=varEnvName[numEnv]
       } else {
         varEnvName2=varEnvName
       }
-      
-      if(regexpr('bio',varEnvName2)>0){
-        if(file.exists(paste0('wc0.5/',varEnvName2,'.tif'))){
-          rasterName=paste0('wc0.5/',varEnvName2,'.tif')
-        }
-      } else if (regexpr('bio',varEnvName2)>0) {
-        if(file.exists(paste0('srtm/',varEnvName2,'.tif'))){
-          rasterName=paste0('srtm/',varEnvName2,'.tif')
+      if(is.null(rasterName)){
+        allowedExtension=c('bil','tif')
+        if(exists('rasterName2')) {
+          rm(rasterName2)
+        }      
+        if(regexpr('bio',varEnvName2)>0){
+          if(file.exists(paste0('wc0.5/',varEnvName2,'.tif'))){
+            rasterName2=paste0('wc0.5/',varEnvName2,'.tif')
+          }
+        } else if (regexpr('rtm',varEnvName2)>0) {
+          if(file.exists(paste0('srtm/',varEnvName2,'.tif'))){
+            rasterName2=paste0('srtm/',varEnvName2,'.tif')
+          }
+        } else {
+          for(aE in 1:length(allowedExtension))
+            if(file.exists(paste0(varEnvName2,'.',allowedExtension[aE]))){
+              rasterName2=paste0(varEnvName2,'.',allowedExtension[aE])
+              break
+            }
         }
       } else {
-        for(aE in 1:length(allowedExtension))
-          if(file.exists(paste0(varEnvName2,'.',allowedExtension(aE)))){
-            rasterName=paste0(varEnvName2,'.',allowedExtension(aE))
-            break
-          }
+        rasterName2=rasterName
       }
       #Open raster
-      if(exists('rasterName')){
-        raster=raster::raster(rasterName)
+      if(exists('rasterName2')){
+        raster=raster::raster(rasterName2)
         #Get real raster data
         raster_df=as.data.frame(raster::sampleRegular(raster, size=1e5, asRaster=FALSE), xy=TRUE)
       }
       
       par(mar=c(2,2,2,2), xpd=FALSE)
       #Draw background
-      if(exists('rasterName')){
+      if(exists('rasterName2')){
         #If raster found, put it as background
         #Put coordinates of scattered point or envData???
         raster::image(raster, asp=1, maxpixels=10000000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
@@ -988,7 +992,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       }
       
       #Draw legend
-      if(exists('rasterName')){
+      if(exists('rasterName2')){
         #Raster legend
         par(mar=c(2,1,3,2), xpd=NA)
         #raster.pal=colorRampPalette(c("yellow", "orange","red"))( 100 )
