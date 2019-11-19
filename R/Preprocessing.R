@@ -601,7 +601,7 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
       raster=raster::getData("worldclim",var="prec",path=active_dir,res=resWC, lon=long, lat=latt)
     }
     
-    setwd(paste0(active_dir,'/wc0.5'))
+    setwd(paste0(active_dir,'/wc',resWC))
     
     for(i in 1:19){ #Loop on number of bio
       
