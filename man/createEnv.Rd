@@ -6,8 +6,9 @@
 \usage{
 createEnv(locationFileName, outputFile, x = NULL, y = NULL,
   locationProj = NULL, separator = ",", worldclim = TRUE,
-  srtm = FALSE, saveDownload, rasterName = NULL, rasterProj = NULL,
-  directory = FALSE, interactiveChecks, verbose = TRUE)
+  resWC = 0.5, srtm = FALSE, saveDownload, rasterName = NULL,
+  rasterProj = NULL, directory = FALSE, interactiveChecks,
+  verbose = TRUE)
 }
 \arguments{
 \item{locationFileName}{char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file}
@@ -23,6 +24,8 @@ createEnv(locationFileName, outputFile, x = NULL, y = NULL,
 \item{separator}{char The separator used to separate columns in your \code{locationFileName}}
 
 \item{worldclim}{logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory}
+
+\item{resWC}{double The resolution at which to download the worldclim tiles. Must be one of 0.5, 2.5, 5, and 10 (minutes of degree). See argument res of raster::getData.}
 
 \item{srtm}{logical If TRUE the SRTM (altitude) variables will be downloaded at a resolution ... Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory}
 

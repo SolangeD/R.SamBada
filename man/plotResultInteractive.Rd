@@ -6,7 +6,8 @@
 \usage{
 plotResultInteractive(preparedOutput, varEnv, envFile, species = NULL,
   pass = NULL, x = NULL, y = NULL, valueName = "pvalueG",
-  chromo = "all", gdsFile = NULL, IDCol = NULL, popStrCol = NULL)
+  chromo = "all", gdsFile = NULL, IDCol = NULL, popStrCol = NULL,
+  ensemblHost = "www.ensembl.org")
 }
 \arguments{
 \item{preparedOutput}{char The prepared output list from prepare_output function}
@@ -32,6 +33,8 @@ plotResultInteractive(preparedOutput, varEnv, envFile, species = NULL,
 \item{IDCol}{char The name of the column in \code{envFile} corresponding to the ID of the individual. If provided, hover on the output map will give the id of the animal}
 
 \item{popStrCol}{char The name or vector of name of column(s) in \code{envFile} describing population structure. If provided, additional layers on the map will be available representing population structure.}
+
+\item{ensemblHost}{char The ensembl url as defined in biomaRt::useMart. Usefull to access archived version of ensembl dataset.}
 }
 \value{
 None
