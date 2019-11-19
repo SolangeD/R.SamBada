@@ -209,6 +209,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 #' @param gdsFile char The GDS file created in the preprocessing of sambada. If null, will try with envFile(without -env.csv or -env-export.csv) and .gds
 #' @param IDCol char The name of the column in \code{envFile} corresponding to the ID of the individual. If provided, hover on the output map will give the id of the animal
 #' @param popStrCol char The name or vector of name of column(s) in \code{envFile} describing population structure. If provided, additional layers on the map will be available representing population structure.
+#' @param ensemblHost char The ensembl url as defined in biomaRt::useMart. Usefull to access archived version of ensembl dataset. 
 #' @details This function opens a local web-page first showing a manhattan plot. By clicking on a marker, a list of information is shown (chromosome and exact position, ensembl gene wihtin the determined window, variant consequence on the protein and if the SNP is correlated with other variables). A map also shows the geographical distribution of the marker (presence/absance), the environmental variable and if present the population variable. On the right of the plot, the variable to be plotted can be checked in the list by clicking on it. Also two boxplots shows the distribution of the environmental variables for individuals with and without the marker. The scale of the y-axis is the unit of the environmental variable.
 #' @return None 
 #' @examples
@@ -239,7 +240,7 @@ prepareOutput = function(sambadaname, dimMax, gdsFile=NULL, popStr=FALSE, nrows=
 #'      IDCol='short_name',popStrCol='pop1')
 #' }
 #' @export
-plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, pass=NULL,x=NULL,y=NULL,  valueName='pvalueG',chromo='all',gdsFile=NULL, IDCol=NULL, popStrCol=NULL){
+plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, pass=NULL,x=NULL,y=NULL,  valueName='pvalueG',chromo='all',gdsFile=NULL, IDCol=NULL, popStrCol=NULL, ensemblHost='www.ensembl.org'){
 
   ### Checks
   #preparedOutput
@@ -295,7 +296,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   chrMaxPos = preparedOutput$chrMaxPos
     
   #Connection to ensembl database
-  ensemblOutput = ensembl_connection(species, TRUE)
+  ensemblOutput = ensembl_connection(species, ensemblHost, TRUE)
   snp = ensemblOutput$snp
   ensembl = ensemblOutput$ensembl
   
@@ -1057,14 +1058,14 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
 
 
 
-ensembl_connection = function(species, interactiveChecks){
+ensembl_connection = function(species, host, interactiveChecks){
   
-  ensembl_dataset = biomaRt::useMart('ensembl')
+  ensembl_dataset = biomaRt::useMart('ensembl', host=host)
   ensembl_dataset=biomaRt::listDatasets(ensembl_dataset)
   dataset_found=ensembl_dataset[grepl(species, ensembl_dataset[,'dataset']),'dataset']
   if(length(dataset_found)==0) stop('Species not found in ensembl database. Either change the name of the species (latin naming e.g. btaurus for cattle) or set it to NULL')
   
-  snp_dataset = biomaRt::useMart('ENSEMBL_MART_SNP')
+  snp_dataset = biomaRt::useMart('ENSEMBL_MART_SNP', host=host)
   snp_dataset=biomaRt::listDatasets(snp_dataset)
   snp_found=snp_dataset[grepl(species, snp_dataset[,'dataset']),'dataset']
   

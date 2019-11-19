@@ -380,6 +380,7 @@ setLocation=function(){
 #' @param separator char The separator used to separate columns in your \code{locationFileName}
 #' @param locationProj integer Coordinate system EPSG code of the \code{locationFileName}. If \code{locationFileName} is already georeferenced, this argument will be skipped. Required if \code{locationFileName} extension is csv.
 #' @param worldclim logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
+#' @param resWC double The resolution at which to download the worldclim tiles. Must be one of 0.5, 2.5, 5, and 10 (minutes of degree). See argument res of raster::getData.
 #' @param srtm logical If TRUE the SRTM (altitude) variables will be downloaded at a resolution ... Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
 #' @param saveDownload logical If TRUE (and if wordclim or srtm is TRUE), the tiles downloaded from global databases will be saved in a non-temporary directory. We recommend setting this parameter to true so that rasters can be used later (post-processing). If wordclim and srtm are FALSE, either value (TRUE/FALSE) will have no effect
 #' @param rasterName char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory. Can be set to null if worldclim or srtm are set to TRUE.
@@ -402,7 +403,7 @@ setLocation=function(){
 #'       saveDownload=TRUE,interactiveChecks=TRUE)
 #' }
 #' @export
-createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL, separator=',', worldclim=TRUE, srtm=FALSE, saveDownload, rasterName=NULL, rasterProj=NULL,directory=FALSE, interactiveChecks, verbose=TRUE){
+createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL, separator=',', worldclim=TRUE, resWC=0.5, srtm=FALSE, saveDownload, rasterName=NULL, rasterProj=NULL,directory=FALSE, interactiveChecks, verbose=TRUE){
   
   ### Load required library
   
@@ -454,6 +455,7 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
   if(typeof(saveDownload)!='logical') stop("saveDownload is supposed to be logical")
   if(!is.null(worldclim)){
     if(typeof(worldclim)!='logical') stop("worldclim is supposed to be logical")
+    if(!resWC%in%c(0.5, 2.5, 5, 10)) stop("resWC should be one of 0.5, 2.5, 5 or 10")
   }
   if(!is.null(srtm)){
     if(typeof(srtm)!='logical') stop("srtm is supposed to be logical")
@@ -593,10 +595,10 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
       long=coord[i,x]
       
       #Download worldclim data (if already downloaded, will not download it twice). Stored in directory wc0.5 of active directory
-      raster=raster::getData("worldclim",var="bio",path=active_dir,res=0.5, lon=long, lat=latt)
-      raster=raster::getData("worldclim",var="tmin",path=active_dir,res=0.5, lon=long, lat=latt)
-      raster=raster::getData("worldclim",var="tmax",path=active_dir,res=0.5, lon=long, lat=latt)
-      raster=raster::getData("worldclim",var="prec",path=active_dir,res=0.5, lon=long, lat=latt)
+      raster=raster::getData("worldclim",var="bio",path=active_dir,res=resWC, lon=long, lat=latt)
+      raster=raster::getData("worldclim",var="tmin",path=active_dir,res=resWC, lon=long, lat=latt)
+      raster=raster::getData("worldclim",var="tmax",path=active_dir,res=resWC, lon=long, lat=latt)
+      raster=raster::getData("worldclim",var="prec",path=active_dir,res=resWC, lon=long, lat=latt)
     }
     
     setwd(paste0(active_dir,'/wc0.5'))
