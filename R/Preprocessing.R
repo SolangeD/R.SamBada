@@ -503,7 +503,7 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
   if(locationextension=='csv'){
     if(!x%in%names(locations)) stop ('Column specified in x-argurment not present in file')
     if(!y%in%names(locations)) stop ('Column specified in y-argurment not present in file')
-    if(length(names(locations[,which(!names(locations)%in%c(x,y))]))==0) stop('Besides the x and y column, you must necessarily have a thrid column in your envFile - typically an ID')
+    if(length(locations[,which(!names(locations)%in%c(x,y))])==0) stop('Besides the x and y column, you must necessarily have a third column in your envFile - typically an ID')
     sp::coordinates(locations) = c(x,y)
   }
   
