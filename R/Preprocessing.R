@@ -7,7 +7,7 @@
 #' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)
 #' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering (if null no filtering on missing rate will be computed)
 #' @param ldThresh double A number between 0 and 1 specifying the linkage disequilibrium (LD) rate filtering (if null no filtering on LD will be computed)
-#' @param mgfThresh double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations rely on genotypes
+#' @param mgfThresh double A number between 0 and 1 specifying the Major Genotype Frequency (MGF) rate filtering (if null no filtering on MGF will be computed). NB: sambada computations rely on genotypes. NB2: The code is written in C++ and needs to be compiled on your computer, therefore Rtools is needed if this parameter is not null.
 #' @param directory char The directory where binaries of sambada are saved. This parameter is not necessary if directory path is permanently stored in the PATH environmental variable or if a function invoking sambada executable (\code{prepareGeno} or \code{sambadaParallel}) has been already run in the R active session.
 #' @param interactiveChecks logical If TRUE, plots will show up showing distribution of allele frequency etc... and the user can interactively change the chosen threshold for \code{mafThresh}, \code{missingnessThresh}, \code{mgfThresh} (optional, default value=FALSE)
 #' @param verbose logical Turn on verbose mode
@@ -148,76 +148,78 @@ prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThre
   
   ### Filtering ###
   MGF <- NULL
-  Rcpp::cppFunction("
-    NumericVector MGF(NumericMatrix xx, double maxMGFAllowed){
-      int xrow = xx.nrow() ;
-      int xcol = xx.ncol();
-      int aa;
-      int Aa;
-      int AA;
-      int sum_max;
-      int mgf;
-      NumericVector yy(xcol);
-      NumericVector yybool(xcol);
-      NumericVector yysnpid(xcol);
-      int k=0;
-      for(int i = 0; i < xcol; i++) {
-      aa=0;
-      Aa=0;
-      AA=0;
-      for(int j = 0; j < xrow; j++){
-      if(xx(j,i)==0){
-      aa++;
-      }
-      else if(xx(j,i)==1){
-      Aa++;
-      }
-      else if(xx(j,i)==2){
-      AA++;
-      }
-      }
-      if(aa>=Aa){
-      sum_max=aa;
-      if(AA>aa){
-      sum_max=AA;
-      }
-      }
-      else{
-      if(AA>=Aa){
-      sum_max=AA;
-      }
-      else{
-      sum_max=Aa;
-      }
-      }
-      if(aa+AA+Aa>0){
-      mgf=(sum_max*100)/(aa+Aa+AA);
-      }
-      else{
-      mgf=0;
-      }
-      yy(i)=mgf;
-      if(mgf>maxMGFAllowed*100){
-      yybool(i)=0;
-      
-      }
-      else{
-      yybool(i)=1;
-      yysnpid(k)=i+1;
-      k++;
-      }
-      
-      }
-      
-      //NumericVector yysnpid2(k);
-      //yysnpid2(yysnpid.begin() , yysnpid.begin() + k);
-      if(maxMGFAllowed>=0){
-      return yysnpid;
-      }
-      else{
-      return yy;
-      }
-  }")
+  if(is.null(mgfThresh)==FALSE){
+    Rcpp::cppFunction("
+      NumericVector MGF(NumericMatrix xx, double maxMGFAllowed){
+        int xrow = xx.nrow() ;
+        int xcol = xx.ncol();
+        int aa;
+        int Aa;
+        int AA;
+        int sum_max;
+        int mgf;
+        NumericVector yy(xcol);
+        NumericVector yybool(xcol);
+        NumericVector yysnpid(xcol);
+        int k=0;
+        for(int i = 0; i < xcol; i++) {
+        aa=0;
+        Aa=0;
+        AA=0;
+        for(int j = 0; j < xrow; j++){
+        if(xx(j,i)==0){
+        aa++;
+        }
+        else if(xx(j,i)==1){
+        Aa++;
+        }
+        else if(xx(j,i)==2){
+        AA++;
+        }
+        }
+        if(aa>=Aa){
+        sum_max=aa;
+        if(AA>aa){
+        sum_max=AA;
+        }
+        }
+        else{
+        if(AA>=Aa){
+        sum_max=AA;
+        }
+        else{
+        sum_max=Aa;
+        }
+        }
+        if(aa+AA+Aa>0){
+        mgf=(sum_max*100)/(aa+Aa+AA);
+        }
+        else{
+        mgf=0;
+        }
+        yy(i)=mgf;
+        if(mgf>maxMGFAllowed*100){
+        yybool(i)=0;
+        
+        }
+        else{
+        yybool(i)=1;
+        yysnpid(k)=i+1;
+        k++;
+        }
+        
+        }
+        
+        //NumericVector yysnpid2(k);
+        //yysnpid2(yysnpid.begin() , yysnpid.begin() + k);
+        if(maxMGFAllowed>=0){
+        return yysnpid;
+        }
+        else{
+        return yy;
+        }
+    }")
+  }
   
   if(verbose==TRUE){
     print('Filtering using SNPRelate in process')
