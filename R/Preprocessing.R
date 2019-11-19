@@ -616,20 +616,25 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
       
     }
     var= c('tmin','tmax','prec')
-    for(v in 1:length(var)){
-      for(i in 1:12){ #Loop on number of bio
-        
-        #Search all raster files of biox
-        files=list.files(pattern = paste0(var[v],i,'_[0-9]*\\.bil'))
-        #merge them using library gdalUtils
-        gdalUtils::mosaic_rasters(files, paste0(var[v],i,'.tif'), gdalwarp_index=NULL,gdalwarp_params=list(t_srs='+proj=longlat +datum=WGS84',s_srs='+proj=longlat +datum=WGS84'),verbose=FALSE)
-        
+    if(resWC==0.5){
+      for(v in 1:length(var)){
+        for(i in 1:12){ #Loop on number of bio
+          
+          #Search all raster files of biox
+          files=list.files(pattern = paste0(var[v],i,'_[0-9]*\\.bil'))
+          #merge them using library gdalUtils
+          gdalUtils::mosaic_rasters(files, paste0(var[v],i,'.tif'), gdalwarp_index=NULL,gdalwarp_params=list(t_srs='+proj=longlat +datum=WGS84',s_srs='+proj=longlat +datum=WGS84'),verbose=FALSE)
+          
+        }
       }
+      ext='.tif'
+    } else {
+      ext='.bil'
     }
     
-    file_vector=paste0('bio',1:19,'.tif')
+    file_vector=paste0('bio',1:19,ext)
     for(v in 1:length(var)){
-      file_vector=c(file_vector,paste0(var[v],1:12,'.tif'))
+      file_vector=c(file_vector,paste0(var[v],1:12,ext))
     }
     file_vector_short=paste0('bio',1:19)
     for(v in 1:length(var)){
