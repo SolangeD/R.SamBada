@@ -738,7 +738,7 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
   
   #Export data
   setwd(working_dir)
-  locationfilename_short=substr(locationFileName,1,gregexpr("\\.", locationFileName)[[1]][length(gregexpr("\\.", locationFileName)[[1]])]-1)
+  #locationfilename_short=substr(locationFileName,1,gregexpr("\\.", locationFileName)[[1]][length(gregexpr("\\.", locationFileName)[[1]])]-1)
   
   write.table(data, file=outputFile, append=FALSE,quote=TRUE,sep=" ", dec = ".",row.names=FALSE,col.names=TRUE)
   
@@ -916,7 +916,7 @@ prepareEnv=function(envFile, outputFile, maxCorr, idName, separator=' ',genoFile
   
   env=openEnvData(envFile, separator)
   
-  #Check that includeCol, excludeCol, popStrCol are in the header of the envFile
+  #Check that includeCol, excludeCol, popStrCol, idName are in the header of the envFile
   if(!is.null(includeCol)){
     if(sum(includeCol %in% colnames(env))!=length(includeCol)) stop("Not all includeCol present in envFile")
   }
@@ -930,7 +930,7 @@ prepareEnv=function(envFile, outputFile, maxCorr, idName, separator=' ',genoFile
   if(!is.null(popStrCol)){
     if(sum(popStrCol %in% colnames(env))!=length(popStrCol)) stop("Not all popStrCol present in envFile")
   }
-  
+  if(sum(idName %in% colnames(env))!=1) stop("idName column not in envFile")
   ### Check correlation among variables ###
   
   if(verbose==TRUE){
@@ -1177,7 +1177,7 @@ prepareEnv=function(envFile, outputFile, maxCorr, idName, separator=' ',genoFile
   if((!is.null(genoFile) & numPc>0) | !is.null(popStrCol)){
     
     if(verbose==TRUE){
-      print('Checking correlation between kept env variables and population var. If correlation > 70%, the variable will be printed here')
+      print('Checking correlation between kept env variables and population var. If correlation env-pop > 70%, the environmental variable will be printed here')
     }    
     if(!is.null(popStrCol)){
       #If population structure already in env file
