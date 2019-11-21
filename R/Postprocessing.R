@@ -1101,7 +1101,7 @@ genoToMarker = function(gds_obj, selectMarker){
   snp_name=substr(selectMarker, 1, nchar(selectMarker)-3)
   #snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==snp_name) #arg!=>snp.id
   #geno=SNPRelate::snpgdsGetGeno(gds_obj, snp.id=snp_id)
-  geno=tryCatch(SNPRelate::snpgdsGetGeno(gds_bed, snp.id=snp_name), error=function(e){return(SNPRelate::snpgdsGetGeno(gds_bed, snp.id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==snp_name)))})
+  geno=tryCatch(SNPRelate::snpgdsGetGeno(gds_obj, snp.id=snp_name), error=function(e){return(SNPRelate::snpgdsGetGeno(gds_obj, snp.id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==snp_name)))})
   allele_comb=substr(selectMarker, nchar(selectMarker)-1, nchar(selectMarker))
   if(substr(allele_comb,1,1)!=substr(allele_comb,2,2)){ #Heterozygote
     geno[geno == 2] <- 0 
