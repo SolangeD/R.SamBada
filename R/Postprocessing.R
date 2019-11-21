@@ -905,6 +905,12 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
         if(regexpr('bio',varEnvName2)>0){
           if(file.exists(paste0('wc0.5/',varEnvName2,'.tif'))){
             rasterName2=paste0('wc0.5/',varEnvName2,'.tif')
+          } else if(file.exists(paste0('wc2-5/',varEnvName2,'.tif'))){
+            rasterName2=paste0('wc2-5/',varEnvName2,'.tif')
+          } else if(file.exists(paste0('wc5/',varEnvName2,'.tif'))){
+            rasterName2=paste0('wc5/',varEnvName2,'.tif')
+          } else if(file.exists(paste0('wc10/',varEnvName2,'.tif'))){
+            rasterName2=paste0('wc10/',varEnvName2,'.tif')
           }
         } else if (regexpr('rtm',varEnvName2)>0) {
           if(file.exists(paste0('srtm/',varEnvName2,'.tif'))){
