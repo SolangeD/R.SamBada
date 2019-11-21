@@ -463,11 +463,12 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
       if (is.null(f)) {
         "Select a point!" 
       }else {
-        selectSNP=subset[which(subset$xcoord==f$x),'snp']
+        selectSNP=subset[which(subset$xcoord==f$x),c('Marker','snp')]
         selectSNP=selectSNP[1,'snp']
         otherVar=sambadaOutput[which(sambadaOutput$snp==selectSNP[[1]]),]
         otherVar=data.frame('Marker'=otherVar$Marker, 'Var'=otherVar$Env_1, 'p/q-value'=otherVar[[valueName]])
         otherVar
+        #selectSNP[[1]]
       }
     })
     
