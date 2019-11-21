@@ -484,7 +484,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           popCol=envData[,popStrCol]
           ID=envData[,IDCol]
           # Get marker and snp
-          selectSNP=subset[which(subset$xcoord==g$x),c('chr','pos','Marker')]
+          selectSNP=subset[which(subset$xcoord==g$x),c('chr','pos','Marker','snp')] #arg!=> 'snp'
           selectSNP=selectSNP[1,]
           #Retrieve genotype
           snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
@@ -495,7 +495,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
           # snp2 = gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "genotype"), start=c(1,snp_id+1), count=c(-1,1))
           # SNPRelate::snpgdsLDpair(snp1, snp2, method = "corr")
           
-          geno=SNPRelate::snpgdsGetGeno(gds_obj, snp.id=snp_id)
+          geno=tryCatch(SNPRelate::snpgdsGetGeno(gds_obj, snp.id=snp_id), error=function(e){return(SNPRelate::snpgdsGetGeno(gds_obj, snp.id=selectSNP$snp))}) #depending on how gds created snp.id might be number of SNP or name of SNP #arg!=> selectSNP$snp
           pres=genoToMarker(gds_obj, selectSNP$Marker)
           xy=data.frame(x,y,varenv,ID, geno, pres, popCol)
          
@@ -537,8 +537,8 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
         # Get marker and snp
         selectSNP=subset[which(subset$xcoord==g$x),c('chr','pos','Marker')]
         selectSNP=selectSNP[1,]
-        #Retrieve genotype
-        snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
+        #Retrieve genotype #arg!=> commenter
+        #snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.chromosome"))==selectSNP$chr  & gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.position"))==selectSNP$pos)
         pres=genoToMarker(gds_obj, selectSNP$Marker)
         xy=data.frame(varenv, pres, popCol)
         boxplot(varenv~pres, data=xy, xlab="pres/abs", ylab=varEnv)
@@ -897,6 +897,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
         varEnvName2=varEnvName
       }
       if(is.null(rasterName)){
+        varEnvName3=varEnvName2
         allowedExtension=c('bil','tif')
         if(exists('rasterName2')) {
           rm(rasterName2)
@@ -918,6 +919,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
         }
       } else {
         rasterName2=rasterName
+        varEnvName3=sub(pattern = "(.*)\\..*$", replacement = "\\1", basename(rasterName)) #rasterName without the extension
       }
       #Open raster
       if(exists('rasterName2')){
@@ -1000,8 +1002,8 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
         raster.pal=terrain.colors( 100 )
         
         image(1, 1:100, t(seq_along(1:100)), col=raster.pal, axes=FALSE , xlab="", ylab="")
-        axis(4, at=(pretty(raster_df[,varEnvName2])[2:(length(pretty(raster_df[,varEnvName2]))-1)]-min(raster_df[,varEnvName2], na.rm=TRUE))/(max(raster_df[,varEnvName2], na.rm=TRUE)-min(raster_df[,varEnvName2], na.rm=TRUE))*100, labels=pretty(raster_df[,varEnvName2])[2:(length(pretty(raster_df[,varEnvName2]))-1)])
-        text(1,107,varEnvName2)
+        axis(4, at=(pretty(raster_df[,varEnvName3])[2:(length(pretty(raster_df[,varEnvName3]))-1)]-min(raster_df[,varEnvName3], na.rm=TRUE))/(max(raster_df[,varEnvName3], na.rm=TRUE)-min(raster_df[,varEnvName3], na.rm=TRUE))*100, labels=pretty(raster_df[,varEnvName3])[2:(length(pretty(raster_df[,varEnvName3]))-1)])
+        text(1,107,varEnvName3)
       } else {
         plot.new()
         par(mar=c(2,1,3,2), xpd=NA)
@@ -1091,8 +1093,9 @@ ensembl_connection = function(species, host, interactiveChecks){
 genoToMarker = function(gds_obj, selectMarker){
   
   snp_name=substr(selectMarker, 1, nchar(selectMarker)-3)
-  snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==snp_name)
-  geno=SNPRelate::snpgdsGetGeno(gds_obj, snp.id=snp_id)
+  #snp_id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==snp_name) #arg!=>snp.id
+  #geno=SNPRelate::snpgdsGetGeno(gds_obj, snp.id=snp_id)
+  geno=tryCatch(SNPRelate::snpgdsGetGeno(gds_bed, snp.id=snp_name), error=function(e){return(SNPRelate::snpgdsGetGeno(gds_bed, snp.id=which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==snp_name)))})
   allele_comb=substr(selectMarker, nchar(selectMarker)-1, nchar(selectMarker))
   if(substr(allele_comb,1,1)!=substr(allele_comb,2,2)){ #Heterozygote
     geno[geno == 2] <- 0 
