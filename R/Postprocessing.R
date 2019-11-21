@@ -789,7 +789,8 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
   on.exit(SNPRelate::snpgdsClose(gds_obj))
   if(!is.null(markerName)){
     for(m in 1:length(markerName)){
-      if(length(which(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id"))==substr(markerName[m], 1, nchar(markerName[m])-3)))==0) stop(paste0(markerName[m]," not found in gds"))
+      snpList=tryCatch(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.rs.id")), error=function(e){return(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "snp.id")))}) #Depending on how gds produced, either snp.id or snp.rs.id
+      if(length(which(snpList==substr(markerName[m], 1, nchar(markerName[m])-3)))==0) stop(paste0(markerName[m]," not found in gds. Carefull you must provide a genotype (=snp name + _ + allele combination) not a snp name. For example BTA-73842-no-rs_TT and not BTA-73842-no-rs only"))
     }
   }
   if(sum(mapType %in% c('marker','env','AS','popStr', 'popPieChart'))!=length(mapType)) stop("mapType should be one, or several of, 'marker','env','AS','popStr', 'popPieChart'")
@@ -904,15 +905,16 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
           rm(rasterName2)
         }      
         if(regexpr('bio',varEnvName2)>0){
-          if(file.exists(paste0('wc0.5/',varEnvName2,'.tif'))){
-            rasterName2=paste0('wc0.5/',varEnvName2,'.tif')
-          } else if(file.exists(paste0('wc2-5/',varEnvName2,'.tif'))){
-            rasterName2=paste0('wc2-5/',varEnvName2,'.tif')
-          } else if(file.exists(paste0('wc5/',varEnvName2,'.tif'))){
-            rasterName2=paste0('wc5/',varEnvName2,'.tif')
-          } else if(file.exists(paste0('wc10/',varEnvName2,'.tif'))){
-            rasterName2=paste0('wc10/',varEnvName2,'.tif')
+          res=c('0.5','2-5','5','10')
+          ext=c('.tif','.bil')
+          for(a in res){
+            for(b in ext){
+              if(file.exists(paste0('wc',a,'/',varEnvName2,b))){
+                rasterName2=paste0('wc',a,'/',varEnvName2,b)
+              }
+            }
           }
+          
         } else if (regexpr('rtm',varEnvName2)>0) {
           if(file.exists(paste0('srtm/',varEnvName2,'.tif'))){
             rasterName2=paste0('srtm/',varEnvName2,'.tif')
@@ -931,6 +933,8 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       #Open raster
       if(exists('rasterName2')){
         raster=raster::raster(rasterName2)
+        #Crop raster to dataset to avoid memory issues
+        raster=raster::crop(raster, raster::extent(envData))
         #Get real raster data
         raster_df=as.data.frame(raster::sampleRegular(raster, size=1e5, asRaster=FALSE), xy=TRUE)
       }
@@ -940,8 +944,7 @@ plotMap = function(envFile, x, y, locationProj,  popStrCol, gdsFile, markerName,
       if(exists('rasterName2')){
         #If raster found, put it as background
         #Put coordinates of scattered point or envData???
-        raster::image(raster, asp=1, maxpixels=10000000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
-        
+        raster::image(raster, asp=1, maxpixels=1000000,  col=terrain.colors(100),xlim = c(min(envData@coords[,x]), max(envData@coords[,x])), ylim = c(min(envData@coords[,y]), max(envData@coords[,y])))
       }else {
         #If raster not found, put countries as background
         country=data('wrld_simpl', package='maptools', envir=environment())
