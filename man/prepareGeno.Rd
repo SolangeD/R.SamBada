@@ -9,7 +9,7 @@ prepareGeno(fileName, outputFile, saveGDS, mafThresh = NULL,
   directory = NULL, interactiveChecks = FALSE, verbose = FALSE)
 }
 \arguments{
-\item{fileName}{char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen}
+\item{fileName}{char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPRelate specific format) will be created unless no filtering options are chosen}
 
 \item{outputFile}{char Name of the output file. Must be a .csv}
 
@@ -60,7 +60,7 @@ prepareGeno(gdsFile, outputFile=file.path(tempdir(),'/uganda-subset-mol.csv'),
 # Run prepareGeno with interactiveChecks=TRUE
 prepareGeno(fileName=system.file("extdata", "uganda-subset-mol.ped", package = "R.SamBada"),
      outputFile=file.path(tempdir(),'/uganda-subset-mol.csv'),TRUE, mafThresh=0.05, 
-     missingnessThresh=0.05, mgfThresh=0.8,interactiveChecks=TRUE)
+     missingnessThresh=0.05,interactiveChecks=TRUE)
 }
 }
 \author{

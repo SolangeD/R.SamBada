@@ -16,13 +16,13 @@ prepareEnv(envFile, outputFile, maxCorr, idName, separator = " ",
 
 \item{outputFile}{char Name of the output file. Must have a .csv extension.}
 
-\item{maxCorr}{double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above (in absolute value), one of the variables will be deleted (the kept variable among the two will always be the one that appears first in the envrionmental file)}
+\item{maxCorr}{double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above (in absolute value), one of the variables will be deleted (the kept variable among the two will always be the one that appears first in the environmental file)}
 
 \item{idName}{char Name of the id in the environmental file matching the one of \code{genoFile}}
 
 \item{separator}{char If \code{envFile} is .csv, the separator character. If file created with create_env, separator is ' '}
 
-\item{genoFile}{char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created}
+\item{genoFile}{char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPRelate specific format) will be created}
 
 \item{numPc}{double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC (the program will find the first leap in the proportion of variance where the ratio (difference in variance between PC x and x+1)/(variance of PC x) is greater than \code{numPc}. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the \code{envFile} match the one of the \code{genoFile} (necessary for sambada's computation). Set it to 0 if \code{genoFile} is null}
 

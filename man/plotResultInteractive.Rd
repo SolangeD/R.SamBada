@@ -34,7 +34,7 @@ plotResultInteractive(preparedOutput, varEnv, envFile, species = NULL,
 
 \item{popStrCol}{char The name or vector of name of column(s) in \code{envFile} describing population structure. If provided, additional layers on the map will be available representing population structure.}
 
-\item{ensemblHost}{char The ensembl url as defined in biomaRt::useMart. Usefull to access archived version of ensembl dataset.}
+\item{ensemblHost}{char The ensembl url as defined in biomaRt::useMart. Useful to access archived version of ensembl dataset.}
 }
 \value{
 None
@@ -43,7 +43,7 @@ None
 Plots the manhattan plot for a given environmental variable. The plot is interactive and a map of the distribution of the marker can be retrieved as well as nearby genes listed in Ensembl.
 }
 \details{
-This function opens a local web-page first showing a manhattan plot. By clicking on a marker, a list of information is shown (chromosome and exact position, ensembl gene wihtin the determined window, variant consequence on the protein and if the SNP is correlated with other variables). A map also shows the geographical distribution of the marker (presence/absance), the environmental variable and if present the population variable. On the right of the plot, the variable to be plotted can be checked in the list by clicking on it. Also two boxplots shows the distribution of the environmental variables for individuals with and without the marker. The scale of the y-axis is the unit of the environmental variable.
+This function opens a local web-page first showing a manhattan plot. By clicking on a marker, a list of information is shown (chromosome and exact position, ensembl gene within the determined window, variant consequence on the protein and if the SNP is correlated with other variables). A map also shows the geographical distribution of the marker (presence/absence), the environmental variable and if present the population variable. On the right of the plot, the variable to be plotted can be checked in the list by clicking on it. Also two boxplots shows the distribution of the environmental variables for individuals with and without the marker. The scale of the y-axis is the unit of the environmental variable.
 }
 \examples{
 \dontrun{
