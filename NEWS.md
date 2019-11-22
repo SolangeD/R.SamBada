@@ -1,20 +1,32 @@
 # R.SamBada 0.1.2
 
+## Improvements
+- createEnv: possibility to enter the resolution of the worldclim dataset
+- plotResultInteractive: possibility to enter the ensembl host version
+
 ## Bug fixes
 - prepareGeno: suppressed warnings "arguments 'show.output.on.console', 'minimized' and 'invisible' are for Windows only"
+	- cpp function for MGF filtering only compiled when mgfThresh is not null
+	- use system2() instead of system() to invoke recode-plink, to avoid the program to get stucked unexpectedly
 - createEnv: checks that the csv file has x and y column inside + a third column
 - prepareEnv: suppress variables correlated above a threshold IN ABSOLUTE VALUE
+	- checks if idName present in envFile
 - sambadaParallel: - bug fix when keepAllFiles=TRUE (files previously saved in temporary directory)
 	- bug fix when wordDelim=,
 	- bug fix when cores=1 to save storey file
 	- removes SamBada error log that is created when SamBada's installation is tested
 	- improved parameter checks
 	- suppressed warnings "arguments 'show.output.on.console', 'minimized' and 'invisible' are for Windows only"
+	- use system2() instead of system() to invoke sambada, to avoid the program to get stucked unexpectedly
 - prepareOutput: bug fix when reading the file when popStr=FALSE
 	- bug fix when opening storey file when wordDelim was different from space in sambadaParallel
 - plotResultInteractive: added axis-label to the boxplot
-- plotMap: - bug fix when rasterName was not null 
+	- bug fix when gds created from a .bed (error snp.rs.id: no such GDS node!)
+- plotMap: - bug fix when rasterName was not null (open raster and draw legend)
 	- bug fix when environmental variable was not a bioclimatic variable
+	- bug fix when gds created from a .bed 
+	- crop raster to dataset to avoid memory issue
+- prepareGeno and sambadaParallel: - bug fix when directory given in relative path
 
 ## Update in the documentation
 - better explanation on plots shown with interactiveChecks=TRUE  or if file given in relative path in prepareOutput 
