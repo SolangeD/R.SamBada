@@ -1,7 +1,7 @@
 #' @title Prepare genomic input
 #' @description Writes a new genomic file that sambada can work with after having applied the selected genomic filtering options.  For this function you need SamBada to be installed on your computer; if this is not already the case, you can do this with downloadSambada() - for Mac users, please read the details in downloadSambada's documentation. The output file has the same name as the input file but with a .csv extension
 #' @author Solange Duruz, Oliver Selmoni
-#' @param fileName char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created unless no filtering options are chosen
+#' @param fileName char Name of the input file (must be in active directory). Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPRelate specific format) will be created unless no filtering options are chosen
 #' @param outputFile char Name of the output file. Must be a .csv
 #' @param saveGDS logical If true (and if the input file extension is different from GDS) the GDS file will be saved. We recommend to set this parameter to TRUE to save time in subsequent functions that rely on GDS file
 #' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering (if null no filtering on MAF will be computed)
@@ -37,7 +37,7 @@
 #' # Run prepareGeno with interactiveChecks=TRUE
 #' prepareGeno(fileName=system.file("extdata", "uganda-subset-mol.ped", package = "R.SamBada"),
 #'      outputFile=file.path(tempdir(),'/uganda-subset-mol.csv'),TRUE, mafThresh=0.05, 
-#'      missingnessThresh=0.05, mgfThresh=0.8,interactiveChecks=TRUE)
+#'      missingnessThresh=0.05,interactiveChecks=TRUE)
 #' }
 #' @export
 prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThresh=NULL,ldThresh=NULL,mgfThresh=NULL, directory=NULL, interactiveChecks=FALSE, verbose=FALSE){
@@ -82,11 +82,11 @@ prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThre
   }
   
   #Check if recode-plink is available
-  if(Sys.info()['sysname']=='Windows'){
-    tryCatch(suppressWarnings(system('recode-plink', intern=TRUE, show.output.on.console=FALSE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada's recode-plink is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
-  } else {
-    tryCatch(suppressWarnings(system('recode-plink', intern=TRUE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada's recode-plink is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
-  }
+  #if(Sys.info()['sysname']=='Windows'){
+    #tryCatch(suppressWarnings(system2('recode-plink', intern=TRUE, show.output.on.console=FALSE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada's recode-plink is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
+  #} else {
+  tryCatch(suppressWarnings(system2('recode-plink', wait=TRUE, stdout=FALSE, stderr=FALSE)), error=function(e){stop("sambada's recode-plink is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
+  #}
   ### If ped file with no filters => no need to code to GDS ###
   
   if(extension=='ped' & is.null(mafThresh) & is.null(missingnessThresh) & is.null(mgfThresh) & is.null(ldThresh)){
@@ -103,7 +103,7 @@ prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThre
     close(f)
     
     #recodePlink(numIndiv,numSNP,filename_short,paste(filename_short,'.csv'))
-    system(paste('recode-plink',numIndiv,numSNP,filename_short,outputFile))
+    system2('recode-plink',args=c(numIndiv,numSNP,filename_short,outputFile))
     return(NA)
   }
   
@@ -352,7 +352,7 @@ prepareGeno=function(fileName,outputFile,saveGDS,mafThresh=NULL, missingnessThre
   numSNP=length(list_snp)
   numIndiv=length(gdsfmt::read.gdsn(gdsfmt::index.gdsn(gds_obj, "sample.id")))
   #test2::recodePlink(numIndiv,numSNP,paste(filename_short,'_filtered',sep=''),paste0(filename_short,'.csv'))
-  system(paste('recode-plink',numIndiv,numSNP,file.path(tmp,paste(filename_short2,'_filtered',sep='')),outputFile))
+  system2('recode-plink',args=c(numIndiv,numSNP,file.path(tmp,paste(filename_short2,'_filtered',sep='')),outputFile))
 }
 
 #' @title Set the location of samples through a local web-application with interactive map
@@ -370,7 +370,7 @@ setLocation=function(){
 
 #' @title Create env file from raster file(s) and/or global database present in the raster r package
 #' @description Create env file as an input for SamBada (it is recommended to run prepare_env function before running samBada) raster file(s) and/or global database present in the raster r package
-#' @details  If you set worldclim=TRUE, then tmin10 represents the minimum temperature in october. Similarly tmax, tavg and prec refers to maximum temperature, average temperature and precipitation. The bio1-bio19 are bioclim variables are computed from these indices and are described here. Temperature are given in 10 degree C and precipitation in mm. The funciton always downloads the best resolution available (30 seconds for worldclim dataset and 90m for SRTM).
+#' @details  If you set worldclim=TRUE, then tmin10 represents the minimum temperature in October. Similarly tmax, tavg and prec refers to maximum temperature, average temperature and precipitation. The bio1-bio19 are bioclim variables are computed from these indices and are described here. Temperature are given in 10 degree C and precipitation in mm. The function always downloads the best resolution available (30 seconds for worldclim dataset and 90m for SRTM).
 #' This function requires that you define the EPSG code of your projection system. If you work with lat/long global projection, then you most probably work with WGS 84 whose EPSG is 4326.
 #' @author Solange Duruz
 #' @param locationFileName char Name of the file containing location of individuals. Must be in the active directory. Supported extension are .csv, .shp. All columns present in this file will also be present in the output file
@@ -382,7 +382,7 @@ setLocation=function(){
 #' @param worldclim logical If TRUE worldclim bio, tmin, tmax and prec variables will be downloaded at a resolution of 0.5 minutes of degree (the finest resolution). Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
 #' @param resWC double The resolution at which to download the worldclim tiles. Must be one of 0.5, 2.5, 5, and 10 (minutes of degree). See argument res of raster::getData.
 #' @param srtm logical If TRUE the SRTM (altitude) variables will be downloaded at a resolution ... Rely rgdal and gdalUtils R package to merge the tiles. The downloaded tiles will be stored in the (new) wc0.5 directory of the active directory
-#' @param saveDownload logical If TRUE (and if wordclim or srtm is TRUE), the tiles downloaded from global databases will be saved in a non-temporary directory. We recommend setting this parameter to true so that rasters can be used later (post-processing). If wordclim and srtm are FALSE, either value (TRUE/FALSE) will have no effect
+#' @param saveDownload logical If TRUE (and if \code{worldclim} or \code{srtm} is TRUE), the tiles downloaded from global databases will be saved in a non-temporary directory. We recommend setting this parameter to true so that rasters can be used later (post-processing). If worldclim and srtm are FALSE, either value (TRUE/FALSE) will have no effect
 #' @param rasterName char or list Name or list of name of raster files to import. Supported format are the one of raster package. If \code{directory} is TRUE then the path to the directory. Can be set to null if worldclim or srtm are set to TRUE.
 #' @param rasterProj integer or list of integer Coordinate system EPSG code of the rasterlayer. If rasterlayer is already georeferenced, this argument will be skipped. If \code{rasterName} is a list, can be either a single number if all projections are the same or a list of projection for all files if different. If \code{directory} is TRUE, can only contain one number (all projections must be equal or rasters must be georeferenced)
 #' @param directory logical If true, all .tif, .gtiff, .img, .sdat, . present in \code{rasterName} will be loaded
@@ -755,10 +755,10 @@ createEnv=function(locationFileName,outputFile, x=NULL,y=NULL,locationProj=NULL,
 #' @author Solange Duruz, Oliver Selmoni
 #' @param envFile char Name of the input environmental file (must be in active directory). Can be .csv or .shp
 #' @param outputFile char Name of the output file. Must have a .csv extension.
-#' @param maxCorr double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above (in absolute value), one of the variables will be deleted (the kept variable among the two will always be the one that appears first in the envrionmental file)
+#' @param maxCorr double A number between 0 and 1 specifying the maximum allowable correlation coefficient between environmental files. If above (in absolute value), one of the variables will be deleted (the kept variable among the two will always be the one that appears first in the environmental file)
 #' @param idName char Name of the id in the environmental file matching the one of \code{genoFile}
 #' @param separator char If \code{envFile} is .csv, the separator character. If file created with create_env, separator is ' '
-#' @param genoFile char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPrelate specific format) will be created
+#' @param genoFile char (optional) Name of the input genomic file (must be in active directory). If not null, population variable will be calculated from a PCA relying on the SNPRelate package. Can be .gds, .ped, .bed, .vcf. If different from .gds, a gds file (SNPRelate specific format) will be created
 #' @param numPc double If above 1, number of principal components to analyze. If between 0 and 1, automatic detection of number of PC (the program will find the first leap in the proportion of variance where the ratio (difference in variance between PC x and x+1)/(variance of PC x) is greater than \code{numPc}. If 0, PCA and population structure will not be computed: in that case, the \code{genoFile} will only be used to make the sample order in the \code{envFile} match the one of the \code{genoFile} (necessary for sambada's computation). Set it to 0 if \code{genoFile} is null 
 #' @param mafThresh double A number between 0 and 1 specifying the Major Allele Frequency (MAF) filtering when computing PCA (if null no filtering on MAF will be computed)
 #' @param missingnessThresh double A number between 0 and 1 specifying the missing rate filtering when computing PCS(if null no filtering on missing rate will be computed)

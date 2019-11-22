@@ -110,11 +110,11 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   }
 
   #Check if sambada is installed
-  if(Sys.info()['sysname']=='Windows'){
-    tryCatch(suppressWarnings(system('sambada', intern=TRUE, show.output.on.console=FALSE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
-  } else {
-    tryCatch(suppressWarnings(system('sambada', intern=TRUE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
-  }
+  #if(Sys.info()['sysname']=='Windows'){
+  #  tryCatch(suppressWarnings(system2('sambada', intern=TRUE, show.output.on.console=FALSE, ignore.stdout=TRUE, ignore.stderr=TRUE)), error=function(e){stop("sambada is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
+  #} else {
+  tryCatch(suppressWarnings(system2('sambada', wait=TRUE, stdout=FALSE, stderr=FALSE)), error=function(e){stop("sambada is not available. You should first download sambada and either put the binary folder to the path environmental variable or specify the path in the directory input argument")})
+  #}
   file.remove(list=list.files(pattern ='Sambada-error-log*'))
   
   ### Load required libraries if cores=NULL or cores>1
@@ -295,12 +295,12 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
     paramFile=paste0(basename(genoFileShort),'-param.txt') #name of paramFile: genoFile (without -recode and without .csv) + -param.txt
     write_sambada_parameter(paramFile, params, 'sambada')
     if(keepAllFiles==TRUE){
-      system(paste('sambada',paramFile, paste0('"',envFile,'"'), paste0('"',genoFile,'"')))
+      system2('sambada',args=c(paramFile, paste0('"',envFile,'"'), paste0('"',genoFile,'"')))
     } else {
       if (basename(envFile)==envFile | regexpr('.',envFile, fixed=TRUE)[1]==1){
-        system(paste('sambada',paramFile, paste0('"',file.path(working_dir,envFile),'"'), paste0('"',basename(genoFile),'"')))
+        system2('sambada',args=c(paramFile, paste0('"',file.path(working_dir,envFile),'"'), paste0('"',basename(genoFile),'"')))
       } else {
-        system(paste('sambada',paramFile, paste0('"',envFile,'"'), paste0('"',basename(genoFile),'"')))
+        system2('sambada',args=c(paramFile, paste0('"',envFile,'"'), paste0('"',basename(genoFile),'"')))
       }
     }
     #Copy files to right location
@@ -344,7 +344,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   if(!is.null(directory)){
     changePath(directory)
   }
-  a=system(paste('supervision', fileSupervision))
+  a=system2('supervision', args=c(fileSupervision), wait=TRUE)
   ### Run sambada
   
   #Prepare Sambada's parameter file for each supervision split (file 1:n-1 are the same)
@@ -378,7 +378,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   } else {
     envFile2=envFile
   }
-  finalMatrix = foreach::foreach(i=0:(cores-1), .combine=cbind, .packages='base') %dopar% {tempMatrix = system(paste0('sambada ',basename(genoFileShort),'_param',i,'.txt "',envFile2,'" ',basename(genoFileShort),'-mark-',i,'-',i*sizeBlock,'.csv'))}
+  finalMatrix = foreach::foreach(i=0:(cores-1), .combine=cbind, .packages='base') %dopar% {tempMatrix = system2('sambada',args=c(paste0(basename(genoFileShort),'_param',i,'.txt'),paste0('"',envFile2,'"'),paste0(basename(genoFileShort),'-mark-',i,'-',i*sizeBlock,'.csv')))}
   
   #Close cluser
   parallel::stopCluster(cl)
@@ -387,7 +387,7 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   print("Running supervision to merge the files")
   #supervision( base-name.txt, numBlock, blockSize, maxDimension, selScore, scoreThreshold, sortScore, wordDelim)
   #system(paste('supervision',basename(genoFile), cores, sizeBlock, dimMax,"Both", 0.001, "Wald", ' '))
-  system(paste('supervision',basename(genoFile), cores, sizeBlock, dimMax))
+  system2('supervision',args=c(basename(genoFile), cores, sizeBlock, dimMax))
   
 
   for(i in 0:(cores-1)){
