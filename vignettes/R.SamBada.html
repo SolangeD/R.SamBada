@@ -7,11 +7,12 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 <meta name="author" content="Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana" />
 
-<meta name="date" content="2019-05-07" />
+<meta name="date" content="2019-11-21" />
 
 <title>R.SamBada</title>
 
@@ -71,9 +72,7 @@ h6 {
 </style>
 
 
-</head>
 
-<body>
 
 <style type="text/css">
 .main-container {
@@ -87,7 +86,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -104,8 +102,6 @@ summary {
 </style>
 
 
-
-<div class="container-fluid main-container">
 
 <!-- tabsets -->
 
@@ -163,20 +159,17 @@ summary {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
 
 
 
@@ -186,17 +179,49 @@ $(document).ready(function () {
 
 
 <h1 class="title toc-ignore">R.SamBada</h1>
-<h4 class="author"><em>Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana</em></h4>
-<h4 class="date"><em>2019-05-07</em></h4>
+<h4 class="author">Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana</h4>
+<h4 class="date">2019-11-21</h4>
 
 </div>
 
 
 <p>This package is designed to entail the whole processing chain to use SamBada, from pre- to post-processing. In this documentation, we will work through all these steps with an example given in the data available with the package. This is a subset of ten SNPs from 800 Ougandan cattle including the sample location (see SamBada’s documentation below for more information)</p>
-<p>If you want more documentation, you can read the <a href="https://cran.r-project.org/web/packages/R.SamBada/R.SamBada.pdf">documentation of the package</a> or <a href="https://github.com/Sylvie/sambada/releases/download/v0.8.0/sambadoc.pdf">SamBada’s documentation</a>. Also read the article …</p>
+<p>If you want more documentation, you can read the <a href="https://CRAN.R-project.org/package=R.SamBada/R.SamBada.pdf">documentation of the package</a> or <a href="https://github.com/Sylvie/sambada/releases/download/v0.8.0/sambadoc.pdf">SamBada’s documentation</a>. Also read the article …</p>
 <p>NB: By default, all examples write to a temporary folder (use tempdir() to see where it is actually saved). You can remove the tempdir() statements and files will be saved in your current directory.</p>
 <p>NB2: All steps presented in this vignette follow one another, in which output files of one step are often used in a subsequent step. However, to facilitate the use of this vignette, input files will always refer to test files of the package. If you want to can use the ones you generated in previous steps (look in the tempdir() folder if you did not specify other output locations). Some steps are necessary to be able to complete the subsequent steps. It is the case of downloadSambada() and prepareOutput()</p>
 <p>NB3: As a general rule, please avoid spaces in input files (and paths leading to them), that might make some commands crash</p>
+<div id="prerequisite" class="section level2">
+<h2>Prerequisite</h2>
+<div id="for-mac-users" class="section level3">
+<h3>For Mac users:</h3>
+<p>SamBada can only be used with GCC7 compiler, which is not the default one on MacOS. You can install it from the terminal by first downloading homebrew and then installing gcc7. For the function createEnv, you also need GDAL to be installed. This can also be done with Homebrew</p>
+<pre class="bash"><code># install Homebrew (https://brew.sh/). At the moment of writing the command to install it is
+/usr/bin/ruby -e &quot;$(curl -fsSL \https://raw.githubusercontent.com/Homebrew/install/master/install)&quot;
+# install GCC7
+brew install gcc@7
+# install GDAL
+brew install gdal</code></pre>
+</div>
+<div id="windows" class="section level3">
+<h3>Windows</h3>
+<p>For the function createEnv, GDAL must be be installed. This can be done by using the osgeo4w installer. At the time of writing, this can be accessed under <a href="https://trac.osgeo.org/osgeo4w/" class="uri">https://trac.osgeo.org/osgeo4w/</a>. Download the 64-bit (or 32-bit) installer, check the ‘Express Desktop Install’, choose one of the proposed URL and uncheck all packages, but the GDAL package (alternatively you can use <a href="https://anaconda.org/conda-forge/gdal/files" class="uri">https://anaconda.org/conda-forge/gdal/files</a>)</p>
+</div>
+<div id="linux" class="section level3">
+<h3>Linux</h3>
+<p>For the function createEnv, GDAL must be be installed. At the moment of writing this can be done with the following command in the terminal</p>
+<pre class="bash"><code>sudo apt install libgdal-dev
+sudo apt install libproj-dev</code></pre>
+</div>
+</div>
+<div id="install-all-necessary-packages" class="section level2">
+<h2>Install all necessary packages</h2>
+<p>To run this vignette, you will need to install R.SamBada. It is recommended to install all dependencies, including the “suggested packages” (i.e. packages that are used in only one or a few functions and that are therefore not mandatory to install the package). Note that one of the dependency (the SNPRelate package) should be installed with the BiocManager separately.</p>
+<pre class="r"><code>install.packages(&quot;BiocManager&quot;)
+BiocManager::install(pkgs=c(&quot;SNPRelate&quot;,&quot;biomaRt&quot;)) #if asked, please update packages that needs to be updated
+install.packages(&quot;R.SamBada&quot;, dependencies=c(&quot;Depends&quot;,
+      &quot;Imports&quot;, &quot;LinkingTo&quot;, &quot;Suggests&quot;))
+library(&quot;R.SamBada&quot;)</code></pre>
+</div>
 <div id="download-sambada" class="section level2">
 <h2>Download Sambada</h2>
 <p>For running sambada, you need to download sambada’s binaries. This can be done with <code>downloadSambada</code> which downloads Sambada from GitHub and unpacks it into the directory of your choice. You might already be a Sambada user and do not have to download it again! Note that if you plan to often use Sambada, it is recommended that you put the binaries folder of Sambada into your path environmental variable (this procedure is OS-dependent, look on the internet how to proceed), otherwise you will have to specify this path every time you start a new R session.</p>
@@ -262,8 +287,7 @@ readLines(locationFile, n=20) #View the first 20 lines of the input file
 #downloads the raster tiles from global databases and create the environmental file
 #Warning: the download and processing of raster is both heavy in space and time-consuming
 #If you want to save time, you can skip this step continue to the next function
-createEnv(locationFileName=locationFile, outputFile=file.path(tempdir(),'uganda-subset-env.csv'), x='longitude',y='latitude',locationProj=4326,separator=';', worldclim=TRUE, saveDownload=TRUE, rasterName=NULL,rasterProj=NULL, interactiveChecks=FALSE) #Also try with interactiveChecks=TRUE
-</code></pre>
+createEnv(locationFileName=locationFile, outputFile=file.path(tempdir(),'uganda-subset-env.csv'), x='longitude',y='latitude',locationProj=4326,separator=';', worldclim=TRUE, saveDownload=TRUE, rasterName=NULL,rasterProj=NULL, interactiveChecks=FALSE) #Also try with interactiveChecks=TRUE</code></pre>
 </div>
 <div id="prepare-the-final-environmental-dataset" class="section level3">
 <h3>Prepare the final environmental dataset</h3>
@@ -312,7 +336,7 @@ prepareEnv(envFile=envFile, outputFile=file.path(tempdir(),'uganda-subset-env-ex
 envFile2=system.file(&quot;extdata&quot;, &quot;uganda-subset-env-export.csv&quot;, package = &quot;R.SamBada&quot;)
 readLines(envFile2, n=20) #View the first 20 line of the environmental file
 
-#Otherwise, take the one provided in the package
+#Locate genoFile in csv format (created with prepareGeno)
 genoFile2=system.file(&quot;extdata&quot;, &quot;uganda-subset-mol.csv&quot;, package = &quot;R.SamBada&quot;)
 readLines(genoFile2, n=20) #View the first 20 line of the genetic file
 
@@ -468,6 +492,23 @@ $(document).ready(function () {
 
 
 </script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
