@@ -1,40 +1,24 @@
 Package: R.SamBada
 Type: Package
-Title: Processing Pipeline for 'SamBada' from Pre- to Post-Processing
-Version: 0.1.0
-Date: 2019-03-18
+Title: Processing Pipeline for 'SamBada' from Pre- To Post-Processing
+Version: 0.1.2
+Date: 2019-11-21
 Author: Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana
 Maintainer: Solange Duruz <solange.duruz@alumni.epfl.ch>
 Description: Processing pipeline for 'SamBada' from pre- to post-processing. 
-	'SamBada' is a landscape genomic software designed to run univariate or multivariate logistic regression between the presence of a genotype and one or several environmental variables. 
+	'SamBada' is a landscape genomic software designed to run univariate or multivariate logistic regression between the presence of a genotype and one or several environmental variables. See Stucki (2017) <doi:10.1111/1755-0998.12629> and <https://github.com/Sylvie/sambada>. 
 	The package provides functions that can be classified into four categories: 
 	1) Install 'SamBada' 
 	2) Preprocessing (prepare genomic file into standards compatible with 'SamBada' and apply quality-control; retrieve environmental conditions at sampling location; prepare environmental file including removal of correlated variables and computation of population structure) 
 	3) Processing (run 'SamBada' on multiple cores using 'Supervision')
 	4) Post-processing (calculate p-values and q-values, produce interactive Manhattan plots and query 'Ensembl' database, produce maps).
 License: GPL (>= 2)
-Imports: SNPRelate,
-	gdsfmt
-LinkingTo: 
-RoxygenNote: 6.1.0
-Suggests: Rcpp,
-	utils,
-	data.table,
-	shiny,
-	plotly,
-	httr,
-	biomaRt,
-	ggplot2,
-	sp, 
-	packcircles, 
-	raster, 
-	mapplots, 
-	spdep,
-	rgdal, 
-	gdalUtils,
-	rworldmap,
-	doParallel,
-	foreach,
-	knitr,
-    rmarkdown
+Imports: SNPRelate, gdsfmt
+LinkingTo:
+RoxygenNote: 6.1.1
+Suggests: Rcpp, utils, data.table, shiny, plotly, httr, biomaRt,
+        ggplot2, sp, packcircles, raster, mapplots, spdep, rgdal,
+        gdalUtils, rworldmap, doParallel, foreach, knitr, rmarkdown
 VignetteBuilder: knitr
+NeedsCompilation: no
+Packaged: 2019-11-21 07:58:26 UTC; Solange
