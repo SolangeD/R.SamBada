@@ -296,9 +296,11 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
   chrMaxPos = preparedOutput$chrMaxPos
     
   #Connection to ensembl database
-  ensemblOutput = ensembl_connection(species, ensemblHost, TRUE)
-  snp = ensemblOutput$snp
-  ensembl = ensemblOutput$ensembl
+  if(!is.null(species)){
+    ensemblOutput = ensembl_connection(species, ensemblHost, TRUE)
+    snp = ensemblOutput$snp
+    ensembl = ensemblOutput$ensembl
+  }
   
   #Prepare Manhattan 
   #Only model involving chosen varenv
@@ -389,7 +391,7 @@ plotResultInteractive = function(preparedOutput, varEnv, envFile,species=NULL, p
 
     # Manhattan
     output$manhattan <- plotly::renderPlotly({
-      plotly::ggplotly(p = p,tooltip = c("y", "label","x","text"), source='man')
+      plotly::ggplotly(p = p,tooltip = c("y", "label","x","text"), source='man') #a changer: x n'est pas nécessaire. Y=-log10(pval)
     })
     
     #When clicked: query Ensembl
