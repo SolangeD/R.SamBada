@@ -231,8 +231,8 @@ sambadaParallel = function(genoFile, envFile, idGeno, idEnv, outputFile, dimMax=
   rm(line)
   close(con)
   
-  #If Id from geno and env file do not match => error
-  if(!identical(as.vector(IDgeno2), as.vector(env[,idEnv]))){
+  #If Id from geno and env file do not match => error. Sometimes one of the vector is transformed into char. Set both to char
+  if(!identical(as.character(as.vector(IDgeno2)), as.character(as.vector(env[,idEnv])))){
     stop('IDs or ID order between the envfile and genofile do not match. Please double check your idGeno and idEnv input or use prepare_env function to reorder your envfile')
   }
   
