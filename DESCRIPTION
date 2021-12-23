@@ -1,8 +1,8 @@
 Package: R.SamBada
 Type: Package
 Title: Processing Pipeline for 'SamBada' from Pre- To Post-Processing
-Version: 0.1.2
-Date: 2019-11-21
+Version: 0.1.3
+Date: 2021-12-23
 Author: Solange Duruz, Sylvie Stucki, Oliver Selmoni, Elia Vajana
 Maintainer: Solange Duruz <solange.duruz@alumni.epfl.ch>
 Description: Processing pipeline for 'SamBada' from pre- to post-processing. 
@@ -15,7 +15,7 @@ Description: Processing pipeline for 'SamBada' from pre- to post-processing.
 License: GPL (>= 2)
 Imports: SNPRelate, gdsfmt
 LinkingTo:
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.2
 Suggests: Rcpp, utils, data.table, shiny, plotly, httr, biomaRt,
         ggplot2, sp, packcircles, raster, mapplots, spdep, rgdal,
         gdalUtils, rworldmap, doParallel, foreach, knitr, rmarkdown
